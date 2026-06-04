@@ -760,6 +760,19 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 73 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed design-partner diligence plan commit `87670fe` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one issue:
+  - adding `commercial/design_partner_plan.json` as a required file while keeping the packet format labeled `taco_data_room_zip_v1` would reject previously exported valid v1 data-room packets.
+- Fixed packet compatibility:
+  - generated packets now use `taco_data_room_zip_v2`,
+  - verifier accepts legacy `taco_data_room_zip_v1` packets with the old required-file set,
+  - verifier validates required files against the packet format declared in `packet/index.json`.
+- Added regression coverage for valid legacy v1 packet verification.
+- Verification after packet-format compatibility fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 28 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 74 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

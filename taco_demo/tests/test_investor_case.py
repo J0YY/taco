@@ -8,6 +8,10 @@ from dataclasses import replace
 from taco_demo.data_room import (
     MAX_ZIP_MEMBERS,
     MAX_ZIP_MEMBER_BYTES,
+    PACKET_FORMAT_V1,
+    PACKET_FORMAT_V2,
+    PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V1,
     build_data_room_bundle,
     build_data_room_checklist,
     build_data_room_manifest,
@@ -347,6 +351,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         design_partner_plan = json.loads(archive.read("commercial/design_partner_plan.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
+    assert index["packet_format"] == PACKET_FORMAT_V2
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -403,7 +408,11 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         "# diligence memo\n",
     )
     cases = [
-        ("packet_format", "evil_format", "Invalid packet index: packet_format must be taco_data_room_zip_v1"),
+        (
+            "packet_format",
+            "evil_format",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1 or taco_data_room_zip_v2",
+        ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
         ("manifest_id", "DR-EVIL", "Invalid packet index: manifest_id does not match manifest.json"),
@@ -426,6 +435,36 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
 
         assert verification["valid"] is False
         assert expected_issue in verification["issues"]
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v1_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V1}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V1,
+        "manifest_id": "DR-LEGACY",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V1 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
 
 
 def test_data_room_bundle_verifier_detects_tampering():

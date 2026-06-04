@@ -18,11 +18,13 @@ from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetri
 
 ZIP_TIMESTAMP = (2026, 6, 4, 0, 0, 0)
 PACKET_INDEX_PATH = "packet/index.json"
+PACKET_FORMAT_V1 = "taco_data_room_zip_v1"
+PACKET_FORMAT_V2 = "taco_data_room_zip_v2"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
 MAX_ZIP_MEMBER_BYTES = 2_000_000
-REQUIRED_BUNDLE_FILES = {
+REQUIRED_BUNDLE_FILES_V1 = {
     "README.md",
     "manifest.json",
     "application.json",
@@ -33,6 +35,8 @@ REQUIRED_BUNDLE_FILES = {
     "research/sources.json",
     "suite/video_index.json",
     "dreamaudit/summary.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V1 | {
     "commercial/design_partner_plan.json",
 }
 
@@ -272,9 +276,6 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
             duplicate_names = sorted({name for name in names if names.count(name) > 1})
             if duplicate_names:
                 issues.extend(f"Duplicate ZIP member path: {name}" for name in duplicate_names)
-            required_missing = sorted(REQUIRED_BUNDLE_FILES - set(names))
-            if required_missing:
-                issues.extend(f"Missing required file: {name}" for name in required_missing)
             if PACKET_INDEX_PATH not in names:
                 issues.append(f"Missing required file: {PACKET_INDEX_PATH}")
             elif size_limit_failed:
@@ -288,13 +289,18 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                     else:
                         issues.append("Invalid packet index: expected JSON object")
                 else:
-                    issues.append("Invalid packet index: packet index exceeds member size limit")
+                        issues.append("Invalid packet index: packet index exceeds member size limit")
             if index is not None:
-                if index.get("packet_format") != "taco_data_room_zip_v1":
-                    issues.append("Invalid packet index: packet_format must be taco_data_room_zip_v1")
+                expected_required_files = _required_files_for_packet_format(str(index.get("packet_format", "")))
+                if expected_required_files is None:
+                    issues.append("Invalid packet index: packet_format must be taco_data_room_zip_v1 or taco_data_room_zip_v2")
+                    expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
                     issues.append("Invalid packet index: checksum_algorithm must be sha256")
-                if index.get("required_files") != sorted(REQUIRED_BUNDLE_FILES | {PACKET_INDEX_PATH}):
+                required_missing = sorted(expected_required_files - set(names))
+                if required_missing:
+                    issues.extend(f"Missing required file: {name}" for name in required_missing)
+                if index.get("required_files") != sorted(expected_required_files | {PACKET_INDEX_PATH}):
                     issues.append("Invalid packet index: required_files does not match packet requirements")
                 if "manifest.json" in names:
                     manifest = json.loads(archive.read("manifest.json"))
@@ -435,7 +441,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": "taco_data_room_zip_v1",
+        "packet_format": PACKET_FORMAT_V2,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -449,6 +455,14 @@ def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[st
             for name, payload in sorted(entries)
         ],
     }
+
+
+def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
+    if packet_format == PACKET_FORMAT_V1:
+        return REQUIRED_BUNDLE_FILES_V1
+    if packet_format == PACKET_FORMAT_V2:
+        return REQUIRED_BUNDLE_FILES
+    return None
 
 
 def _unsafe_zip_name(name: str) -> bool:
