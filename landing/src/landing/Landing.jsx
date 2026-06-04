@@ -498,6 +498,7 @@ const POLICY_CATS = [
     { name: 'OpenVLA · SimplerEnv open-drawer', task: 'open the drawer', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/openvla_drawer_success.mp4', f: '/videos/openvla_drawer_failure.mp4' },
   ] },
   { key: 'mskill', label: 'Manipulation arms · RL (ManiSkill)', policies: [
+    { name: 'PPO · PickCube', task: 'pick the cube to a goal pose · ManiSkill3 (trained vs early)', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/pickcube_success.mp4', f: '/videos/pickcube_failure.mp4' },
     { name: 'PPO · PullCube', task: 'pull cube to target · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/pullcube_success.mp4', f: '/videos/pullcube_failure.mp4' },
   ] },
   { key: 'mobile', label: 'Mobile manipulators', policies: [
