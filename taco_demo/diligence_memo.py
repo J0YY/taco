@@ -112,6 +112,7 @@ def build_diligence_memo(
     claim_validation_ledger = data_room_manifest["claim_validation_ledger"]
     investor_proof_pipeline = data_room_manifest["investor_proof_pipeline"]
     research_validation_plan = data_room_manifest["research_validation_plan"]
+    methodology_validation_protocol = data_room_manifest["methodology_validation_protocol"]
     commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
     commercial_unit_economics = data_room_manifest["commercial_unit_economics"]
     seed_round_close_plan = data_room_manifest["seed_round_close_plan"]
@@ -178,6 +179,29 @@ def build_diligence_memo(
     lines.extend(["", "| Downgrade rule | Trigger | Required downgrade |", "| --- | --- | --- |"])
     for item in research_validation_plan["downgrade_rules"]:
         lines.append(f"| {item['rule']} | {item['trigger']} | {item['required_downgrade']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Methodology Validation Protocol",
+            "",
+            f"* Status: {methodology_validation_protocol['status']}",
+            f"* Boundary: {methodology_validation_protocol['boundary']}",
+            f"* Primary endpoints: {len(methodology_validation_protocol['primary_endpoints'])}",
+            f"* Baselines: {len(methodology_validation_protocol['baseline_comparisons'])}",
+            "",
+            "| Endpoint | Metric | Pass threshold | Blocks claim |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for item in methodology_validation_protocol["primary_endpoints"]:
+        lines.append(f"| {item['endpoint']} | {item['metric']} | {item['pass_threshold']} | {item['blocks_claim']} |")
+    lines.extend(["", "| Baseline | Compared against | Failure mode |", "| --- | --- | --- |"])
+    for item in methodology_validation_protocol["baseline_comparisons"]:
+        lines.append(f"| {item['baseline']} | {item['compared_against']} | {item['failure_mode']} |")
+    lines.extend(["", "| Rung | Minimum artifacts | Promotes to | Do not use for |", "| --- | --- | --- | --- |"])
+    for item in methodology_validation_protocol["sample_size_rungs"]:
+        lines.append(f"| {item['rung']} | {item['minimum_artifacts']} | {item['promotes_to']} | {item['do_not_use_for']} |")
 
     lines.extend(
         [

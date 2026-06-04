@@ -1226,3 +1226,20 @@
   - `git diff --check` -> clean.
 - Independent `codex review --base _review-loop-baseline` reran the focused and full pytest suites and found no actionable correctness issues in the external proof registry, app wiring, memo wiring, v21 packet, verifier compatibility, or tests.
 - Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `23976`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
+
+## 2026-06-04 - Improvement loop: methodology validation protocol
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `55f7cc0`.
+- Identified the next VC diligence gap: TACO had hypotheses and validation workstreams, but no prospective protocol that an external reviewer could execute with predeclared endpoints, baselines, sample-size rungs, artifact gates, and claim-downgrade rules.
+- Added `taco_demo/methodology_validation_protocol.py` with primary endpoints, output-only/replay/control/screenshot baselines, sample-size rungs, execution workflows, acceptance matrix, artifact package, and no-claim rules.
+- Wired the protocol into the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture/research language.
+- Bumped generated data-room packets to `taco_data_room_zip_v22` while preserving verifier compatibility for legacy v1 through v21 packets.
+- Added tests for the protocol contract, row helpers, manifest/ZIP export, memo section, current v22 packet indexing, invalid packet-format messaging, and legacy v21 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m py_compile taco_demo/methodology_validation_protocol.py taco_demo/external_proof_registry.py taco_demo/data_room.py taco_demo/app.py taco_demo/diligence_memo.py` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 68 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 70 passed.
+  - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 116 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.

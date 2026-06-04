@@ -103,6 +103,7 @@ InsuranceApplication
          seed round close plan with investor segmentation, weekly close motion, lead-partner gates, and no-count rules
          buyer ROI model with stakeholder value drivers, payback cases, and procurement proof gates
          research validation plan with falsifiable hypotheses, workstreams, thresholds, and downgrade rules
+         methodology validation protocol with endpoints, baselines, sample-size rungs, and artifact gates
          investor claim validation ledger with safe claims, evidence levels, upgrade gates, and disallowed overclaims
          investor proof pipeline with weekly reviewer cadence, proof gates, packet fingerprints, and data-room upgrade rules
          external proof registry with proof slots, permission-to-quote state, redaction gates, and claim-upgrade rules
@@ -256,7 +257,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, methodology evidence map, research validation plan, investor claim validation ledger, investor proof pipeline, external proof registry, commercial traction plan, commercial unit economics, seed round close plan, pricing diligence sensitivity, actuarial readiness plan, buyer ROI model, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, methodology evidence map, research validation plan, methodology validation protocol, investor claim validation ledger, investor proof pipeline, external proof registry, commercial traction plan, commercial unit economics, seed round close plan, pricing diligence sensitivity, actuarial readiness plan, buyer ROI model, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
@@ -276,6 +277,8 @@ TACO translates those directions into an insurance workflow: failure evidence, i
 The Investor Case tab now includes a methodology evidence map. It separates research-backed direction, local artifact evidence, live DreamAudit transfer evidence, and still-open assumptions so the product does not imply that demo traces are actuarial validation or that simulator evidence alone is enough for launch.
 
 The research validation plan makes the methodology falsifiable. It maps the simulation, perturbation, interpretability, control, packet-transfer, and actuarial-governance claims into testable hypotheses, validation workstreams, acceptance thresholds, falsification signals, minimum proof packages, and downgrade rules. This improves technical diligence while keeping the boundary clear: research anchors motivate experiments, but they do not prove sim-to-real transfer, causal interpretability, actuarial credibility, external acceptance, filed pricing, or live loss reduction.
+
+The methodology validation protocol turns those workstreams into an executable prospective study design. It predeclares primary endpoints, output-only and replay baselines, sample-size rungs, packet-hash pre-registration, reviewer artifact gates, and claim downgrade rules so TACO can show a disciplined path to proving the method rather than implying the local demo has already done so.
 
 The investor claim validation ledger turns the pitch into a controlled diligence artifact. It lists safe wording, current evidence, upgrade gates, and disallowed overclaims for internals, replay evidence, pricing, ROI, external validation, capacity, and packet transfer. This makes the story more fundraise-ready without implying deterministic behavior, signed customers, guaranteed savings, filed rates, or carrier approval.
 

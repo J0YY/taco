@@ -26,6 +26,7 @@ from .investor_case import RESEARCH_FOUNDATIONS
 from .investor_objections import build_investor_objection_register
 from .investor_proof_pipeline import build_investor_proof_pipeline
 from .methodology_evidence import build_methodology_evidence_map
+from .methodology_validation_protocol import build_methodology_validation_protocol
 from .pilot_walkthrough import build_pilot_walkthrough_playbook
 from .pricing_diligence import build_pricing_diligence
 from .research_validation import build_research_validation_plan
@@ -60,6 +61,7 @@ PACKET_FORMAT_V18 = "taco_data_room_zip_v18"
 PACKET_FORMAT_V19 = "taco_data_room_zip_v19"
 PACKET_FORMAT_V20 = "taco_data_room_zip_v20"
 PACKET_FORMAT_V21 = "taco_data_room_zip_v21"
+PACKET_FORMAT_V22 = "taco_data_room_zip_v22"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -133,8 +135,11 @@ REQUIRED_BUNDLE_FILES_V19 = REQUIRED_BUNDLE_FILES_V18 | {
 REQUIRED_BUNDLE_FILES_V20 = REQUIRED_BUNDLE_FILES_V19 | {
     "commercial/seed_round_close_plan.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V20 | {
+REQUIRED_BUNDLE_FILES_V21 = REQUIRED_BUNDLE_FILES_V20 | {
     "commercial/external_proof_registry.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V21 | {
+    "research/methodology_validation_protocol.json",
 }
 
 
@@ -204,6 +209,12 @@ def build_data_room_checklist(
             "ready" if len(RESEARCH_FOUNDATIONS) >= 4 and suite_size >= 40 else "needs_work",
             "Falsifiable hypotheses, validation experiments, acceptance thresholds, downgrade rules, and blocked claims are attached.",
             "Run the validation workstreams with partner-specific DreamAudit, activation, control, reviewer, and actuarial evidence before upgrading research-backed claims.",
+        ),
+        _item(
+            "Methodology Validation Protocol",
+            "ready" if len(RESEARCH_FOUNDATIONS) >= 4 and suite_size >= 40 and certificates and metrics else "needs_work",
+            "Prospective endpoints, baselines, sample-size rungs, execution workflows, artifact package, and claim-upgrade boundaries are attached.",
+            "Pre-register the packet hash and run endpoint-specific baselines before saying the methodology has been externally validated.",
         ),
         _item(
             "Commercial Scale Model",
@@ -491,6 +502,15 @@ def build_data_room_manifest(
         claim_validation_ledger,
         seed_round_close_plan,
     )
+    methodology_validation_protocol = build_methodology_validation_protocol(
+        application,
+        certificates,
+        metrics,
+        quote,
+        suite_manifest,
+        research_validation_plan,
+        external_proof_registry,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -522,6 +542,7 @@ def build_data_room_manifest(
         "claim_validation_ledger": claim_validation_ledger,
         "investor_proof_pipeline": investor_proof_pipeline,
         "research_validation_plan": research_validation_plan,
+        "methodology_validation_protocol": methodology_validation_protocol,
         "commercial_traction_plan": commercial_traction_plan,
         "commercial_unit_economics": commercial_unit_economics,
         "seed_round_close_plan": seed_round_close_plan,
@@ -553,6 +574,7 @@ def build_data_room_bundle(
         ("research/methodology_evidence_map.json", _json_bytes(manifest["methodology_evidence_map"])),
         ("research/claim_validation_ledger.json", _json_bytes(manifest["claim_validation_ledger"])),
         ("research/research_validation_plan.json", _json_bytes(manifest["research_validation_plan"])),
+        ("research/methodology_validation_protocol.json", _json_bytes(manifest["methodology_validation_protocol"])),
         ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
         ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
         ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
@@ -679,7 +701,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
                         "taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, "
                         "taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, "
-                        "taco_data_room_zip_v20, or taco_data_room_zip_v21"
+                        "taco_data_room_zip_v20, taco_data_room_zip_v21, or taco_data_room_zip_v22"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -828,7 +850,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V21,
+        "packet_format": PACKET_FORMAT_V22,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -886,6 +908,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V20:
         return REQUIRED_BUNDLE_FILES_V20
     if packet_format == PACKET_FORMAT_V21:
+        return REQUIRED_BUNDLE_FILES_V21
+    if packet_format == PACKET_FORMAT_V22:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -935,6 +959,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `research/methodology_evidence_map.json` - claim-by-claim methodology evidence map",
             "* `research/claim_validation_ledger.json` - investor-safe claims, evidence levels, upgrade gates, and disallowed overclaims",
             "* `research/research_validation_plan.json` - falsifiable hypotheses, validation workstreams, acceptance thresholds, and downgrade rules",
+            "* `research/methodology_validation_protocol.json` - prospective endpoints, baselines, sample-size rungs, execution workflows, and artifact gates",
             "* `certificates/` - primary replay failure certificates",
             "* `metrics/` - internal-risk metric contracts",
             "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",

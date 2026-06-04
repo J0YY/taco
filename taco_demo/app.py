@@ -94,6 +94,13 @@ from taco_demo.investor_proof_pipeline import (
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
 from taco_demo.methodology_evidence import build_methodology_evidence_map, methodology_evidence_rows
+from taco_demo.methodology_validation_protocol import (
+    build_methodology_validation_protocol,
+    validation_baseline_rows,
+    validation_endpoint_rows,
+    validation_rung_rows,
+    validation_workflow_rows,
+)
 from taco_demo.pilot_walkthrough import build_pilot_walkthrough_playbook, pilot_walkthrough_rows
 from taco_demo.pricing_diligence import build_pricing_diligence, pricing_control_rows, pricing_factor_rows
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
@@ -810,6 +817,15 @@ with tabs[9]:
             claim_validation_ledger,
             seed_round_close_plan,
         )
+        methodology_validation_protocol = build_methodology_validation_protocol(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            suite_manifest,
+            research_validation_plan,
+            external_proof_registry,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -916,6 +932,16 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(research_validation_hypothesis_rows(research_validation_plan)), width="stretch")
         st.dataframe(pd.DataFrame(research_validation_workstream_rows(research_validation_plan)), width="stretch")
         st.dataframe(pd.DataFrame(research_validation_rule_rows(research_validation_plan)), width="stretch")
+        st.markdown("#### Methodology Validation Protocol")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Protocol status", str(methodology_validation_protocol["status"]).replace("_", " ").title())
+        c2.metric("Primary endpoints", len(methodology_validation_protocol["primary_endpoints"]))
+        c3.metric("Sample rungs", len(methodology_validation_protocol["sample_size_rungs"]))
+        st.caption(methodology_validation_protocol["boundary"])
+        st.dataframe(pd.DataFrame(validation_endpoint_rows(methodology_validation_protocol)), width="stretch")
+        st.dataframe(pd.DataFrame(validation_baseline_rows(methodology_validation_protocol)), width="stretch")
+        st.dataframe(pd.DataFrame(validation_rung_rows(methodology_validation_protocol)), width="stretch")
+        st.dataframe(pd.DataFrame(validation_workflow_rows(methodology_validation_protocol)), width="stretch")
         st.markdown("#### Investor Proof Pipeline")
         c1, c2, c3 = st.columns(3)
         c1.metric("Pipeline status", str(investor_proof_pipeline["status"]).replace("_", " ").title())
