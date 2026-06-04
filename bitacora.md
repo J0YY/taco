@@ -1114,6 +1114,7 @@
   - `git diff --check` -> clean.
 - Pushed research validation plan commit `4825680` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no correctness-breaking regression in the research validation plan, Investor Case UI, memo wiring, v17 data-room packet, or legacy verifier paths.
+- Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `9523`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
 - Pushed investor proof pipeline commit `119661c` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no correctness-breaking regression in the investor proof pipeline, Investor Case UI, memo wiring, v16 data-room packet, or legacy verifier paths.
 - Restarted Streamlit at `http://127.0.0.1:8501`; initial shell-background PIDs `6805` and `6919` exited without error logs, then relaunched with an explicitly detached process group, `--server.fileWatcherType none`, and active PID `7108`.
