@@ -335,3 +335,17 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 42 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed full-corpus taxonomy commit `1038b54` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one edge case:
+  - generic DreamAudit failures with `perturbation.type = "openvla_action_noise"` still normalized to `counterfactual_policy_failure`, leaving them unmapped despite action-noise evidence in metadata.
+- Fixed DreamAudit normalization to infer `action_noise_counterfactual_failure` from action-noise perturbation metadata before falling back to a generic failure label.
+- Added a regression test for a generic action-noise certificate with `perturbed_validation.failure_mode = "counterfactual_policy_failure"`.
+- Verified the reviewer repro now prints:
+  - `action_noise_counterfactual_failure action_noise_envelope_monitor_enabled action-envelope monitor with actuator-noise re-audit trigger`.
+- Verification after review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_quote_engine.py` -> 20 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 43 passed.
+  - default 250-certificate DreamAudit scan: readiness `85/100`, unmapped families `[]`, remaining gap is low minimality coverage.
+  - full 6,531-certificate DreamAudit scan: readiness `100/100`, status `carrier_review_ready`, unmapped families `[]`, gaps `[]`.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

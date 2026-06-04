@@ -90,6 +90,8 @@ def _normalized_failure_type(raw_failure_type: str, perturbation: JsonDict, task
         return "distractor_object_confusion"
     if any(token in signal for token in ["collision", "contact", "force", "overshoot"]):
         return "contact_force_overshoot"
+    if any(token in signal for token in ["action_noise", "actuator_noise", "gripper_flip", "grip_mixed"]):
+        return "action_noise_counterfactual_failure"
     if any(token in signal for token in ["blur", "bright", "dim", "shift", "vision", "observation"]):
         return "vision_perturbation_counterfactual_failure"
     if raw:

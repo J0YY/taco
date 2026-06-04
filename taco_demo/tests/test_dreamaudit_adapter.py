@@ -170,3 +170,25 @@ def test_compact_non_visual_certificates_preserve_perturbation_costs():
     assert action_cert.minimal_failure_cost == 0.25
     assert language_cert.minimal_failure_cost > 0
     assert language_cert.minimal_failure_cost != 0.5
+
+
+def test_generic_action_noise_certificate_maps_from_perturbation_metadata():
+    payload = {
+        "certificate_id": "generic-action-noise",
+        "native_validation": {"steps": 80, "success": True},
+        "perturbed_validation": {"failure_mode": "counterfactual_policy_failure", "steps": 151, "success": False},
+        "policy": {"name": "OpenVLA"},
+        "task": {"suite": "goal", "task_idx": 1, "episode_idx": 0, "task_name": "put_the_bowl_on_the_stove"},
+        "perturbation": {
+            "type": "openvla_action_noise",
+            "noise_name": "medium_sigma025",
+            "noise_sigma": 0.25,
+            "mean_action_l2": 0.56,
+        },
+        "minimality": {"method": "sigma_sweep", "smallest_failing_sigma": 0.25},
+    }
+
+    cert = adapt_dreamaudit_certificate(payload)
+
+    assert cert.failure_type == "action_noise_counterfactual_failure"
+    assert cert.patch_recipe["taco_required_control"] == "action-envelope monitor with actuator-noise re-audit trigger"
