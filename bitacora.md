@@ -1264,3 +1264,20 @@
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
 - Independent `codex review --base _review-loop-baseline` reran the full pytest suite and found no actionable correctness issues in the competitive positioning artifact, UI wiring, memo wiring, v23 packet, verifier compatibility, docs, or tests.
 - Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `29871`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
+
+## 2026-06-04 - Improvement loop: activation evidence contract
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `f3a54aa`.
+- Identified the next VC diligence gap: TACO had a real optional activation recorder and tests, but the data room did not yet expose a reviewer-verifiable activation-capture contract with layer maps, calibration gates, NPZ checks, and explicit failure conditions.
+- Checked a suspected Investor Case UI issue around the External Validation Capture Kit scorecard metric; the current file renders it once, so no UI duplicate fix was needed.
+- Added `taco_demo/activation_evidence_contract.py` with required success/failure/mitigated trace bundle fields, layer-to-signal mapping, calibration gates, artifact checks, reviewer workflow, failure conditions, and internals no-claim rules.
+- Wired the activation evidence contract into the Investor Case UI, diligence memo, VC data-room checklist, manifest, ZIP packet, packet README, and root README architecture/research/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v24` while preserving verifier compatibility for legacy v1 through v23 packets.
+- Verified the current UI file no longer has the duplicated External Validation Capture Kit scorecard metric.
+- Verification before commit:
+  - `.venv/bin/python -m py_compile taco_demo/activation_evidence_contract.py taco_demo/data_room.py taco_demo/app.py taco_demo/diligence_memo.py taco_demo/external_proof_registry.py taco_demo/methodology_validation_protocol.py taco_demo/tests/test_investor_case.py` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 72 passed.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 120 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.

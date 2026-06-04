@@ -10,6 +10,7 @@ from typing import Any
 import zipfile
 import zlib
 
+from .activation_evidence_contract import build_activation_evidence_contract
 from .actuarial_readiness import build_actuarial_readiness_plan
 from .buyer_roi import build_buyer_roi_model
 from .claim_validation import build_claim_validation_ledger
@@ -64,6 +65,7 @@ PACKET_FORMAT_V20 = "taco_data_room_zip_v20"
 PACKET_FORMAT_V21 = "taco_data_room_zip_v21"
 PACKET_FORMAT_V22 = "taco_data_room_zip_v22"
 PACKET_FORMAT_V23 = "taco_data_room_zip_v23"
+PACKET_FORMAT_V24 = "taco_data_room_zip_v24"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -143,8 +145,11 @@ REQUIRED_BUNDLE_FILES_V21 = REQUIRED_BUNDLE_FILES_V20 | {
 REQUIRED_BUNDLE_FILES_V22 = REQUIRED_BUNDLE_FILES_V21 | {
     "research/methodology_validation_protocol.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V22 | {
+REQUIRED_BUNDLE_FILES_V23 = REQUIRED_BUNDLE_FILES_V22 | {
     "commercial/competitive_positioning.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V23 | {
+    "research/activation_evidence_contract.json",
 }
 
 
@@ -184,6 +189,12 @@ def build_data_room_checklist(
             "ready" if certificates and covered_metrics == len(certificates) else "needs_work",
             f"{covered_metrics}/{len(certificates)} certificates have internal risk metrics; sources: {metric_source_text}.",
             "Attach activation/trace NPZ evidence for every primary certificate.",
+        ),
+        _item(
+            "Activation Evidence Contract",
+            "ready" if certificates and covered_metrics == len(certificates) else "needs_work",
+            "Layer-to-signal map, trace bundle requirements, calibration gates, artifact checks, and no-claim rules are attached.",
+            "Run policy-specific ActivationRecorder capture before upgrading internals claims beyond local/demo evidence.",
         ),
         _item(
             "ManiSkill/RMA Video Suite",
@@ -530,6 +541,14 @@ def build_data_room_manifest(
         investor_proof_pipeline,
         methodology_validation_protocol,
     )
+    activation_evidence_contract = build_activation_evidence_contract(
+        application,
+        certificates,
+        metrics,
+        quote,
+        methodology_validation_protocol,
+        technical_diligence_runbook,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -563,6 +582,7 @@ def build_data_room_manifest(
         "investor_proof_pipeline": investor_proof_pipeline,
         "research_validation_plan": research_validation_plan,
         "methodology_validation_protocol": methodology_validation_protocol,
+        "activation_evidence_contract": activation_evidence_contract,
         "commercial_traction_plan": commercial_traction_plan,
         "commercial_unit_economics": commercial_unit_economics,
         "seed_round_close_plan": seed_round_close_plan,
@@ -595,6 +615,7 @@ def build_data_room_bundle(
         ("research/claim_validation_ledger.json", _json_bytes(manifest["claim_validation_ledger"])),
         ("research/research_validation_plan.json", _json_bytes(manifest["research_validation_plan"])),
         ("research/methodology_validation_protocol.json", _json_bytes(manifest["methodology_validation_protocol"])),
+        ("research/activation_evidence_contract.json", _json_bytes(manifest["activation_evidence_contract"])),
         ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
         ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
         ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
@@ -722,7 +743,8 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
                         "taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, "
                         "taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, "
-                        "taco_data_room_zip_v20, taco_data_room_zip_v21, taco_data_room_zip_v22, or taco_data_room_zip_v23"
+                        "taco_data_room_zip_v20, taco_data_room_zip_v21, taco_data_room_zip_v22, "
+                        "taco_data_room_zip_v23, or taco_data_room_zip_v24"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -871,7 +893,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V23,
+        "packet_format": PACKET_FORMAT_V24,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -933,6 +955,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V22:
         return REQUIRED_BUNDLE_FILES_V22
     if packet_format == PACKET_FORMAT_V23:
+        return REQUIRED_BUNDLE_FILES_V23
+    if packet_format == PACKET_FORMAT_V24:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -983,6 +1007,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `research/claim_validation_ledger.json` - investor-safe claims, evidence levels, upgrade gates, and disallowed overclaims",
             "* `research/research_validation_plan.json` - falsifiable hypotheses, validation workstreams, acceptance thresholds, and downgrade rules",
             "* `research/methodology_validation_protocol.json` - prospective endpoints, baselines, sample-size rungs, execution workflows, and artifact gates",
+            "* `research/activation_evidence_contract.json` - layer-to-signal map, trace-bundle requirements, calibration gates, artifact checks, and no-claim rules",
             "* `certificates/` - primary replay failure certificates",
             "* `metrics/` - internal-risk metric contracts",
             "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",

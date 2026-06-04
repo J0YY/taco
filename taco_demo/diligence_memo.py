@@ -113,6 +113,7 @@ def build_diligence_memo(
     investor_proof_pipeline = data_room_manifest["investor_proof_pipeline"]
     research_validation_plan = data_room_manifest["research_validation_plan"]
     methodology_validation_protocol = data_room_manifest["methodology_validation_protocol"]
+    activation_evidence_contract = data_room_manifest["activation_evidence_contract"]
     competitive_positioning = data_room_manifest["competitive_positioning"]
     commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
     commercial_unit_economics = data_room_manifest["commercial_unit_economics"]
@@ -203,6 +204,31 @@ def build_diligence_memo(
     lines.extend(["", "| Rung | Minimum artifacts | Promotes to | Do not use for |", "| --- | --- | --- | --- |"])
     for item in methodology_validation_protocol["sample_size_rungs"]:
         lines.append(f"| {item['rung']} | {item['minimum_artifacts']} | {item['promotes_to']} | {item['do_not_use_for']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Activation Evidence Contract",
+            "",
+            f"* Status: {activation_evidence_contract['status']}",
+            f"* Boundary: {activation_evidence_contract['boundary']}",
+            f"* Real activation metrics: {activation_evidence_contract['current_evidence']['real_activation_metric_count']}",
+            f"* Recorder module: {activation_evidence_contract['current_evidence']['recorder_module']}",
+            "",
+            "| Layer role | Example layer pattern | TACO signal | Reviewer question |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for item in activation_evidence_contract["layer_signal_map"]:
+        lines.append(
+            f"| {item['layer_role']} | {item['example_layer_pattern']} | {item['taco_signal']} | {item['reviewer_question']} |"
+        )
+    lines.extend(["", "| Calibration gate | Pass condition | Failure action |", "| --- | --- | --- |"])
+    for item in activation_evidence_contract["calibration_gates"]:
+        lines.append(f"| {item['gate']} | {item['pass_condition']} | {item['failure_action']} |")
+    lines.extend(["", "| Artifact check | Evidence | Blocks |", "| --- | --- | --- |"])
+    for item in activation_evidence_contract["artifact_checks"]:
+        lines.append(f"| {item['check']} | {item['evidence']} | {item['blocks']} |")
 
     lines.extend(
         [

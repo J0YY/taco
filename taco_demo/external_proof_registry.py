@@ -41,7 +41,7 @@ def build_external_proof_registry(
         "packet_context": {
             "manifest_id": manifest_id,
             "packet_sha256_required": True,
-            "packet_format_expected": "taco_data_room_zip_v23",
+            "packet_format_expected": "taco_data_room_zip_v24",
             "minimum_packet_files_reviewed": int(packet_context.get("minimum_external_packet_artifact_count", 0) or 0),
         },
         "current_counts": {

@@ -10,6 +10,13 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from taco_demo.binder import issue_binder
+from taco_demo.activation_evidence_contract import (
+    activation_artifact_check_rows,
+    activation_gate_rows,
+    activation_layer_rows,
+    activation_workflow_rows,
+    build_activation_evidence_contract,
+)
 from taco_demo.actuarial_readiness import (
     actuarial_cost_rows,
     actuarial_credibility_rows,
@@ -840,6 +847,14 @@ with tabs[9]:
             investor_proof_pipeline,
             methodology_validation_protocol,
         )
+        activation_evidence_contract = build_activation_evidence_contract(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            methodology_validation_protocol,
+            technical_runbook,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -965,6 +980,16 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(validation_baseline_rows(methodology_validation_protocol)), width="stretch")
         st.dataframe(pd.DataFrame(validation_rung_rows(methodology_validation_protocol)), width="stretch")
         st.dataframe(pd.DataFrame(validation_workflow_rows(methodology_validation_protocol)), width="stretch")
+        st.markdown("#### Activation Evidence Contract")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Contract status", str(activation_evidence_contract["status"]).replace("_", " ").title())
+        c2.metric("Mapped signals", len(activation_evidence_contract["layer_signal_map"]))
+        c3.metric("Real activation metrics", activation_evidence_contract["current_evidence"]["real_activation_metric_count"])
+        st.caption(activation_evidence_contract["boundary"])
+        st.dataframe(pd.DataFrame(activation_layer_rows(activation_evidence_contract)), width="stretch")
+        st.dataframe(pd.DataFrame(activation_gate_rows(activation_evidence_contract)), width="stretch")
+        st.dataframe(pd.DataFrame(activation_artifact_check_rows(activation_evidence_contract)), width="stretch")
+        st.dataframe(pd.DataFrame(activation_workflow_rows(activation_evidence_contract)), width="stretch")
         st.markdown("#### Investor Proof Pipeline")
         c1, c2, c3 = st.columns(3)
         c1.metric("Pipeline status", str(investor_proof_pipeline["status"]).replace("_", " ").title())
