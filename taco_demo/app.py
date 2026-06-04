@@ -674,6 +674,7 @@ with tabs[9]:
             renewal_summary(audit["quote"]),
             commercial_model,
             external_validation_kit,
+            pricing_diligence,
         )
         enterprise_security_plan = build_enterprise_security_plan(
             application,

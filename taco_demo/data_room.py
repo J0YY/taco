@@ -340,6 +340,7 @@ def build_data_room_manifest(
         renewal_summary(quote),
         commercial_scale_model,
         external_validation_capture_kit,
+        pricing_diligence,
     )
     return {
         "manifest_id": f"DR-{application.application_id}",

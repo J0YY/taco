@@ -13,6 +13,7 @@ def build_buyer_roi_model(
     renewal: dict[str, Any],
     commercial_model: dict[str, Any],
     external_validation_kit: dict[str, Any],
+    pricing_diligence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return modeled buyer economics without claiming guaranteed savings."""
 
@@ -20,9 +21,11 @@ def build_buyer_roi_model(
     implementation_services_usd = 45_000
     first_year_cost_usd = annual_taco_subscription_usd + implementation_services_usd
     monthly_premium = int(quote.final_monthly_premium_usd or 0)
-    premium_delta_proxy = max(0, int(quote.metadata.get("no_controls_monthly_premium_usd", 0) or 0) - monthly_premium)
-    if premium_delta_proxy == 0:
-        premium_delta_proxy = max(0, monthly_premium // 2)
+    if pricing_diligence:
+        no_controls_monthly = int(pricing_diligence.get("no_controls_monthly_premium_usd", 0) or 0)
+    else:
+        no_controls_monthly = int(quote.metadata.get("no_controls_monthly_premium_usd", 0) or 0)
+    premium_delta_proxy = max(0, no_controls_monthly - monthly_premium)
     prevented_loss = int(renewal.get("prevented_loss_usd", 0) or 0)
     incurred_loss = int(renewal.get("incurred_loss_usd", 0) or 0)
     risk_review_delay_days = 45
@@ -56,6 +59,7 @@ def build_buyer_roi_model(
             "evidence_ops_hours_saved": evidence_ops_hours_saved,
             "evidence_ops_hourly_cost_usd": evidence_ops_hourly_cost_usd,
             "control_credit_monthly_proxy_usd": premium_delta_proxy,
+            "control_credit_source": "pricing_diligence_no_controls_delta" if pricing_diligence else "quote_metadata_no_controls_delta_or_zero",
             "prevented_loss_evidence_usd": prevented_loss,
             "incurred_loss_evidence_usd": incurred_loss,
         },

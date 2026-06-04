@@ -1058,3 +1058,11 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 101 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed buyer ROI model commit `71a0751` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one actionable issue: the ROI control-credit proxy used quote metadata that generated quotes do not populate, so app/data-room exports could fall back to an arbitrary half-premium value.
+- Fixed the ROI model to use the actual pricing-diligence no-controls monthly delta, default to zero when no comparison exists, and expose the source in `assumption_set`.
+- Verification after review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 55 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 101 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
