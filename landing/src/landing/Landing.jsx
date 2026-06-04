@@ -493,6 +493,8 @@ function RobotGallery() {
       s: '/videos/openvla_coke_success.mp4', f: '/videos/openvla_coke_failure.mp4' },
     { title: 'ANYmal-C · quadruped (robot dog)', task: 'walk to goal · AnymalC-Reach (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk',
       s: '/videos/anymal_dog_success.mp4', f: '/videos/anymal_dog_failure.mp4' },
+    { title: 'MS-HAB · mobile pick (Fetch)', task: 'tidy-house pick · ReplicaCAD apartment', tier: 'Tier 3 · Remediate', tone: 'dot-risk',
+      s: '/videos/mshab_pick_success.mp4', f: '/videos/mshab_pick_failure.mp4' },
   ]
   const vstyle = { width: '100%', display: 'block', borderRadius: 6, background: '#221e1b', aspectRatio: '16 / 10', objectFit: 'cover' }
   return (
