@@ -1410,6 +1410,55 @@ def test_evidence_provenance_audit_handles_pathless_dreamaudit_and_non_primary_m
     assert audit["status"] == "provenance_audit_ready_recorded_activations_pending"
     assert "Attach DreamAudit source path" in audit["certificate_sources"][0]["upgrade_gate"]
 
+    duplicate_recorded_metrics = [
+        InternalRiskMetrics(
+            DEMO_CERTIFICATES[0].certificate_id,
+            1.0,
+            0.6,
+            0.4,
+            0.8,
+            0.9,
+            0.2,
+            "activation_signature",
+            True,
+            "recorded_activation_forward_hooks",
+            {"recorded_required_signal_count": 6},
+        )
+        for _ in range(len(DEMO_CERTIFICATES))
+    ] + [
+        InternalRiskMetrics(
+            cert.certificate_id,
+            1.0,
+            0.6,
+            0.4,
+            0.8,
+            0.9,
+            0.2,
+            "demo_signature",
+            True,
+            "demo_trace_fixture",
+            {},
+        )
+        for cert in DEMO_CERTIFICATES[1:]
+    ]
+    duplicate_quote = generate_quote(
+        app,
+        DEMO_CERTIFICATES,
+        {metric.certificate_id: metric for metric in duplicate_recorded_metrics},
+        {},
+    )
+    duplicate_audit = build_evidence_provenance_audit(
+        app,
+        DEMO_CERTIFICATES,
+        duplicate_recorded_metrics,
+        duplicate_quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+    )
+
+    assert duplicate_audit["current_counts"]["recorded_activation_metrics"] == 1
+    assert duplicate_audit["current_counts"]["primary_recorded_activation_metric_rows"] == 3
+    assert duplicate_audit["status"] == "provenance_audit_ready_recorded_activations_pending"
+
 
 def test_commercial_traction_plan_converts_proof_workflows_into_countable_seed_traction():
     app = default_application()

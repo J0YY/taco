@@ -25,7 +25,13 @@ def build_evidence_provenance_audit(
     video_rows = [_video_row(case) for case in suite_cases]
     live_dreamaudit_sources = sum(1 for row in certificate_rows if row["evidence_class"] == "adapted_dreamaudit_certificate")
     primary_metric_rows = [row for row in metric_rows if row["certificate_id"] in primary_certificate_ids]
-    recorded_activation_metrics = sum(1 for row in primary_metric_rows if row["evidence_class"] == "recorded_activation_trace")
+    primary_recorded_activation_metric_rows = sum(
+        1 for row in primary_metric_rows if row["evidence_class"] == "recorded_activation_trace"
+    )
+    recorded_activation_certificate_ids = {
+        row["certificate_id"] for row in primary_metric_rows if row["evidence_class"] == "recorded_activation_trace"
+    }
+    recorded_activation_metrics = len(recorded_activation_certificate_ids)
     all_recorded_activation_metrics = sum(1 for row in metric_rows if row["evidence_class"] == "recorded_activation_trace")
     generated_video_count = sum(1 for row in video_rows if row["evidence_class"] == "generated_maniskill_rma_replay")
     fixture_certificate_count = sum(1 for row in certificate_rows if row["evidence_class"] == "local_fixture_certificate")
@@ -58,6 +64,7 @@ def build_evidence_provenance_audit(
             "adapted_dreamaudit_certificates": live_dreamaudit_sources,
             "local_fixture_certificates": fixture_certificate_count,
             "recorded_activation_metrics": recorded_activation_metrics,
+            "primary_recorded_activation_metric_rows": primary_recorded_activation_metric_rows,
             "all_recorded_activation_metrics": all_recorded_activation_metrics,
             "non_primary_metric_count": len(metric_rows) - len(primary_metric_rows),
             "generated_suite_videos": generated_video_count,

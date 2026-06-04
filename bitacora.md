@@ -1358,3 +1358,10 @@
   - `git diff --check` -> clean.
   - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 80 passed.
   - `.venv/bin/python -m pytest taco_demo/tests -q` -> 129 passed.
+- Second independent `codex review --base _review-loop-baseline` found one remaining P2 edge case: duplicate recorded metrics for one certificate could make readiness appear complete while other primary certificates only had demo metrics.
+- Fixed the second-round finding by counting unique primary certificate IDs with recorded activation traces for readiness, while keeping row counts in the audit for transparency, and added a duplicate-recorded-metric regression assertion.
+- Verification after second-round fix:
+  - `.venv/bin/python -m py_compile taco_demo/evidence_provenance.py taco_demo/tests/test_investor_case.py` -> passed.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 80 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests -q` -> 129 passed.
