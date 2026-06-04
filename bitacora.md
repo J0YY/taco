@@ -1206,3 +1206,5 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 112 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Second independent `codex review --base _review-loop-baseline` reran `.venv/bin/python -m pytest taco_demo/tests -q`, verified a generated v20 data-room ZIP packet, and found no discrete regressions in the seed round close plan, app wiring, memo wiring, v20 packet, verifier compatibility, or tests.
+- Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `21859`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
