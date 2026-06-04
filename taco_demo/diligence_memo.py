@@ -113,6 +113,7 @@ def build_diligence_memo(
     investor_proof_pipeline = data_room_manifest["investor_proof_pipeline"]
     research_validation_plan = data_room_manifest["research_validation_plan"]
     methodology_validation_protocol = data_room_manifest["methodology_validation_protocol"]
+    competitive_positioning = data_room_manifest["competitive_positioning"]
     commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
     commercial_unit_economics = data_room_manifest["commercial_unit_economics"]
     seed_round_close_plan = data_room_manifest["seed_round_close_plan"]
@@ -487,6 +488,33 @@ def build_diligence_memo(
     lines.extend(["", "| Gate | Proof required |", "| --- | --- |"])
     for gate in commercial_model["seed_round_commercial_gates"]:
         lines.append(f"| {gate['gate']} | {gate['proof_required']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Competitive Positioning",
+            "",
+            f"* Status: {competitive_positioning['status']}",
+            f"* Boundary: {competitive_positioning['boundary']}",
+            f"* Category: {competitive_positioning['category_definition']['category_name']}",
+            f"* Wedge: {competitive_positioning['category_definition']['wedge']}",
+            "",
+            "| Alternative | Buyer default | Where TACO differs | Proof needed |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for item in competitive_positioning["alternative_categories"]:
+        lines.append(
+            f"| {item['alternative']} | {item['buyer_default']} | {item['where_taco_differs']} | {item['proof_needed']} |"
+        )
+    lines.extend(["", "| Wedge step | Motion | Buyer proof | Investor readout |", "| --- | --- | --- | --- |"])
+    for item in competitive_positioning["wedge_strategy"]:
+        lines.append(f"| {item['step']} | {item['motion']} | {item['buyer_proof']} | {item['investor_readout']} |")
+    lines.extend(["", "| Defensibility hypothesis | Mechanism | Validation gate | Failure signal |", "| --- | --- | --- | --- |"])
+    for item in competitive_positioning["defensibility_hypotheses"]:
+        lines.append(
+            f"| {item['hypothesis']} | {item['mechanism']} | {item['validation_gate']} | {item['failure_signal']} |"
+        )
 
     lines.extend(
         [

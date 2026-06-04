@@ -57,6 +57,12 @@ from taco_demo.commercial_unit_economics import (
     unit_economics_revenue_rows,
     unit_economics_scenario_rows,
 )
+from taco_demo.competitive_positioning import (
+    build_competitive_positioning,
+    competitive_alternative_rows,
+    competitive_defensibility_rows,
+    competitive_wedge_rows,
+)
 from taco_demo.data_room import (
     MAX_PACKET_BYTES,
     PACKET_INDEX_PATH,
@@ -826,6 +832,14 @@ with tabs[9]:
             research_validation_plan,
             external_proof_registry,
         )
+        competitive_positioning = build_competitive_positioning(
+            application,
+            audit["quote"],
+            methodology_map,
+            commercial_model,
+            investor_proof_pipeline,
+            methodology_validation_protocol,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -877,6 +891,15 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(commercial_segment_rows(commercial_model)), width="stretch")
         st.dataframe(pd.DataFrame(commercial_scenario_rows(commercial_model)), width="stretch")
         st.dataframe(pd.DataFrame(commercial_gate_rows(commercial_model)), width="stretch")
+        st.markdown("#### Competitive Positioning")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Positioning status", str(competitive_positioning["status"]).replace("_", " ").title())
+        c2.metric("Alternatives", len(competitive_positioning["alternative_categories"]))
+        c3.metric("Moat hypotheses", len(competitive_positioning["defensibility_hypotheses"]))
+        st.caption(competitive_positioning["boundary"])
+        st.dataframe(pd.DataFrame(competitive_alternative_rows(competitive_positioning)), width="stretch")
+        st.dataframe(pd.DataFrame(competitive_wedge_rows(competitive_positioning)), width="stretch")
+        st.dataframe(pd.DataFrame(competitive_defensibility_rows(competitive_positioning)), width="stretch")
         st.markdown("#### Buyer ROI Model")
         c1, c2, c3 = st.columns(3)
         c1.metric("ROI status", str(buyer_roi_model["status"]).replace("_", " ").title())

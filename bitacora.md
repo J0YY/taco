@@ -1245,3 +1245,20 @@
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
 - Independent `codex review --base _review-loop-baseline` reran the full test suite and app import, then found no actionable correctness issues in the methodology validation protocol, UI wiring, memo wiring, v22 packet, verifier compatibility, or tests.
 - Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `26501`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
+
+## 2026-06-04 - Improvement loop: competitive positioning
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `dd99421`.
+- Identified the next VC diligence gap: TACO had methodology, proof, unit economics, and seed-close artifacts, but no structured answer to category, alternatives, wedge strategy, and defensibility without overclaiming market validation.
+- Added `taco_demo/competitive_positioning.py` with category definition, why-now drivers, alternative-category comparisons, wedge strategy, defensibility hypotheses, do-not-claim rules, and next validation actions.
+- Wired competitive positioning into the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture/research language.
+- Bumped generated data-room packets to `taco_data_room_zip_v23` while preserving verifier compatibility for legacy v1 through v22 packets.
+- Added tests for the positioning contract, row helpers, manifest/ZIP export, memo section, current v23 packet indexing, invalid packet-format messaging, and legacy v22 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m py_compile taco_demo/competitive_positioning.py taco_demo/data_room.py taco_demo/app.py taco_demo/diligence_memo.py taco_demo/external_proof_registry.py taco_demo/methodology_validation_protocol.py` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 70 passed.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 72 passed.
+  - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 118 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.

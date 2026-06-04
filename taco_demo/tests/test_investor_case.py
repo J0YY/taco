@@ -51,6 +51,12 @@ from taco_demo.commercial_unit_economics import (
     unit_economics_revenue_rows,
     unit_economics_scenario_rows,
 )
+from taco_demo.competitive_positioning import (
+    build_competitive_positioning,
+    competitive_alternative_rows,
+    competitive_defensibility_rows,
+    competitive_wedge_rows,
+)
 from taco_demo.data_room import (
     MAX_ZIP_MEMBERS,
     MAX_ZIP_MEMBER_BYTES,
@@ -76,7 +82,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V20,
     PACKET_FORMAT_V21,
     PACKET_FORMAT_V22,
+    PACKET_FORMAT_V23,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V22,
     REQUIRED_BUNDLE_FILES_V21,
     REQUIRED_BUNDLE_FILES_V20,
     REQUIRED_BUNDLE_FILES_V19,
@@ -628,7 +636,7 @@ def test_external_proof_registry_tracks_artifact_slots_without_counting_uncollec
     assert registry["registry_id"] == "EPROOF-APP-APEX-001"
     assert registry["status"] == "registry_ready_no_external_artifacts_collected"
     assert "not evidence that reviewer memos" in registry["boundary"]
-    assert registry["packet_context"]["packet_format_expected"] == "taco_data_room_zip_v22"
+    assert registry["packet_context"]["packet_format_expected"] == "taco_data_room_zip_v23"
     assert registry["packet_context"]["packet_sha256_required"] is True
     assert registry["current_counts"]["proof_slots"] == 6
     assert registry["current_counts"]["countable_external_artifacts"] == 0
@@ -690,6 +698,57 @@ def test_commercial_scale_model_ties_market_context_to_revenue_scenarios_without
     assert commercial_segment_rows(model)
     assert commercial_scenario_rows(model)[1]["Modeled ARR"] == 3_800_000
     assert len(commercial_gate_rows(model)) >= 4
+
+
+def test_competitive_positioning_defines_category_without_claiming_market_validation():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(
+            cert.certificate_id,
+            1.0,
+            0.6,
+            0.4,
+            0.8,
+            0.9,
+            0.2,
+            "signature",
+            True,
+            "recorded_activation_forward_hooks",
+            {},
+        )
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    suite_manifest = {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()}
+    manifest = build_data_room_manifest(app, DEMO_CERTIFICATES, metrics, quote, suite_manifest, _carrier_ready_dreamaudit_intake())
+    positioning = manifest["competitive_positioning"]
+    rebuilt = build_competitive_positioning(
+        app,
+        quote,
+        manifest["methodology_evidence_map"],
+        manifest["commercial_scale_model"],
+        manifest["investor_proof_pipeline"],
+        manifest["methodology_validation_protocol"],
+    )
+
+    assert rebuilt["positioning_id"] == positioning["positioning_id"]
+    assert positioning["positioning_id"] == "COMP-APP-APEX-001"
+    assert positioning["status"] == "category_positioning_ready_needs_market_validation"
+    assert "not a market study" in positioning["boundary"]
+    assert positioning["category_definition"]["category_name"] == "autonomy-risk evidence layer"
+    assert "pre-deployment learned-policy liability evidence" in positioning["category_definition"]["wedge"]
+    assert {item["alternative"] for item in positioning["alternative_categories"]} >= {
+        "traditional_insurance_underwriting",
+        "robotics_simulation_or_qa_tools",
+        "ml_observability_or_model_monitoring",
+        "broker_or_mga_submission_workflow",
+    }
+    assert any(item["step"] == "2_submission_packet" for item in positioning["wedge_strategy"])
+    assert any(item["hypothesis"] == "internals_create_non_obvious_signal" for item in positioning["defensibility_hypotheses"])
+    assert any("Do not claim pricing power" in item for item in positioning["do_not_claim"])
+    assert competitive_alternative_rows(positioning)
+    assert competitive_wedge_rows(positioning)
+    assert competitive_defensibility_rows(positioning)
 
 
 def test_buyer_roi_model_links_stakeholder_value_to_proof_gates_without_claiming_savings():
@@ -1092,7 +1151,7 @@ def test_methodology_validation_protocol_predeclares_endpoints_baselines_and_art
     assert protocol["protocol_id"] == "VALPROTO-APP-APEX-001"
     assert protocol["status"] == "protocol_ready_pre_registration_required"
     assert "not evidence that TACO has completed external validation" in protocol["boundary"]
-    assert protocol["packet_context"]["target_packet_format"] == "taco_data_room_zip_v22"
+    assert protocol["packet_context"]["target_packet_format"] == "taco_data_room_zip_v23"
     assert protocol["packet_context"]["pre_registration_required"] is True
     assert protocol["packet_context"]["external_registry"] == "EPROOF-APP-APEX-001"
     assert protocol["current_design_inputs"]["real_activation_metric_count"] == len(metrics)
@@ -1650,6 +1709,9 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert manifest["commercial_scale_model"]["model_id"] == "COMM-APP-APEX-001"
     assert "signed pipeline" in manifest["commercial_scale_model"]["boundary"]
     assert manifest["commercial_scale_model"]["base_case"]["modeled_arr_usd"] == 3_800_000
+    assert manifest["competitive_positioning"]["positioning_id"] == "COMP-APP-APEX-001"
+    assert "not a market study" in manifest["competitive_positioning"]["boundary"]
+    assert any(item["alternative"] == "traditional_insurance_underwriting" for item in manifest["competitive_positioning"]["alternative_categories"])
     assert manifest["capacity_roadmap"]["roadmap_id"] == "CAP-APP-APEX-001"
     assert "not legal advice" in manifest["capacity_roadmap"]["boundary"]
     assert manifest["enterprise_security_plan"]["plan_id"] == "SEC-APP-APEX-001"
@@ -1777,6 +1839,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/investor_objection_register.json" in summary["files"]
     assert "commercial/pilot_walkthrough_playbook.json" in summary["files"]
     assert "commercial/commercial_scale_model.json" in summary["files"]
+    assert "commercial/competitive_positioning.json" in summary["files"]
     assert "commercial/capacity_roadmap.json" in summary["files"]
     assert "commercial/enterprise_security_plan.json" in summary["files"]
     assert "commercial/external_validation_capture_kit.json" in summary["files"]
@@ -1808,6 +1871,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         objection_register = json.loads(archive.read("commercial/investor_objection_register.json"))
         pilot_walkthrough = json.loads(archive.read("commercial/pilot_walkthrough_playbook.json"))
         commercial_model = json.loads(archive.read("commercial/commercial_scale_model.json"))
+        competitive_positioning = json.loads(archive.read("commercial/competitive_positioning.json"))
         capacity_roadmap = json.loads(archive.read("commercial/capacity_roadmap.json"))
         enterprise_security_plan = json.loads(archive.read("commercial/enterprise_security_plan.json"))
         external_validation_kit = json.loads(archive.read("commercial/external_validation_capture_kit.json"))
@@ -1825,7 +1889,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V22
+    assert index["packet_format"] == PACKET_FORMAT_V23
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -1843,6 +1907,10 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert commercial_model["model_id"] == "COMM-APP-APEX-001"
     assert commercial_model["status"] == "scenario_model_not_revenue_forecast"
     assert commercial_model["base_case"]["modeled_arr_usd"] == 3_800_000
+    assert competitive_positioning["positioning_id"] == "COMP-APP-APEX-001"
+    assert competitive_positioning["status"] == "category_positioning_ready_needs_market_validation"
+    assert any(item["alternative"] == "ml_observability_or_model_monitoring" for item in competitive_positioning["alternative_categories"])
+    assert any(item["hypothesis"] == "packet_standard_becomes_workflow_lock_in" for item in competitive_positioning["defensibility_hypotheses"])
     assert capacity_roadmap["roadmap_id"] == "CAP-APP-APEX-001"
     assert capacity_roadmap["status"] == "capacity_path_defined_not_committed"
     assert "not legal advice" in capacity_roadmap["boundary"]
@@ -1877,7 +1945,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert any(item["hypothesis_id"] == "internal_activations_add_signal" for item in research_validation_plan["hypotheses"])
     assert any(rule["rule"] == "sim_to_real_failure_mismatch" for rule in research_validation_plan["downgrade_rules"])
     assert methodology_validation_protocol["protocol_id"] == "VALPROTO-APP-APEX-001"
-    assert methodology_validation_protocol["packet_context"]["target_packet_format"] == "taco_data_room_zip_v22"
+    assert methodology_validation_protocol["packet_context"]["target_packet_format"] == "taco_data_room_zip_v23"
     assert any(item["baseline"] == "slide_or_screenshot_review" for item in methodology_validation_protocol["baseline_comparisons"])
     assert any(item["workflow"] == "update_claim_ledger" for item in methodology_validation_protocol["execution_workflows"])
     assert commercial_traction_plan["plan_id"] == "TRACT-APP-APEX-001"
@@ -1903,6 +1971,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "not an insurance offer, filed actuarial product, rate adequacy opinion" in readme
     assert "commercial/buyer_roi_model.json" in readme
     assert "commercial/investor_proof_pipeline.json" in readme
+    assert "commercial/competitive_positioning.json" in readme
     assert "commercial/commercial_traction_plan.json" in readme
     assert "commercial/commercial_unit_economics.json" in readme
     assert "commercial/seed_round_close_plan.json" in readme
@@ -1989,6 +2058,10 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "## Commercial Scale Model" in memo
     assert "scenario_model_not_revenue_forecast" in memo
     assert "base_evidence_platform" in memo
+    assert "## Competitive Positioning" in memo
+    assert "category_positioning_ready_needs_market_validation" in memo
+    assert "traditional_insurance_underwriting" in memo
+    assert "internals_create_non_obvious_signal" in memo
     assert "## Insurance Capacity Roadmap" in memo
     assert "capacity_path_defined_not_committed" in memo
     assert "phase_0_evidence_vendor" in memo
@@ -2033,7 +2106,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, taco_data_room_zip_v20, taco_data_room_zip_v21, or taco_data_room_zip_v22",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, taco_data_room_zip_v20, taco_data_room_zip_v21, taco_data_room_zip_v22, or taco_data_room_zip_v23",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -2668,6 +2741,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v21_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V21 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v22_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V22}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V22"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V22,
+        "manifest_id": "DR-LEGACY-V22",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V22 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

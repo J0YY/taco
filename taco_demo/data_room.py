@@ -15,6 +15,7 @@ from .buyer_roi import build_buyer_roi_model
 from .claim_validation import build_claim_validation_ledger
 from .commercial_traction import build_commercial_traction_plan
 from .commercial_unit_economics import build_commercial_unit_economics
+from .competitive_positioning import build_competitive_positioning
 from .design_partner_plan import build_design_partner_plan
 from .external_validation import build_external_validation_capture_kit
 from .external_proof_registry import build_external_proof_registry
@@ -62,6 +63,7 @@ PACKET_FORMAT_V19 = "taco_data_room_zip_v19"
 PACKET_FORMAT_V20 = "taco_data_room_zip_v20"
 PACKET_FORMAT_V21 = "taco_data_room_zip_v21"
 PACKET_FORMAT_V22 = "taco_data_room_zip_v22"
+PACKET_FORMAT_V23 = "taco_data_room_zip_v23"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -138,8 +140,11 @@ REQUIRED_BUNDLE_FILES_V20 = REQUIRED_BUNDLE_FILES_V19 | {
 REQUIRED_BUNDLE_FILES_V21 = REQUIRED_BUNDLE_FILES_V20 | {
     "commercial/external_proof_registry.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V21 | {
+REQUIRED_BUNDLE_FILES_V22 = REQUIRED_BUNDLE_FILES_V21 | {
     "research/methodology_validation_protocol.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V22 | {
+    "commercial/competitive_positioning.json",
 }
 
 
@@ -221,6 +226,12 @@ def build_data_room_checklist(
             "ready" if application.coverage_requested_usd > 0 and quote.final_monthly_premium_usd > 0 else "needs_work",
             "Market-context, buyer-segment, revenue-scenario, and proof-gate model is attached with explicit boundaries.",
             "Validate ACV, packet fees, and paid pilot conversion with external reviewers.",
+        ),
+        _item(
+            "Competitive Positioning",
+            "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
+            "Category definition, alternative-category comparisons, wedge strategy, defensibility hypotheses, and validation actions are attached.",
+            "Collect reviewer evidence naming which incumbent workflow TACO replaces, augments, or fails to fit before claiming category pull.",
         ),
         _item(
             "Insurance Capacity Roadmap",
@@ -511,6 +522,14 @@ def build_data_room_manifest(
         research_validation_plan,
         external_proof_registry,
     )
+    competitive_positioning = build_competitive_positioning(
+        application,
+        quote,
+        methodology_evidence_map,
+        commercial_scale_model,
+        investor_proof_pipeline,
+        methodology_validation_protocol,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -533,6 +552,7 @@ def build_data_room_manifest(
         "investor_objection_register": objection_register,
         "pilot_walkthrough_playbook": pilot_walkthrough_playbook,
         "commercial_scale_model": commercial_scale_model,
+        "competitive_positioning": competitive_positioning,
         "capacity_roadmap": capacity_roadmap,
         "enterprise_security_plan": enterprise_security_plan,
         "technical_diligence_runbook": technical_diligence_runbook,
@@ -583,6 +603,7 @@ def build_data_room_bundle(
         ("commercial/investor_objection_register.json", _json_bytes(manifest["investor_objection_register"])),
         ("commercial/pilot_walkthrough_playbook.json", _json_bytes(manifest["pilot_walkthrough_playbook"])),
         ("commercial/commercial_scale_model.json", _json_bytes(manifest["commercial_scale_model"])),
+        ("commercial/competitive_positioning.json", _json_bytes(manifest["competitive_positioning"])),
         ("commercial/capacity_roadmap.json", _json_bytes(manifest["capacity_roadmap"])),
         ("commercial/enterprise_security_plan.json", _json_bytes(manifest["enterprise_security_plan"])),
         ("commercial/external_validation_capture_kit.json", _json_bytes(manifest["external_validation_capture_kit"])),
@@ -701,7 +722,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
                         "taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, "
                         "taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, "
-                        "taco_data_room_zip_v20, taco_data_room_zip_v21, or taco_data_room_zip_v22"
+                        "taco_data_room_zip_v20, taco_data_room_zip_v21, taco_data_room_zip_v22, or taco_data_room_zip_v23"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -850,7 +871,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V22,
+        "packet_format": PACKET_FORMAT_V23,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -910,6 +931,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V21:
         return REQUIRED_BUNDLE_FILES_V21
     if packet_format == PACKET_FORMAT_V22:
+        return REQUIRED_BUNDLE_FILES_V22
+    if packet_format == PACKET_FORMAT_V23:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -970,6 +993,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/investor_objection_register.json` - evidence-linked investor and carrier objection register",
             "* `commercial/pilot_walkthrough_playbook.json` - reviewer walkthrough agenda, role tracks, and evidence capture form",
             "* `commercial/commercial_scale_model.json` - market-context, buyer-segment, revenue-scenario, and proof-gate model",
+            "* `commercial/competitive_positioning.json` - category definition, alternatives, wedge strategy, defensibility hypotheses, and validation actions",
             "* `commercial/capacity_roadmap.json` - insurance capacity, licensing, filing, actuarial, and claims-readiness roadmap",
             "* `commercial/enterprise_security_plan.json` - security, data governance, retention, incident response, and SOC2/NIST readiness plan",
             "* `commercial/external_validation_capture_kit.json` - reviewer feedback, scorecard, LOI/pilot-scope, and permission-to-quote capture kit",

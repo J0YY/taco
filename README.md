@@ -98,6 +98,7 @@ InsuranceApplication
          role-specific external-review agenda
          evidence capture form for pilots, LOIs, or reviewer memos
          commercial scale model with market sources, buyer segments, and proof gates
+         competitive positioning with category definition, alternatives, wedge strategy, and defensibility gates
          commercial traction plan with ICP targets, paid package ladder, weekly metrics, and count/do-not-count reporting
          commercial unit economics with modeled revenue mix, COGS, gross margin, CAC/payback, and seed milestone gates
          seed round close plan with investor segmentation, weekly close motion, lead-partner gates, and no-count rules
@@ -257,7 +258,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, methodology evidence map, research validation plan, methodology validation protocol, investor claim validation ledger, investor proof pipeline, external proof registry, commercial traction plan, commercial unit economics, seed round close plan, pricing diligence sensitivity, actuarial readiness plan, buyer ROI model, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, methodology evidence map, research validation plan, methodology validation protocol, investor claim validation ledger, investor proof pipeline, external proof registry, commercial traction plan, commercial unit economics, seed round close plan, competitive positioning, pricing diligence sensitivity, actuarial readiness plan, buyer ROI model, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
@@ -289,6 +290,8 @@ It also includes an investor objection register that maps likely VC and carrier 
 The pilot walkthrough playbook converts the data-room artifacts into a reviewer meeting workflow. It gives broker, MGA, OEM, carrier, and reinsurer reviewers a checksum-verification step, role-specific questions, pass/fail criteria, evidence capture fields, conversion gates, and red flags. It is a capture workflow for external evidence, not a claim that those pilots, LOIs, or capacity discussions have already happened.
 
 The commercial scale model adds the missing VC lens: market-context sources, buyer segments, first-product motions, modeled revenue scenarios, and proof gates that would make a $5M seed round rational. It is explicitly a scenario model, not audited TAM, committed revenue, signed pipeline, insurance capacity, or an actuarial filing.
+
+The competitive positioning artifact defines TACO as an autonomy-risk evidence layer and compares it against traditional insurance underwriting, robotics simulation/QA, ML observability, certification tooling, and broker/MGA submission workflows. It is a strategy artifact, not a market study or proof of buyer pull; it specifies the reviewer evidence needed before claiming category demand or defensibility.
 
 The commercial unit-economics model shows how TACO could move from services-heavy proof work toward repeatable evidence-platform revenue. It separates package price, delivery cost, modeled gross margin, CAC/payback assumptions, and milestone gates while excluding insurance premium, commissions, float, underwriting profit, and carrier capacity until those paths are legally and commercially real.
 
