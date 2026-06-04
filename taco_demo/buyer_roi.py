@@ -22,10 +22,14 @@ def build_buyer_roi_model(
     first_year_cost_usd = annual_taco_subscription_usd + implementation_services_usd
     monthly_premium = int(quote.final_monthly_premium_usd or 0)
     if pricing_diligence:
-        no_controls_monthly = int(pricing_diligence.get("no_controls_monthly_premium_usd", 0) or 0)
+        premium_delta_proxy = int(pricing_diligence.get("aggregate_control_delta_usd", 0) or 0)
+        if premium_delta_proxy <= 0:
+            all_controls_monthly = int(pricing_diligence.get("all_controls_monthly_premium_usd", 0) or 0)
+            no_controls_monthly = int(pricing_diligence.get("no_controls_monthly_premium_usd", 0) or 0)
+            premium_delta_proxy = max(0, no_controls_monthly - all_controls_monthly)
     else:
         no_controls_monthly = int(quote.metadata.get("no_controls_monthly_premium_usd", 0) or 0)
-    premium_delta_proxy = max(0, no_controls_monthly - monthly_premium)
+        premium_delta_proxy = max(0, no_controls_monthly - monthly_premium)
     prevented_loss = int(renewal.get("prevented_loss_usd", 0) or 0)
     incurred_loss = int(renewal.get("incurred_loss_usd", 0) or 0)
     risk_review_delay_days = 45

@@ -614,7 +614,8 @@ def test_buyer_roi_model_links_stakeholder_value_to_proof_gates_without_claiming
     assert "not guaranteed savings" in model["boundary"]
     assert model["assumption_set"]["first_year_cost_usd"] == 165_000
     assert model["assumption_set"]["control_credit_source"] == "pricing_diligence_no_controls_delta"
-    assert model["assumption_set"]["control_credit_monthly_proxy_usd"] == pricing["no_controls_monthly_premium_usd"] - quote.final_monthly_premium_usd
+    assert model["assumption_set"]["control_credit_monthly_proxy_usd"] == pricing["aggregate_control_delta_usd"]
+    assert model["assumption_set"]["control_credit_monthly_proxy_usd"] > 0
     assert len(model["buyer_value_drivers"]) == 4
     assert len(model["roi_scenarios"]) == 3
     assert next(item for item in model["roi_scenarios"] if item["scenario"] == "base")["net_value_usd"] > 0

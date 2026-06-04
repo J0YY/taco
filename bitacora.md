@@ -1066,3 +1066,11 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 101 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed pricing-delta fix commit `822976e` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found the ROI control-credit proxy should use the pricing artifact's aggregate all-controls/no-controls delta, not subtract the current quote, because the current quote can already represent disabled controls.
+- Fixed the ROI model to use `pricing_diligence["aggregate_control_delta_usd"]` with an all-controls/no-controls fallback and updated the disabled-control quote test to assert the positive aggregate delta is preserved.
+- Verification after second review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 55 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 101 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
