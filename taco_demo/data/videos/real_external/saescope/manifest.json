@@ -1,0 +1,212 @@
+[
+  {
+    "key": [
+      0,
+      26,
+      59
+    ],
+    "success": 1,
+    "first_alert": null,
+    "lead": null,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 19,
+    "rerun_episode_seed": 45,
+    "case": "success_no_internal_alert",
+    "video": "paper/corl_2026_template_submission/video_supplement/01_success_clean_orange_no_alert.mp4",
+    "rerun_steps": 27,
+    "rerun_success": true,
+    "selected_name": "01_success_clean_orange_no_alert.mp4",
+    "source_candidate": "success_00/00_success_no_internal_alert_s26_e19.mp4",
+    "review_note": "Clean success; internal and action monitors stay below threshold."
+  },
+  {
+    "key": [
+      0,
+      35,
+      239
+    ],
+    "success": 1,
+    "first_alert": null,
+    "lead": null,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 19,
+    "rerun_episode_seed": 54,
+    "case": "success_no_internal_alert",
+    "video": "paper/corl_2026_template_submission/video_supplement/02_success_clean_can_no_alert.mp4",
+    "rerun_steps": 49,
+    "rerun_success": true,
+    "selected_name": "02_success_clean_can_no_alert.mp4",
+    "source_candidate": "success_00/01_success_no_internal_alert_s35_e19.mp4",
+    "review_note": "Clean success with a different object layout; no monitor alert."
+  },
+  {
+    "key": [
+      0,
+      61,
+      759
+    ],
+    "success": 1,
+    "first_alert": null,
+    "lead": null,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 19,
+    "rerun_episode_seed": 80,
+    "case": "success_no_internal_alert",
+    "video": "paper/corl_2026_template_submission/video_supplement/03_success_clean_short_no_alert.mp4",
+    "rerun_steps": 20,
+    "rerun_success": true,
+    "selected_name": "03_success_clean_short_no_alert.mp4",
+    "source_candidate": "success_00/04_success_no_internal_alert_s61_e19.mp4",
+    "review_note": "Short clean success; no monitor alert."
+  },
+  {
+    "key": [
+      0,
+      24,
+      1
+    ],
+    "success": 0,
+    "first_alert": 32,
+    "lead": 48,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 1,
+    "rerun_episode_seed": 25,
+    "case": "failure_internal_early_action_late",
+    "video": "paper/corl_2026_template_submission/video_supplement/04_failure_internal_early_no_action_orange.mp4",
+    "rerun_steps": 80,
+    "rerun_success": false,
+    "selected_name": "04_failure_internal_early_no_action_orange.mp4",
+    "source_candidate": "failure_00/00_failure_internal_early_action_late_s24_e1.mp4",
+    "review_note": "Failure; internal monitor triggers at t=32 while action diagnostic never alerts."
+  },
+  {
+    "key": [
+      0,
+      24,
+      3
+    ],
+    "success": 0,
+    "first_alert": 32,
+    "lead": 48,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 3,
+    "rerun_episode_seed": 27,
+    "case": "failure_internal_early_action_late",
+    "video": "paper/corl_2026_template_submission/video_supplement/05_failure_internal_early_no_action_apple.mp4",
+    "rerun_steps": 80,
+    "rerun_success": false,
+    "selected_name": "05_failure_internal_early_no_action_apple.mp4",
+    "source_candidate": "failure_00/01_failure_internal_early_action_late_s24_e3.mp4",
+    "review_note": "Visually distinct failure; internal monitor triggers at t=32 while action diagnostic never alerts."
+  },
+  {
+    "key": [
+      0,
+      24,
+      6
+    ],
+    "success": 0,
+    "first_alert": 32,
+    "lead": 48,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 6,
+    "rerun_episode_seed": 30,
+    "case": "failure_internal_early_action_late",
+    "video": "paper/corl_2026_template_submission/video_supplement/06_failure_internal_early_no_action_towel.mp4",
+    "rerun_steps": 80,
+    "rerun_success": false,
+    "selected_name": "06_failure_internal_early_no_action_towel.mp4",
+    "source_candidate": "failure_00/04_failure_internal_early_action_late_s24_e6.mp4",
+    "review_note": "Failure with towel/can layout; internal monitor triggers at t=32 while action diagnostic never alerts."
+  },
+  {
+    "key": [
+      0,
+      24,
+      11
+    ],
+    "success": 0,
+    "first_alert": 32,
+    "lead": 48,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 11,
+    "rerun_episode_seed": 35,
+    "case": "failure_internal_early_action_late",
+    "video": "paper/corl_2026_template_submission/video_supplement/07_failure_internal_early_no_action_bottle.mp4",
+    "rerun_steps": 80,
+    "rerun_success": false,
+    "selected_name": "07_failure_internal_early_no_action_bottle.mp4",
+    "source_candidate": "failure_06/04_failure_internal_early_action_late_s24_e11.mp4",
+    "review_note": "Failure with bottle/can/orange layout; internal monitor triggers at t=32 while action diagnostic never alerts."
+  },
+  {
+    "key": [
+      0,
+      24,
+      2
+    ],
+    "success": 0,
+    "first_alert": 32,
+    "lead": 48,
+    "action_first_alert": 56,
+    "action_lead": 24,
+    "local_episode_index": 2,
+    "rerun_episode_seed": 26,
+    "case": "failure_internal_early",
+    "video": "paper/corl_2026_template_submission/video_supplement/08_failure_internal_early_action_late.mp4",
+    "rerun_steps": 80,
+    "rerun_success": false,
+    "selected_name": "08_failure_internal_early_action_late.mp4",
+    "source_candidate": "mixed_00/04_failure_internal_early_s24_e2.mp4",
+    "review_note": "Failure where internal monitor triggers at t=32 and action diagnostic only alerts later at t=56."
+  },
+  {
+    "key": [
+      0,
+      24,
+      16
+    ],
+    "success": 0,
+    "first_alert": 32,
+    "lead": 48,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 16,
+    "rerun_episode_seed": 40,
+    "case": "failure_internal_early_action_late",
+    "video": "paper/corl_2026_template_submission/video_supplement/09_failure_internal_early_no_action_alt.mp4",
+    "rerun_steps": 80,
+    "rerun_success": false,
+    "selected_name": "09_failure_internal_early_no_action_alt.mp4",
+    "source_candidate": "failure_24/05_failure_internal_early_action_late_s24_e16.mp4",
+    "review_note": "Additional failure from a different seed; internal monitor triggers early and action diagnostic does not alert."
+  },
+  {
+    "key": [
+      0,
+      68,
+      899
+    ],
+    "success": 1,
+    "first_alert": 32,
+    "lead": 48,
+    "action_first_alert": null,
+    "action_lead": null,
+    "local_episode_index": 19,
+    "rerun_episode_seed": 87,
+    "case": "success_false_handoff",
+    "video": "paper/corl_2026_template_submission/video_supplement/10_limitation_false_handoff_success.mp4",
+    "rerun_steps": 47,
+    "rerun_success": true,
+    "selected_name": "10_limitation_false_handoff_success.mp4",
+    "source_candidate": "false_00/01_success_false_handoff_s68_e19.mp4",
+    "review_note": "Limitation: successful rollout where internal monitor would hand off."
+  }
+]

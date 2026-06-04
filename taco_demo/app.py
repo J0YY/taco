@@ -10,6 +10,13 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from taco_demo.binder import issue_binder
+from taco_demo.external_evidence import (
+    fr004_certificate,
+    maniskill_render_summary,
+    nla4vla_catalog,
+    saescope_catalog_rows,
+    saescope_summary,
+)
 from taco_demo.activation_evidence_contract import (
     activation_artifact_check_rows,
     activation_gate_rows,
@@ -375,6 +382,7 @@ tabs = st.tabs(
         "Renewal Loop",
         "Investor Case",
         "DreamAudit Intake",
+        "Real Cross-Policy Evidence",
         "Spec",
     ]
 )
@@ -1426,6 +1434,110 @@ with tabs[10]:
         st.write(summary["sources"])
 
 with tabs[11]:
+    st.markdown("### Real Cross-Policy Evidence")
+    st.caption(
+        "Real rendered rollouts imported from sibling robotics projects, with their "
+        "original success/failure metadata. These show TACO's evidence is policy- and "
+        "simulator-agnostic, and that internal risk signatures can fire before failure on a real policy."
+    )
+
+    ss = saescope_summary()
+    st.markdown("#### FR-004 · Internal monitor fires before failure (real)")
+    if ss.get("available"):
+        cert = fr004_certificate()
+        st.success(
+            f"Real VLA diffusion policy on {ss['environment']} (source: {ss['source_project']}). "
+            "An internal SAE monitor was recorded per episode."
+        )
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Early-warning lead", f"{ss['mean_early_warning_lead_steps']:.0f} steps")
+        c2.metric("Detection recall", f"{ss['recall'] * 100:.0f}%")
+        c3.metric("Monitor precision", f"{ss['precision'] * 100:.0f}%")
+        c4.metric("Neighborhood failure rate", f"{ss['neighborhood_failure_rate'] * 100:.0f}%")
+        st.markdown(
+            f"The internal monitor first alerts at step **{ss['first_alert_step']}**, a "
+            f"**{ss['mean_early_warning_lead_steps']:.0f}-step** lead before the episode fails — "
+            "the real version of TACO's early-warning thesis. One clean success raised a false "
+            "alert (the precision gap), a real limitation kept in the evidence."
+        )
+        rows = saescope_catalog_rows()
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "Clip": r["clip"],
+                        "Outcome": r["outcome"],
+                        "Internal alert @ step": r["internal_alert_step"],
+                        "Early-warning lead": r["early_warning_lead_steps"],
+                        "Case": r["case"],
+                    }
+                    for r in rows
+                ]
+            ),
+            width="stretch",
+        )
+        selected = st.selectbox("FR-004 replay", [r["clip"] for r in rows], key="fr004_clip")
+        chosen = next(r for r in rows if r["clip"] == selected)
+        cols = st.columns([1, 1])
+        with cols[0]:
+            if Path(chosen["video_path"]).exists():
+                st.video(chosen["video_path"])
+            st.caption(f"{chosen['outcome']} · {chosen['case']}")
+        with cols[1]:
+            st.markdown("**What TACO reads from this replay**")
+            st.write(chosen["note"] or cert["dominant_risk_signature"])
+            st.markdown("**Recommended control**")
+            st.write(cert["recommended_control"])
+            st.json({k: cert[k] for k in ("certificate_id", "policy_id", "task_id", "failure_type", "early_warning_lead_steps")})
+        st.caption(cert["provenance"])
+    else:
+        st.info("FR-004 evidence not found. Expected manifests under data/videos/real_external/saescope/.")
+
+    st.markdown("#### Policy / simulator breadth (nla4vla)")
+    st.caption("OpenVLA-7B on LIBERO and SmolVLA on MetaWorld — multiple VLA families and simulators.")
+    nla_rows = nla4vla_catalog()
+    if nla_rows:
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    {
+                        "Clip": r["clip"],
+                        "Policy": r["policy"],
+                        "Environment": r["environment"],
+                        "Task": r["task"],
+                        "Outcome": r["outcome"],
+                    }
+                    for r in nla_rows
+                ]
+            ),
+            width="stretch",
+        )
+        nla_sel = st.selectbox("Breadth replay", [r["clip"] for r in nla_rows], key="nla4vla_clip")
+        nla_chosen = next(r for r in nla_rows if r["clip"] == nla_sel)
+        ncols = st.columns([1, 1])
+        with ncols[0]:
+            if Path(nla_chosen["video_path"]).exists():
+                st.video(nla_chosen["video_path"])
+            st.caption(f"{nla_chosen['policy']} · {nla_chosen['environment']} · {nla_chosen['outcome']}")
+        with ncols[1]:
+            st.markdown("**What to watch for**")
+            st.write(nla_chosen["what_to_watch_for"])
+
+    ms = maniskill_render_summary()
+    st.markdown("#### ManiSkill rope rollout (cluster-rendered, real)")
+    if ms.get("available"):
+        st.caption(
+            f"Rendered on the athena GPU cluster: {ms['env_id']} policy eval across {ms['episodes']} "
+            f"parallel envs — {ms['failures']}/{ms['episodes']} failed "
+            f"({ms['neighborhood_failure_rate'] * 100:.0f}% neighborhood failure rate)."
+        )
+        if Path(ms["video_path"]).exists():
+            st.video(ms["video_path"])
+        st.caption(f"Source: {ms['source_project']}.")
+    else:
+        st.info("ManiSkill render not present. Pull runs/taco_demo_render/test_videos/0.mp4 from the cluster.")
+
+with tabs[12]:
     readme = Path(__file__).resolve().parents[1] / "README.md"
     if readme.exists():
         st.markdown(readme.read_text(encoding="utf-8"))
