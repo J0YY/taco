@@ -492,7 +492,9 @@ function RobotGallery() {
     { title: 'OpenVLA · SimplerEnv', task: 'pick coke can · variant-shift OOD', tier: 'Tier 2 · Conditional', tone: 'dot-warn',
       s: '/videos/openvla_coke_success.mp4', f: '/videos/openvla_coke_failure.mp4' },
     { title: 'ANYmal-C · quadruped (robot dog)', task: 'walk to goal · AnymalC-Reach (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk',
-      s: '/videos/anymal_dog_success.mp4', f: '/videos/anymal_dog_failure.mp4' },
+      s: '/videos/anymal_success.mp4', f: '/videos/anymal_fall.mp4' },
+    { title: 'Unitree Go2 · quadruped (robot dog)', task: 'walk to goal · UnitreeGo2-Reach (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk',
+      s: '/videos/go2_success.mp4', f: '/videos/go2_fall.mp4' },
     { title: 'MS-HAB · mobile pick (Fetch)', task: 'tidy-house pick · ReplicaCAD apartment', tier: 'Tier 3 · Remediate', tone: 'dot-risk',
       s: '/videos/mshab_pick_success.mp4', f: '/videos/mshab_pick_failure.mp4' },
   ]
