@@ -184,7 +184,7 @@ with tabs[0]:
     status = traditional_underwriting_status(application)
     if status["status"] == "blocked_no_telemetry":
         st.warning("Traditional underwriting blocked: no deployment telemetry or historical loss data.")
-        st.info("TACO can proceed using synthetic actuarial evidence: replayable failures + internal model risk signatures.")
+        st.info("TACO can proceed using structured pre-deployment evidence: replayable failures + internal model risk signatures.")
     else:
         st.success(status["explanation"])
     st.json(dataclass_to_dict(application))
@@ -552,7 +552,7 @@ with tabs[9]:
         )
 
 with tabs[10]:
-    readme = Path(__file__).with_name("README.md")
+    readme = Path(__file__).resolve().parents[1] / "README.md"
     if readme.exists():
         st.markdown(readme.read_text(encoding="utf-8"))
     else:

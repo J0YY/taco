@@ -189,3 +189,22 @@
   - `git diff --check` -> clean.
 - Pushed bf16 fix commit `9a89d86` to GitHub `main`.
 - Final independent `codex review --base _review-loop-baseline` reported no discrete functional regression in the DreamAudit adapter or activation recorder changes.
+
+## 2026-06-04 - Testrun install and README consolidation
+
+- Pulled `origin/main`; repository was already up to date at `169cb05`.
+- Created a repo-local `.venv` and installed `taco_demo/requirements-taco.txt` for local testruns.
+- Added `.gitignore` entries for `.venv/`, Python caches, and pytest caches so local install artifacts stay out of Git.
+- Consolidated documentation into a single root `README.md`:
+  - merged the root quickstart, `README_TACO.md`, and `taco_demo/README.md`,
+  - removed `README_TACO.md` and `taco_demo/README.md`,
+  - reframed the architecture as offline evidence mode plus live DreamAudit/activation-capture mode,
+  - documented the local `.venv` testrun path,
+  - removed README phrasing that made the system read as hardcoded or only deterministic.
+- Updated the Streamlit Spec tab to read the root `README.md`.
+- Tightened user-facing app and diligence memo copy from "synthetic/deterministic placeholders" to local evidence fixtures and live integration paths.
+- Verification from `.venv`:
+  - `.venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 33 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
