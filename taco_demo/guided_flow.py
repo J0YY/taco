@@ -25,6 +25,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from .external_evidence import fr004_certificate, saescope_summary
+from .mechanism import MECH_SOURCES, mechanism_caption, mechanism_flowchart_dot
 from .quote_engine import generate_quote
 from .sample_data import DEMO_CERTIFICATES
 from .schemas import default_application
@@ -32,6 +33,13 @@ from .trace_scoring import compute_early_warning_margin, compute_internal_metric
 
 DATA_ROOT = Path(__file__).resolve().parent / "data"
 RISK_THRESHOLD = 0.65
+
+
+def _prov(real: bool, source: str) -> str:
+    """A compact provenance badge string: where a number on screen comes from."""
+    if real:
+        return f":green[● REAL] · {source}"
+    return f":orange[● ILLUSTRATIVE] · {source}"
 
 # --- exhibits: one failure story per certificate -----------------------------
 
@@ -323,11 +331,10 @@ def render_guided_flow() -> None:
                 cap += f" · {ex['success_steps']} steps · success"
             st.caption(cap)
         with cols[1]:
-            st.success("This is the benchmark behavior an insurer would otherwise have to trust blindly.")
-            st.write("No deployment telemetry exists yet, so traditional underwriting is blocked. "
-                     "TACO instead stress-tests the policy to manufacture pre-deployment evidence.")
             st.markdown(f"**Policy:** {policy['name']}")
             st.markdown(f"**Task:** {ex['task']}")
+            st.caption("No telemetry yet → traditional underwriting blocked. TACO manufactures pre-deployment evidence.")
+            st.caption(_prov(ex.get("real_video", False), "rendered simulator rollout"))
 
     # Stage 2 — DreamAudit perturbation -> failure
     with stage_tabs[1]:
@@ -344,33 +351,35 @@ def render_guided_flow() -> None:
                 cap += f" · {ex['failure_steps']} steps · FAILURE"
             st.caption(cap)
         with cols[1]:
-            st.error("Same policy, same scene — one minimal edit flips success into failure.")
-            st.write("DreamAudit records this as a replayable failure certificate: the exact perturbation, "
-                     "its minimal cost, and the neighborhood failure rate. That makes the failure reproducible "
-                     "evidence, not an anecdote.")
-            if ex["real_video"]:
-                st.caption("Real rendered rollout (not a placeholder animation).")
+            st.error("One minimal edit flips success → failure.")
+            st.caption("DreamAudit logs a replayable certificate: exact perturbation, minimal cost, neighborhood failure rate.")
+            st.caption(_prov(ex.get("real_video", False), "rendered simulator rollout"))
 
     # Stage 3 — mechanistic interpretation (animation)
     with stage_tabs[2]:
         _pipeline_header(2)
-        st.markdown("#### Why it failed — the internal mechanism, played back")
+        st.markdown("#### Why it failed — the internal mechanism")
+        with st.expander("How we read the robot's mind (method)", expanded=False):
+            st.graphviz_chart(mechanism_flowchart_dot())
+            st.caption(mechanism_caption())
+            st.caption("Method: " + MECH_SOURCES[0]["source"] + " — " + MECH_SOURCES[0]["url"])
         trace = _exhibit_trace(cert_id)
         failure_ts = _CERTS[cert_id].failure_timestep if cert_id in _CERTS else 80
-        anim = _activation_animation(trace, ex["risk_key"], failure_ts)
-        st.plotly_chart(anim, width="stretch")
-        st.caption("Press ▶ Play interpretation: watch the internal features evolve as the rollout proceeds. "
-                   "Green = task features, red/orange = risk features.")
         chart, _, lead = _crossing_chart(trace, failure_ts)
         st.plotly_chart(chart, width="stretch")
         if lead:
             unit = "steps" if EXHIBITS_is_steps(trace) else "s"
-            st.success(f"The internal risk signature appears **{lead:.0f} {unit} before** the physical failure — "
-                       "the early-warning window that makes a runtime monitor (and conditional coverage) possible.")
-        st.info(ex["mech_caption"])
-        if ex.get("schematic_trace"):
+            st.success(f"Internal risk signature appears **{lead:.0f} {unit} before** the physical failure.")
+        is_schematic = bool(ex.get("schematic_trace"))
+        st.caption(_prov(not is_schematic,
+                         "sae-scope SAE monitor (Swann et al. 2026)" if is_schematic
+                         else "synthetic NPZ trace — illustrative internal signals"))
+        with st.expander("▶ Play the internal features evolving", expanded=False):
+            st.plotly_chart(_activation_animation(trace, ex["risk_key"], failure_ts), width="stretch")
+            st.caption("Green = task features, red/orange = risk features.")
+        if is_schematic:
             ss = saescope_summary()
-            st.caption(f"Schematic timed to REAL sae-scope data: first alert step {ss.get('first_alert_step')}, "
+            st.caption(f"Timing from REAL sae-scope data: first alert step {ss.get('first_alert_step')}, "
                        f"{ss.get('mean_early_warning_lead_steps'):.0f}-step lead, recall {ss.get('recall')}, "
                        f"precision {ss.get('precision')}.")
         elif ex.get("mitigated") and Path(str(ex["mitigated"])).exists():
@@ -429,8 +438,7 @@ def _render_quote(policy: dict[str, Any]) -> None:
     st.write(quote.required_controls)
     st.markdown("**Exclusions**")
     st.write(quote.exclusions or ["None while required controls remain enabled"])
-    st.caption("Internal risk signatures + mitigability set the multipliers; required controls convert into "
-               "premium discounts and, when disabled, named exclusions.")
+    st.caption(_prov(False, "deterministic quote_engine — transparent demo pricing, not filed actuarial rates"))
 
 
 def _render_fr004_pricing() -> None:
