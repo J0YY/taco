@@ -18,6 +18,7 @@ def build_diligence_memo(
     metrics: list[InternalRiskMetrics],
     quote: QuoteBreakdown,
     suite_manifest: dict[str, Any],
+    dreamaudit_intake: dict[str, Any] | None = None,
 ) -> str:
     """Build a single Markdown artifact for investors, brokers, and underwriters."""
 
@@ -29,7 +30,14 @@ def build_diligence_memo(
     mean_risk = sum(metric.internal_risk_score for metric in metrics) / len(metrics) if metrics else 0.0
     mean_mitigability = sum(metric.causal_mitigability_score for metric in metrics) / len(metrics) if metrics else 0.0
     renewal = renewal_summary(quote)
-    fundraise_readiness = build_fundraise_readiness(application, certificates, metrics, quote, suite_manifest)
+    fundraise_readiness = build_fundraise_readiness(
+        application,
+        certificates,
+        metrics,
+        quote,
+        suite_manifest,
+        dreamaudit_intake,
+    )
 
     lines = [
         "# TACO Investor Diligence Memo",

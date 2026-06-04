@@ -435,3 +435,21 @@
   - `git diff --check` -> clean.
 - Pushed VC readiness gate commit `7386960` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` reported no discrete correctness issues in the readiness scoring, UI display, memo section, or tests.
+
+## 2026-06-04 - Improvement loop: live DreamAudit VC gate
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `381a48c`.
+- Captured `_review-loop-baseline` at `381a48cfbf52abba849607ca5bdd9c40b2225697` for the independent review loop.
+- Added a `Live DreamAudit Corpus` gate to the VC readiness score:
+  - without a scanned DreamAudit intake summary, the package is marked as a credible seed demo that still needs a live DreamAudit scan,
+  - with a carrier-ready DreamAudit ladder attached, the gate passes and the score can reach `100/100`.
+- Updated the Investor tab to pass `st.session_state.dreamaudit_intake` into the readiness gates and diligence memo.
+- Updated the Investor tab to show fundraise evidence gaps in addition to design-partner caveats.
+- Updated the root README to explain that VC readiness separates demo-only proof points from attached live DreamAudit corpus evidence.
+- Added tests for carrier-ready DreamAudit intake scoring and the no-live-scan gap.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py taco_demo/tests/test_renewal_loop.py` -> 11 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 50 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - real DreamAudit-backed fundraise smoke check: recommended scan limit `5000`, fundraise readiness `100/100`, posture `seed_diligence_ready_with_live_evidence_caveats`, `7/7` gates passed, gaps `[]`.
+  - `git diff --check` -> clean.

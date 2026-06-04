@@ -506,12 +506,14 @@ with tabs[9]:
         st.markdown("**Known investor risks**")
         st.write(summary["investor_risk"])
         suite_manifest = _load_maniskill_manifest()
+        dreamaudit_intake = st.session_state.get("dreamaudit_intake")
         readiness = build_fundraise_readiness(
             application,
             audit["certificates"],
             list(audit["metrics"].values()),
             audit["quote"],
             suite_manifest,
+            dreamaudit_intake,
         )
         st.markdown("#### VC Readiness Gates")
         c1, c2, c3 = st.columns(3)
@@ -519,11 +521,22 @@ with tabs[9]:
         c2.metric("Gates passed", f"{readiness['gates_passed']}/{readiness['gates_total']}")
         c3.metric("Posture", str(readiness["posture"]).replace("_", " ").title())
         st.dataframe(pd.DataFrame(fundraise_readiness_rows(readiness)), width="stretch")
+        if readiness["gaps"]:
+            st.markdown("**Evidence gaps to close next**")
+            for gap in readiness["gaps"]:
+                st.markdown(f"* {gap}")
         if readiness["caveats"]:
             st.markdown("**Still required before institutional diligence**")
             for caveat in readiness["caveats"]:
                 st.markdown(f"* {caveat}")
-        memo = build_diligence_memo(application, audit["certificates"], list(audit["metrics"].values()), audit["quote"], suite_manifest)
+        memo = build_diligence_memo(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            suite_manifest,
+            dreamaudit_intake,
+        )
         st.download_button(
             "Download Investor Diligence Memo",
             memo.encode("utf-8"),
