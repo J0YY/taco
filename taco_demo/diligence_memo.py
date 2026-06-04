@@ -110,6 +110,7 @@ def build_diligence_memo(
     buyer_roi_model = data_room_manifest["buyer_roi_model"]
     claim_validation_ledger = data_room_manifest["claim_validation_ledger"]
     investor_proof_pipeline = data_room_manifest["investor_proof_pipeline"]
+    research_validation_plan = data_room_manifest["research_validation_plan"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -149,6 +150,30 @@ def build_diligence_memo(
         lines.append(
             f"| {claim['claim_id']} | {claim['status']} | {claim['current_evidence']} | {claim['boundary']} |"
         )
+
+    lines.extend(
+        [
+            "",
+            "## Research Validation Plan",
+            "",
+            f"* Status: {research_validation_plan['status']}",
+            f"* Boundary: {research_validation_plan['boundary']}",
+            f"* Validation score: {research_validation_plan['current_evidence_summary']['research_validation_score']}/100",
+            "",
+            "| Hypothesis | Testable prediction | Blocked claim until passed |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for item in research_validation_plan["hypotheses"]:
+        lines.append(
+            f"| {item['hypothesis_id']} | {item['testable_prediction']} | {item['blocked_claim_until_passed']} |"
+        )
+    lines.extend(["", "| Workstream | Acceptance threshold | Falsification signal |", "| --- | --- | --- |"])
+    for item in research_validation_plan["validation_workstreams"]:
+        lines.append(f"| {item['workstream']} | {item['acceptance_threshold']} | {item['falsification_signal']} |")
+    lines.extend(["", "| Downgrade rule | Trigger | Required downgrade |", "| --- | --- | --- |"])
+    for item in research_validation_plan["downgrade_rules"]:
+        lines.append(f"| {item['rule']} | {item['trigger']} | {item['required_downgrade']} |")
 
     lines.extend(
         [

@@ -25,6 +25,7 @@ from .investor_proof_pipeline import build_investor_proof_pipeline
 from .methodology_evidence import build_methodology_evidence_map
 from .pilot_walkthrough import build_pilot_walkthrough_playbook
 from .pricing_diligence import build_pricing_diligence
+from .research_validation import build_research_validation_plan
 from .renewal_loop import renewal_summary
 from .security_plan import build_enterprise_security_plan
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
@@ -50,6 +51,7 @@ PACKET_FORMAT_V13 = "taco_data_room_zip_v13"
 PACKET_FORMAT_V14 = "taco_data_room_zip_v14"
 PACKET_FORMAT_V15 = "taco_data_room_zip_v15"
 PACKET_FORMAT_V16 = "taco_data_room_zip_v16"
+PACKET_FORMAT_V17 = "taco_data_room_zip_v17"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -108,8 +110,11 @@ REQUIRED_BUNDLE_FILES_V14 = REQUIRED_BUNDLE_FILES_V13 | {
 REQUIRED_BUNDLE_FILES_V15 = REQUIRED_BUNDLE_FILES_V14 | {
     "research/claim_validation_ledger.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V15 | {
+REQUIRED_BUNDLE_FILES_V16 = REQUIRED_BUNDLE_FILES_V15 | {
     "commercial/investor_proof_pipeline.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V16 | {
+    "research/research_validation_plan.json",
 }
 
 
@@ -173,6 +178,12 @@ def build_data_room_checklist(
             "ready" if len(RESEARCH_FOUNDATIONS) >= 4 else "needs_work",
             f"{len(RESEARCH_FOUNDATIONS)} linked research anchors.",
             "Attach primary-source references for simulation, perturbation, interpretability, and monitoring claims.",
+        ),
+        _item(
+            "Research Validation Plan",
+            "ready" if len(RESEARCH_FOUNDATIONS) >= 4 and suite_size >= 40 else "needs_work",
+            "Falsifiable hypotheses, validation experiments, acceptance thresholds, downgrade rules, and blocked claims are attached.",
+            "Run the validation workstreams with partner-specific DreamAudit, activation, control, reviewer, and actuarial evidence before upgrading research-backed claims.",
         ),
         _item(
             "Commercial Scale Model",
@@ -387,6 +398,17 @@ def build_data_room_manifest(
         claim_validation_ledger,
         buyer_roi_model,
     )
+    research_validation_plan = build_research_validation_plan(
+        application,
+        certificates,
+        metrics,
+        quote,
+        suite_manifest,
+        methodology_evidence_map,
+        claim_validation_ledger,
+        investor_proof_pipeline,
+        dreamaudit_intake,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -417,6 +439,7 @@ def build_data_room_manifest(
         "buyer_roi_model": buyer_roi_model,
         "claim_validation_ledger": claim_validation_ledger,
         "investor_proof_pipeline": investor_proof_pipeline,
+        "research_validation_plan": research_validation_plan,
     }
 
 
@@ -443,6 +466,7 @@ def build_data_room_bundle(
         ("research/sources.json", _json_bytes(RESEARCH_FOUNDATIONS)),
         ("research/methodology_evidence_map.json", _json_bytes(manifest["methodology_evidence_map"])),
         ("research/claim_validation_ledger.json", _json_bytes(manifest["claim_validation_ledger"])),
+        ("research/research_validation_plan.json", _json_bytes(manifest["research_validation_plan"])),
         ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
         ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
         ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
@@ -563,7 +587,8 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, "
                         "taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, "
                         "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
-                        "taco_data_room_zip_v14, taco_data_room_zip_v15, or taco_data_room_zip_v16"
+                        "taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, "
+                        "or taco_data_room_zip_v17"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -712,7 +737,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V16,
+        "packet_format": PACKET_FORMAT_V17,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -760,6 +785,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V15:
         return REQUIRED_BUNDLE_FILES_V15
     if packet_format == PACKET_FORMAT_V16:
+        return REQUIRED_BUNDLE_FILES_V16
+    if packet_format == PACKET_FORMAT_V17:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -808,6 +835,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `research/sources.json` - research-methodology anchors",
             "* `research/methodology_evidence_map.json` - claim-by-claim methodology evidence map",
             "* `research/claim_validation_ledger.json` - investor-safe claims, evidence levels, upgrade gates, and disallowed overclaims",
+            "* `research/research_validation_plan.json` - falsifiable hypotheses, validation workstreams, acceptance thresholds, and downgrade rules",
             "* `certificates/` - primary replay failure certificates",
             "* `metrics/` - internal-risk metric contracts",
             "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",

@@ -77,6 +77,12 @@ from taco_demo.methodology_evidence import build_methodology_evidence_map, metho
 from taco_demo.pilot_walkthrough import build_pilot_walkthrough_playbook, pilot_walkthrough_rows
 from taco_demo.pricing_diligence import build_pricing_diligence, pricing_control_rows, pricing_factor_rows
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
+from taco_demo.research_validation import (
+    build_research_validation_plan,
+    research_validation_hypothesis_rows,
+    research_validation_rule_rows,
+    research_validation_workstream_rows,
+)
 from taco_demo.renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from taco_demo.schemas import FailureCertificate, InsuranceApplication, ReplayArtifacts, dataclass_to_dict, default_application, read_json
 from taco_demo.scripts.bootstrap_demo_data import bootstrap
@@ -728,6 +734,17 @@ with tabs[9]:
             claim_validation_ledger,
             buyer_roi_model,
         )
+        research_validation_plan = build_research_validation_plan(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            suite_manifest,
+            methodology_map,
+            claim_validation_ledger,
+            investor_proof_pipeline,
+            dreamaudit_intake,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -816,6 +833,15 @@ with tabs[9]:
         st.caption(claim_validation_ledger["boundary"])
         st.dataframe(pd.DataFrame(claim_validation_summary_rows(claim_validation_ledger)), width="stretch")
         st.dataframe(pd.DataFrame(claim_validation_rows(claim_validation_ledger)), width="stretch")
+        st.markdown("#### Research Validation Plan")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Research status", str(research_validation_plan["status"]).replace("_", " ").title())
+        c2.metric("Validation score", f"{research_validation_plan['current_evidence_summary']['research_validation_score']}/100")
+        c3.metric("Workstreams", len(research_validation_plan["validation_workstreams"]))
+        st.caption(research_validation_plan["boundary"])
+        st.dataframe(pd.DataFrame(research_validation_hypothesis_rows(research_validation_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(research_validation_workstream_rows(research_validation_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(research_validation_rule_rows(research_validation_plan)), width="stretch")
         st.markdown("#### Investor Proof Pipeline")
         c1, c2, c3 = st.columns(3)
         c1.metric("Pipeline status", str(investor_proof_pipeline["status"]).replace("_", " ").title())
