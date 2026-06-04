@@ -577,6 +577,19 @@ with tabs[10]:
         c2.metric("Failure families", len(summary["failure_families"]))
         c3.metric("High severity", summary["high_severity"])
         c4.metric("Mean neighborhood rate", f"{summary['mean_failure_rate_neighborhood']:.2f}")
+        readiness = intake["readiness"]
+        st.markdown("#### Underwriting Readiness")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Readiness score", f"{readiness['readiness_score']}/100")
+        c2.metric("Status", str(readiness["status"]).replace("_", " ").title())
+        c3.metric("Controls mapped", len(readiness["required_controls"]))
+        c4.metric("Behavioral multiplier", f"{readiness['mean_behavioral_fragility_multiplier']:.2f}x")
+        st.markdown("**Required controls implied by imported evidence**")
+        st.write(readiness["required_controls"] or ["No mapped controls yet"])
+        if readiness["gaps"]:
+            st.markdown("**Evidence gaps before carrier review**")
+            for gap in readiness["gaps"]:
+                st.markdown(f"* {gap}")
         cols = st.columns(3)
         with cols[0]:
             st.markdown("**Failure families**")

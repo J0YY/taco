@@ -208,6 +208,8 @@ The Streamlit app includes:
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
+The `DreamAudit Intake` tab scans a local artifact directory and reports not just counts, but underwriting readiness: mapped controls, evidence gaps, minimality coverage, replay/certificate command coverage, and behavioral fragility.
+
 ## Research Backing
 
 The methodology is intentionally research-adjacent without overstating actuarial validity:

@@ -228,3 +228,29 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 36 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+
+## 2026-06-04 - Improvement loop: DreamAudit underwriting readiness
+
+- Pulled `origin/main`; repository was already up to date at `b6f1064`.
+- Extended `taco_demo/dreamaudit_intake.py` with underwriting-readiness analysis:
+  - readiness score,
+  - carrier-review status,
+  - required controls implied by imported certificates,
+  - unmapped failure families,
+  - minimality report coverage,
+  - replay/certificate command coverage,
+  - behavioral fragility multiplier,
+  - evidence gaps before carrier review.
+- Updated the `DreamAudit Intake` Streamlit tab to show the readiness score, status, controls, behavioral multiplier, and gaps above the raw counts.
+- Made `adapt_dreamaudit_certificate(..., source_path=...)` tolerate string paths as well as `Path` objects.
+- Added tests for broad mapped evidence scoring as carrier-review ready and for missing/partial evidence scoring as not ready.
+- Verified against `/Users/joyyang/Projects/dreamaudit/artifacts` at scan limit 250:
+  - 250 adapted certificates,
+  - readiness score `80/100`,
+  - status `needs_more_evidence`,
+  - identified unmapped action-noise and vision-perturbation families as the current control-mapping gap.
+- Verification from `.venv`:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py` -> 9 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 37 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

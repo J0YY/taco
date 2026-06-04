@@ -234,6 +234,8 @@ def adapt_dreamaudit_certificate(path_or_payload: Path | str | JsonDict | Any, s
         source_path = Path(path_or_payload)
         payload = load_dreamaudit_certificate(source_path)
     else:
+        if source_path is not None:
+            source_path = Path(source_path)
         payload = _as_dict(path_or_payload)
     perturbation = dict(_get(payload, "perturbation", default={}) or {})
     task = dict(_get(payload, "task", default={}) or {})
