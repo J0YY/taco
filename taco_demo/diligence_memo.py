@@ -113,6 +113,7 @@ def build_diligence_memo(
     research_validation_plan = data_room_manifest["research_validation_plan"]
     commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
     commercial_unit_economics = data_room_manifest["commercial_unit_economics"]
+    seed_round_close_plan = data_room_manifest["seed_round_close_plan"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -286,6 +287,36 @@ def build_diligence_memo(
     lines.extend(["", "| Gate | Metric | Pass condition | Do not count |", "| --- | --- | --- | --- |"])
     for gate in commercial_unit_economics["seed_milestone_gates"]:
         lines.append(f"| {gate['gate']} | {gate['metric']} | {gate['pass_condition']} | {gate['do_not_count']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Seed Round Close Plan",
+            "",
+            f"* Status: {seed_round_close_plan['status']}",
+            f"* Boundary: {seed_round_close_plan['boundary']}",
+            f"* Target raise: ${seed_round_close_plan['target_raise_usd']:,.0f}",
+            f"* Target runway: {seed_round_close_plan['target_runway_months']} months",
+            f"* Readiness score: {seed_round_close_plan['current_signal_stack']['readiness_score']}/100",
+            "",
+            "| Investor segment | Target partners | Lead question | Evidence to lead with |",
+            "| --- | ---: | --- | --- |",
+        ]
+    )
+    for segment in seed_round_close_plan["investor_segments"]:
+        lines.append(
+            f"| {segment['segment']} | {segment['target_partners']} | {segment['lead_question']} | "
+            f"{segment['evidence_to_lead_with']} |"
+        )
+    lines.extend(["", "| Week | Objective | Output | Decision gate |", "| --- | --- | --- | --- |"])
+    for week in seed_round_close_plan["weekly_close_motion"]:
+        lines.append(f"| {week['week']} | {week['objective']} | {week['output']} | {week['decision_gate']} |")
+    lines.extend(["", "| Gate | Pass condition | Do not count |", "| --- | --- | --- |"])
+    for gate in seed_round_close_plan["closing_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['pass_condition']} | {gate['do_not_count']} |")
+    lines.extend(["", "| Rule | Do not count | Upgrade evidence |", "| --- | --- | --- |"])
+    for rule in seed_round_close_plan["no_count_rules"]:
+        lines.append(f"| {rule['rule']} | {rule['do_not_count']} | {rule['upgrade_evidence']} |")
 
     lines.extend(
         [

@@ -105,6 +105,13 @@ from taco_demo.seed_financing_plan import (
     seed_financing_milestone_rows,
     seed_financing_use_of_funds_rows,
 )
+from taco_demo.seed_round_close import (
+    build_seed_round_close_plan,
+    seed_round_gate_rows,
+    seed_round_investor_rows,
+    seed_round_rule_rows,
+    seed_round_week_rows,
+)
 from taco_demo.security_plan import (
     build_enterprise_security_plan,
     security_control_rows,
@@ -779,6 +786,16 @@ with tabs[9]:
             seed_financing_plan,
             buyer_roi_model,
         )
+        seed_round_close_plan = build_seed_round_close_plan(
+            application,
+            audit["quote"],
+            readiness,
+            seed_financing_plan,
+            investor_proof_pipeline,
+            commercial_traction_plan,
+            commercial_unit_economics,
+            claim_validation_ledger,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -913,6 +930,16 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(unit_economics_scenario_rows(commercial_unit_economics)), width="stretch")
         st.dataframe(pd.DataFrame(unit_economics_payback_rows(commercial_unit_economics)), width="stretch")
         st.dataframe(pd.DataFrame(unit_economics_gate_rows(commercial_unit_economics)), width="stretch")
+        st.markdown("#### Seed Round Close Plan")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Close status", str(seed_round_close_plan["status"]).replace("_", " ").title())
+        c2.metric("Target raise", _money(seed_round_close_plan["target_raise_usd"]))
+        c3.metric("Lead segments", len(seed_round_close_plan["investor_segments"]))
+        st.caption(seed_round_close_plan["boundary"])
+        st.dataframe(pd.DataFrame(seed_round_investor_rows(seed_round_close_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(seed_round_week_rows(seed_round_close_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(seed_round_gate_rows(seed_round_close_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(seed_round_rule_rows(seed_round_close_plan)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],
