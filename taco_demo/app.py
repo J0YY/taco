@@ -11,7 +11,7 @@ import streamlit as st
 
 from taco_demo.binder import issue_binder
 from taco_demo.activation_recorder import torch_available
-from taco_demo.data_room import build_data_room_bundle, build_data_room_checklist, build_data_room_manifest, data_room_rows
+from taco_demo.data_room import build_data_room_bundle, build_data_room_checklist, build_data_room_manifest, data_room_rows, verify_data_room_bundle
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
@@ -581,6 +581,11 @@ with tabs[9]:
             suite_manifest,
             memo,
             dreamaudit_intake,
+        )
+        packet_verification = verify_data_room_bundle(bundle)
+        st.caption(
+            f"Packet verification: {'valid' if packet_verification['valid'] else 'needs review'}; "
+            f"{packet_verification['indexed_file_count']} indexed files."
         )
         st.download_button(
             "Download Data Room Packet",

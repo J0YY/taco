@@ -553,6 +553,22 @@
   - `git diff --check` -> clean.
 - Pushed ZIP path fix commit `35ffd13` to GitHub `main`.
 - Second independent `codex review --base _review-loop-baseline` found no discrete, actionable bugs in the cumulative ZIP data-room export changes.
+
+## 2026-06-04 - Improvement loop: data-room packet verification
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `a10e2f4`.
+- Captured `_review-loop-baseline` at `a10e2f48af793af56f833e62b132d8e685ce8a0f` for the independent review loop.
+- Identified a chain-of-custody gap: the data-room packet was downloadable and path-safe, but did not yet include a checksum index or a verifier for post-transfer audit.
+- Added `packet/index.json` to the data-room ZIP with SHA-256 checksums and byte lengths for every packet file.
+- Added `verify_data_room_bundle` to check required files, unsafe ZIP paths, duplicate member names, missing index entries, byte lengths, and SHA-256 mismatches.
+- Updated the Investor Case tab to show packet verification status before the ZIP download and updated the README product surface to call out hash-indexed packet export.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 16 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 62 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - data-room packet smoke check generated a 19,031-byte ZIP with 17 files, packet index present, verifier valid, and 16 indexed payload files.
+  - `.venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force` -> regenerated local demo evidence under `taco_demo/data`.
+  - `git diff --check` -> clean.
 - Pushed activation trace bridge commit `912edd8` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found one issue:
   - independent min-max normalization per saved trace could erase cross-rollout differences when raw activation ranges differ, making mitigability and feature-stability metrics misleading.

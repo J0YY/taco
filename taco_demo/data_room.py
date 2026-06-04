@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import hashlib
 import json
 import re
 from typing import Any
@@ -14,6 +15,19 @@ from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetri
 
 
 ZIP_TIMESTAMP = (2026, 6, 4, 0, 0, 0)
+PACKET_INDEX_PATH = "packet/index.json"
+REQUIRED_BUNDLE_FILES = {
+    "README.md",
+    "manifest.json",
+    "application.json",
+    "quote.json",
+    "checklist.json",
+    "diligence_memo.md",
+    "insurance/workflow_examples.json",
+    "research/sources.json",
+    "suite/video_index.json",
+    "dreamaudit/summary.json",
+}
 
 
 def build_data_room_checklist(
@@ -155,26 +169,33 @@ def build_data_room_bundle(
     """Build a ZIP diligence packet with machine-readable contracts and memo."""
 
     manifest = build_data_room_manifest(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
+    entries: list[tuple[str, bytes]] = [
+        ("README.md", _text_bytes(_bundle_readme(manifest))),
+        ("manifest.json", _json_bytes(manifest)),
+        ("application.json", _json_bytes(manifest["application"])),
+        ("quote.json", _json_bytes(manifest["quote"])),
+        ("checklist.json", _json_bytes(manifest["checklist"])),
+        ("diligence_memo.md", _text_bytes(diligence_memo)),
+        ("insurance/workflow_examples.json", _json_bytes(INSURANCE_SCENARIOS)),
+        ("research/sources.json", _json_bytes(RESEARCH_FOUNDATIONS)),
+        ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
+        ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
+    ]
+    certificate_names: set[str] = set()
+    for cert in certificates:
+        name = _safe_zip_stem(cert.certificate_id, certificate_names)
+        entries.append((f"certificates/{name}.json", _json_bytes(dataclass_to_dict(cert))))
+    metric_names: set[str] = set()
+    for metric in metrics:
+        name = _safe_zip_stem(metric.certificate_id, metric_names)
+        entries.append((f"metrics/{name}.json", _json_bytes(dataclass_to_dict(metric))))
+    packet_index = _packet_index(manifest["manifest_id"], entries)
+    entries.append((PACKET_INDEX_PATH, _json_bytes(packet_index)))
+
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
-        _write_zip_text(archive, "README.md", _bundle_readme(manifest))
-        _write_zip_json(archive, "manifest.json", manifest)
-        _write_zip_json(archive, "application.json", manifest["application"])
-        _write_zip_json(archive, "quote.json", manifest["quote"])
-        _write_zip_json(archive, "checklist.json", manifest["checklist"])
-        _write_zip_text(archive, "diligence_memo.md", diligence_memo)
-        _write_zip_json(archive, "insurance/workflow_examples.json", INSURANCE_SCENARIOS)
-        _write_zip_json(archive, "research/sources.json", RESEARCH_FOUNDATIONS)
-        _write_zip_json(archive, "suite/video_index.json", manifest["suite_summary"])
-        _write_zip_json(archive, "dreamaudit/summary.json", manifest["dreamaudit"])
-        certificate_names: set[str] = set()
-        for cert in certificates:
-            name = _safe_zip_stem(cert.certificate_id, certificate_names)
-            _write_zip_json(archive, f"certificates/{name}.json", dataclass_to_dict(cert))
-        metric_names: set[str] = set()
-        for metric in metrics:
-            name = _safe_zip_stem(metric.certificate_id, metric_names)
-            _write_zip_json(archive, f"metrics/{name}.json", dataclass_to_dict(metric))
+        for name, payload in entries:
+            _write_zip_bytes(archive, name, payload)
     return buffer.getvalue()
 
 
@@ -188,7 +209,56 @@ def data_room_bundle_summary(bundle_bytes: bytes) -> dict[str, Any]:
         "contains_manifest": "manifest.json" in names,
         "contains_memo": "diligence_memo.md" in names,
         "contains_video_index": "suite/video_index.json" in names,
+        "contains_packet_index": PACKET_INDEX_PATH in names,
         "files": names,
+    }
+
+
+def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
+    """Verify ZIP member safety and packet-index checksums."""
+
+    issues: list[str] = []
+    names: list[str] = []
+    index: dict[str, Any] | None = None
+    try:
+        with zipfile.ZipFile(io.BytesIO(bundle_bytes), mode="r") as archive:
+            names = sorted(archive.namelist())
+            unsafe_names = [name for name in names if _unsafe_zip_name(name)]
+            if unsafe_names:
+                issues.extend(f"Unsafe ZIP member path: {name}" for name in unsafe_names)
+            duplicate_names = sorted({name for name in names if names.count(name) > 1})
+            if duplicate_names:
+                issues.extend(f"Duplicate ZIP member path: {name}" for name in duplicate_names)
+            required_missing = sorted(REQUIRED_BUNDLE_FILES - set(names))
+            if required_missing:
+                issues.extend(f"Missing required file: {name}" for name in required_missing)
+            if PACKET_INDEX_PATH not in names:
+                issues.append(f"Missing required file: {PACKET_INDEX_PATH}")
+            else:
+                index = json.loads(archive.read(PACKET_INDEX_PATH))
+            if index:
+                indexed_files = {item["path"]: item for item in index.get("files", [])}
+                for name, item in indexed_files.items():
+                    if name not in names:
+                        issues.append(f"Indexed file missing from ZIP: {name}")
+                        continue
+                    payload = archive.read(name)
+                    expected = str(item.get("sha256", ""))
+                    actual = hashlib.sha256(payload).hexdigest()
+                    if actual != expected:
+                        issues.append(f"Checksum mismatch: {name}")
+                    if len(payload) != int(item.get("bytes", -1)):
+                        issues.append(f"Byte length mismatch: {name}")
+                unindexed = sorted(set(names) - set(indexed_files) - {PACKET_INDEX_PATH})
+                if unindexed:
+                    issues.extend(f"ZIP file missing from packet index: {name}" for name in unindexed)
+    except (KeyError, ValueError, zipfile.BadZipFile, json.JSONDecodeError) as exc:
+        issues.append(f"Invalid data-room packet: {exc}")
+    return {
+        "valid": not issues,
+        "issues": issues,
+        "file_count": len(names),
+        "indexed_file_count": len(index.get("files", [])) if index else 0,
     }
 
 
@@ -252,14 +322,40 @@ def _item(artifact: str, status: str, evidence: str, next_action: str) -> dict[s
     }
 
 
-def _write_zip_json(archive: zipfile.ZipFile, name: str, payload: Any) -> None:
-    _write_zip_text(archive, name, json.dumps(payload, indent=2, sort_keys=True))
+def _json_bytes(payload: Any) -> bytes:
+    return json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
 
 
-def _write_zip_text(archive: zipfile.ZipFile, name: str, payload: str) -> None:
+def _text_bytes(payload: str) -> bytes:
+    return payload.encode("utf-8")
+
+
+def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> None:
     info = zipfile.ZipInfo(name, ZIP_TIMESTAMP)
     info.compress_type = zipfile.ZIP_DEFLATED
-    archive.writestr(info, payload.encode("utf-8"))
+    archive.writestr(info, payload)
+
+
+def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
+    return {
+        "packet_format": "taco_data_room_zip_v1",
+        "manifest_id": manifest_id,
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(entries),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(entries)
+        ],
+    }
+
+
+def _unsafe_zip_name(name: str) -> bool:
+    return name.startswith("/") or name.startswith("../") or "/../" in name or "\\" in name
 
 
 def _safe_zip_stem(raw_id: str, used: set[str]) -> str:
@@ -292,6 +388,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `quote.json` - quote breakdown",
             "* `checklist.json` - VC/carrier readiness checklist",
             "* `diligence_memo.md` - investor and underwriting memo",
+            "* `packet/index.json` - SHA-256 checksum index for packet verification",
             "* `insurance/workflow_examples.json` - priced workflow examples",
             "* `research/sources.json` - research-methodology anchors",
             "* `certificates/` - primary replay failure certificates",
