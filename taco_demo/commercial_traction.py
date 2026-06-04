@@ -193,8 +193,8 @@ def _segments(
             "Deployment Evidence Review",
             "Procurement/risk review note saying which controls, exclusions, or evidence change deployment approval.",
             "A procurement conversation that does not connect TACO artifacts to vendor approval or insurance terms.",
-            tracks.get("enterprise_procurement_risk", {}).get("buyer_question", ""),
-            capture.get("enterprise_procurement_risk", {}).get("minimum_success", ""),
+            "Can TACO evidence help enterprise risk and procurement teams approve autonomous robot vendors before field loss history exists?",
+            "Enterprise reviewer names one deployment approval blocker, one required control or exclusion, and one written procurement or risk-review follow-up path.",
         ),
     ]
 

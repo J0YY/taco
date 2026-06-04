@@ -1156,3 +1156,10 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 109 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Second independent `codex review --base _review-loop-baseline` found one P2 issue: the new enterprise-risk segment used a non-existent source lookup, so it exported generic fallback text.
+- Fixed the enterprise segment to use explicit enterprise procurement/risk questions and minimum-success criteria, then added regression assertions for those fields.
+- Verification after second review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 63 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 109 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
