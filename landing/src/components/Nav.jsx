@@ -3,9 +3,10 @@ import Wordmark from './Wordmark.jsx'
 
 const LINKS = [
   ['Product', '#product'],
+  ['Explainer', '#explainer'],
+  ['Policies', '#policies'],
   ['Pipeline', '#pipeline'],
   ['Certification', '#certification'],
-  ['Evidence', '#evidence'],
 ]
 
 export default function Nav() {

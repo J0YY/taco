@@ -486,52 +486,41 @@ function Commercial() {
 
 /* ================= SECTION — EXPLAINER (mechanistic interpretation) ================= */
 const EXPLAINER = [
-  ['01_opening', 'Opening claim'],
-  ['02_activations', 'Activations, weights & neurons'],
-  ['03_features', 'What a feature is'],
-  ['04_superposition', 'Superposition & polysemantic neurons'],
-  ['05_sae_mechanics', 'Sparse autoencoder mechanics'],
-  ['06_topk', 'TopK sparsity'],
-  ['07_monitor_rule', 'Feature monitor rule'],
-  ['08_replay_timing', 'Replay behavior vs internal timing'],
-  ['09_sae_prism', 'SAE as a prism'],
-  ['10_feature_quality', 'General vs memorized features'],
-  ['11_dreamaudit', 'DreamAudit evidence timing'],
-  ['12_insurance', 'Terms from monitorability'],
-  ['13_claim', 'Final underwriting claim'],
+  ['01_opening', 'Open the black box', 'We look inside the policy, not just its benchmark score.'],
+  ['02_activations', 'Neurons fire', 'As the robot acts, neurons in the network light up.'],
+  ['03_features', 'What a feature is', 'A feature is a concept the network reuses across many situations.'],
+  ['04_superposition', 'Superposition', 'A single neuron can carry several different meanings at once.'],
+  ['05_sae_mechanics', 'Sparse autoencoder', 'It pulls those tangled meanings apart into clean features.'],
+  ['06_topk', 'TopK sparsity', 'Keep only the few features that actually fire at each step.'],
+  ['07_monitor_rule', 'Feature monitor', 'Put a trip wire on a risky feature and watch it during the task.'],
+  ['08_replay_timing', 'Early warning', 'The internal signal trips before the visible failure happens.'],
+  ['09_sae_prism', 'SAE as a prism', 'It splits one mixed signal into separate, readable parts.'],
+  ['10_feature_quality', 'General vs memorized', 'Real skills generalize; memorized shortcuts do not.'],
+  ['11_dreamaudit', 'DreamAudit timing', 'We force the failure and measure how early the warning fires.'],
+  ['12_insurance', 'From risk to terms', 'A risk we can watch becomes a coverage and certification condition.'],
+  ['13_claim', 'The claim', 'So we can certify a robot policy before it is ever deployed.'],
 ]
 function Explainer() {
-  const [i, setI] = useState(0)
-  const [id, label] = EXPLAINER[i]
-  const btn = { cursor: 'pointer', borderRadius: 6, padding: '6px 12px', fontFamily: 'DM Mono, monospace', fontSize: 12, border: '1px solid #4d4641', background: 'transparent', color: '#c9c0ad' }
   return (
     <section id="explainer" className="band">
       <div className="container">
         <div className="section-head">
-          <div className="eyebrow" style={{ marginBottom: 16 }}>How it works · mechanistic interpretation</div>
-          <h2 className="display-lg">From neurons to insurance terms.</h2>
+          <div className="eyebrow" style={{ marginBottom: 16 }}>How it works</div>
+          <h2 className="display-lg">From neurons to certification.</h2>
           <p className="body-lg" style={{ marginTop: 16 }}>
-            A short visual walkthrough: how a sparse autoencoder reads a robot policy's internal
-            features, why a feature monitor fires before the physical failure, and how that
-            monitorability becomes a certification lever.
+            A short visual walkthrough of how we read a robot policy from the inside, why the
+            internal warning fires before the physical failure, and how that turns into a certificate.
           </p>
         </div>
-        <div style={{ marginBottom: 14 }}>
-          <select value={i} onChange={(e) => setI(+e.target.value)}
-            style={{ background: '#2a2521', color: '#f7f5f0', border: '1px solid #4d4641', borderRadius: 6, padding: '9px 14px', fontFamily: 'DM Mono, monospace', fontSize: 13, minWidth: 340 }}>
-            {EXPLAINER.map(([cid, lbl], k) => (<option key={cid} value={k}>{k + 1}. {lbl}</option>))}
-          </select>
-        </div>
-        <div className="card">
-          <video key={id} src={`/videos/explainer/${id}.mp4`} controls autoPlay muted playsInline
-            style={{ width: '100%', borderRadius: 8, background: '#221e1b', display: 'block' }} />
-          <div style={{ marginTop: 12, display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className="label-mono">Chapter {i + 1} / {EXPLAINER.length} · {label}</span>
-            <span style={{ display: 'flex', gap: 8 }}>
-              <button style={btn} onClick={() => setI(Math.max(0, i - 1))}>‹ prev</button>
-              <button style={btn} onClick={() => setI(Math.min(EXPLAINER.length - 1, i + 1))}>next ›</button>
-            </span>
-          </div>
+        <div className="grid grid-3">
+          {EXPLAINER.map(([id, title, cap], k) => (
+            <div className="card" key={id}>
+              <img src={`/videos/explainer/${id}.gif`} alt={title} loading="lazy"
+                style={{ width: '100%', borderRadius: 6, background: '#221e1b', display: 'block' }} />
+              <div className="card-title" style={{ marginTop: 10, fontSize: 14 }}>{k + 1}. {title}</div>
+              <p style={{ marginTop: 4 }}>{cap}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -553,6 +542,7 @@ const POLICY_CATS = [
   ] },
   { key: 'mskill', label: 'Manipulation arms · RL (ManiSkill)', policies: [
     { name: 'PPO · PickCube', task: 'pick the cube to a goal pose · ManiSkill3 (trained vs early)', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/pickcube_success.mp4', f: '/videos/pickcube_failure.mp4' },
+    { name: 'PPO · StackCube', task: 'stack the red cube on the green cube · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/stackcube_success.mp4', f: '/videos/stackcube_failure.mp4' },
     { name: 'PPO · PullCube', task: 'pull cube to target · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/pullcube_success.mp4', f: '/videos/pullcube_failure.mp4' },
   ] },
   { key: 'mobile', label: 'Mobile manipulators', policies: [
