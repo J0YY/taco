@@ -335,6 +335,7 @@ def test_data_room_bundle_verifier_rejects_empty_packet_index():
     for index_payload, expected_issue in [
         ("[]", "Invalid packet index: expected JSON object"),
         ("{}", "Invalid packet index: files must be a non-empty list"),
+        ('{"files":null}', "Invalid packet index: files must be a non-empty list"),
         ('{"files":[]}', "Invalid packet index: files must be a non-empty list"),
     ]:
         buffer = io.BytesIO()

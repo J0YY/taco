@@ -220,6 +220,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
     issues: list[str] = []
     names: list[str] = []
     index: dict[str, Any] | None = None
+    indexed_file_count = 0
     try:
         with zipfile.ZipFile(io.BytesIO(bundle_bytes), mode="r") as archive:
             names = sorted(archive.namelist())
@@ -251,6 +252,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         issues.append("Invalid packet index: file entries must be objects with string paths")
                         continue
                     indexed_files[item["path"]] = item
+                indexed_file_count = len(indexed_files)
                 for name, item in indexed_files.items():
                     if name not in names:
                         issues.append(f"Indexed file missing from ZIP: {name}")
@@ -271,7 +273,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
         "valid": not issues,
         "issues": issues,
         "file_count": len(names),
-        "indexed_file_count": len(index.get("files", [])) if index else 0,
+        "indexed_file_count": indexed_file_count,
     }
 
 

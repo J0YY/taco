@@ -578,20 +578,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 63 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
-- Pushed activation trace bridge commit `912edd8` to GitHub `main`.
-- Independent `codex review --base _review-loop-baseline` found one issue:
-  - independent min-max normalization per saved trace could erase cross-rollout differences when raw activation ranges differ, making mitigability and feature-stability metrics misleading.
-- Fixed activation calibration:
-  - one-off trace exports now require calibrated `[0, 1]` values or an explicit `signal_calibration`,
-  - `record_taco_trace_bundle` records all modes first and applies shared calibration across success/failure/mitigated traces when raw activations fall outside `[0, 1]`,
-  - added regression coverage for uncalibrated one-off exports and raw activation bundles with preserved cross-rollout risk differences.
-- Verification after calibration fix:
-  - `.venv/bin/python -m pytest taco_demo/tests/test_activation_recorder.py taco_demo/tests/test_trace_scoring.py` -> 14 passed.
-  - `.venv/bin/python -m pytest taco_demo/tests` -> 58 passed.
+- Pushed packet-index validation fix commit `ea72e1c` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found one issue:
+  - `{"files": null}` could crash the indexed-file count return instead of failing closed.
+- Fixed indexed-file counting to use the validated index mapping and added `{"files": null}` regression coverage.
+- Verification after second packet-index fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 17 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 63 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
-- Pushed calibration fix commit `46b3183` to GitHub `main`.
-- Second independent `codex review --base _review-loop-baseline` found no discrete, actionable bugs in the cumulative activation trace bridge changes.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
