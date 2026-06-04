@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 from typing import Any
 import zipfile
 
@@ -166,10 +167,14 @@ def build_data_room_bundle(
         _write_zip_json(archive, "research/sources.json", RESEARCH_FOUNDATIONS)
         _write_zip_json(archive, "suite/video_index.json", manifest["suite_summary"])
         _write_zip_json(archive, "dreamaudit/summary.json", manifest["dreamaudit"])
+        certificate_names: set[str] = set()
         for cert in certificates:
-            _write_zip_json(archive, f"certificates/{cert.certificate_id}.json", dataclass_to_dict(cert))
+            name = _safe_zip_stem(cert.certificate_id, certificate_names)
+            _write_zip_json(archive, f"certificates/{name}.json", dataclass_to_dict(cert))
+        metric_names: set[str] = set()
         for metric in metrics:
-            _write_zip_json(archive, f"metrics/{metric.certificate_id}.json", dataclass_to_dict(metric))
+            name = _safe_zip_stem(metric.certificate_id, metric_names)
+            _write_zip_json(archive, f"metrics/{name}.json", dataclass_to_dict(metric))
     return buffer.getvalue()
 
 
@@ -255,6 +260,19 @@ def _write_zip_text(archive: zipfile.ZipFile, name: str, payload: str) -> None:
     info = zipfile.ZipInfo(name, ZIP_TIMESTAMP)
     info.compress_type = zipfile.ZIP_DEFLATED
     archive.writestr(info, payload.encode("utf-8"))
+
+
+def _safe_zip_stem(raw_id: str, used: set[str]) -> str:
+    stem = re.sub(r"[^0-9A-Za-z._-]+", "_", str(raw_id)).strip("._-")
+    if not stem or stem in {".", ".."}:
+        stem = "evidence"
+    candidate = stem
+    counter = 2
+    while candidate in used:
+        candidate = f"{stem}__{counter}"
+        counter += 1
+    used.add(candidate)
+    return candidate
 
 
 def _bundle_readme(manifest: dict[str, Any]) -> str:

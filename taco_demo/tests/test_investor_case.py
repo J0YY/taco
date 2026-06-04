@@ -1,6 +1,7 @@
 import io
 import json
 import zipfile
+from dataclasses import replace
 
 from taco_demo.data_room import (
     build_data_room_bundle,
@@ -266,3 +267,38 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
     assert "not an insurance offer" in readme
+
+
+def test_data_room_bundle_sanitizes_external_certificate_ids_in_zip_paths():
+    app = default_application()
+    certs = [
+        replace(DEMO_CERTIFICATES[0], certificate_id="../../outside/FR-001"),
+        replace(DEMO_CERTIFICATES[1], certificate_id="..//outside/FR-001"),
+    ]
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "test", {})
+        for cert in certs
+    ]
+    controls = {
+        "reaudit_required_after_model_update": True,
+        "occlusion_risk_monitor_enabled": True,
+        "language_override_sanitizer_enabled": True,
+        "target_identity_confirmation_enabled": True,
+    }
+    quote = generate_quote(app, certs, {metric.certificate_id: metric for metric in metrics}, controls)
+
+    bundle = build_data_room_bundle(
+        app,
+        certs,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        "# diligence memo\n",
+    )
+    files = data_room_bundle_summary(bundle)["files"]
+
+    assert "certificates/outside_FR-001.json" in files
+    assert "certificates/outside_FR-001__2.json" in files
+    assert "metrics/outside_FR-001.json" in files
+    assert "metrics/outside_FR-001__2.json" in files
+    assert not any(name.startswith("../") or "/../" in name for name in files)

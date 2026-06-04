@@ -539,6 +539,18 @@
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `.venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force` -> regenerated local demo evidence under `taco_demo/data`.
   - `git diff --check` -> clean.
+- Pushed data-room packet export commit `ef034d5` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one issue:
+  - DreamAudit/external certificate IDs could contain path separators, and using those IDs directly in ZIP member names could create unsafe archive paths.
+- Fixed ZIP member path generation:
+  - added sanitized, collision-safe evidence stems for certificate and metric ZIP entries,
+  - added a regression test with malicious `../` certificate IDs and duplicate sanitized stems,
+  - extended the packet to include machine-readable insurance workflow examples and research sources.
+- Verification after ZIP path fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 14 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 60 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 - Pushed activation trace bridge commit `912edd8` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found one issue:
   - independent min-max normalization per saved trace could erase cross-rollout differences when raw activation ranges differ, making mitigability and feature-stability metrics misleading.
