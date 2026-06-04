@@ -1318,3 +1318,4 @@
   - `git diff --check` -> clean.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
 - Independent `codex review --base _review-loop-baseline` inspected the cumulative DreamAudit corpus reconciliation diff, observed the test suite passing, and found no discrete correctness issues in the manifest, bundle, memo, UI, verifier compatibility, or tests.
+- Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `37988`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
