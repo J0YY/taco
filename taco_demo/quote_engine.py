@@ -29,6 +29,10 @@ def required_control_for_failure(failure_type: str) -> str | None:
         return "language_override_sanitizer_enabled"
     if "distractor" in failure_type or "confusion" in failure_type:
         return "target_identity_confirmation_enabled"
+    if "action_noise" in failure_type or ("action" in failure_type and "noise" in failure_type):
+        return "action_noise_envelope_monitor_enabled"
+    if "vision" in failure_type or "observation" in failure_type:
+        return "vision_shift_monitor_enabled"
     return None
 
 
@@ -98,6 +102,10 @@ def generate_quote(
             exclusions.append("FR-002 language override failures excluded until instruction sanitizer is enabled.")
         elif cert.certificate_id == "FR-003":
             exclusions.append("FR-003 semantic distractor confusion excluded until target identity confirmation is enabled.")
+        elif control == "action_noise_envelope_monitor_enabled":
+            exclusions.append(f"{cert.certificate_id} action-noise sensitivity excluded until action-envelope monitoring is enabled.")
+        elif control == "vision_shift_monitor_enabled":
+            exclusions.append(f"{cert.certificate_id} vision-shift sensitivity excluded until vision-shift monitoring and re-audit triggers are enabled.")
         else:
             exclusions.append(f"{cert.certificate_id} known failure family excluded until required internal-risk control is enabled.")
 

@@ -291,3 +291,29 @@
   - `git diff --check` -> clean.
 - Pushed second review-fix commit `d3535c8` to GitHub `main`.
 - Third independent `codex review --base _review-loop-baseline` reported no discrete correctness issues in the readiness summary or UI wiring.
+
+## 2026-06-04 - Improvement loop: DreamAudit control taxonomy
+
+- Pulled `origin/main`; repository was already up to date at `bd3fa67`.
+- Closed the live DreamAudit intake control-mapping gap by adding named underwriting controls for:
+  - `action_noise_counterfactual_failure` -> `action_noise_envelope_monitor_enabled`,
+  - `vision_perturbation_counterfactual_failure` -> `vision_shift_monitor_enabled`.
+- Updated DreamAudit patch recipes so imported action-noise certificates carry an action-envelope monitor recommendation.
+- Added quote-surface toggles for action-noise and vision-shift controls.
+- Added exclusion wording for disabled action-noise and vision-shift controls.
+- Added tests proving:
+  - action-noise and vision perturbation map to required controls,
+  - disabled controls generate specific exclusions,
+  - DreamAudit readiness no longer marks those families as unmapped.
+- Re-ran the real DreamAudit artifact scan:
+  - 250 adapted certificates at scan limit 250,
+  - readiness score improved from `65/100` to `85/100`,
+  - status remained `needs_more_evidence`,
+  - unmapped failure families dropped to `[]`,
+  - required controls now include action-noise, language override, occlusion, and vision-shift controls,
+  - the only remaining carrier-review gap is less-than-half minimality coverage.
+- Verification from `.venv`:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_quote_engine.py taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py` -> 19 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 42 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

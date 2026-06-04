@@ -214,6 +214,7 @@ def _patch_recipe(payload: JsonDict, failure_type: str) -> JsonDict:
         "language_override_instruction_conflict": "language override sanitizer with instruction provenance logging",
         "distractor_object_confusion": "target identity confirmation before irreversible grasp",
         "contact_force_overshoot": "force-envelope monitor with automatic slowdown",
+        "action_noise_counterfactual_failure": "action-envelope monitor with actuator-noise re-audit trigger",
         "vision_perturbation_counterfactual_failure": "vision-shift monitor with re-audit trigger",
     }
     recipe.setdefault("taco_required_control", controls_by_failure.get(failure_type, "known-failure runtime monitor"))

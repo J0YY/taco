@@ -116,6 +116,41 @@ def test_underwriting_readiness_scores_broad_mapped_evidence():
     assert readiness["replay_commands"] == 30
 
 
+def test_underwriting_readiness_maps_action_noise_and_vision_controls():
+    certs = []
+    for idx, (failure_mode, perturbation_type, control) in enumerate(
+        [
+            ("action_noise_counterfactual_failure", "openvla_action_noise", "action_noise_envelope_monitor_enabled"),
+            (
+                "vision_perturbation_counterfactual_failure",
+                "openvla_observation_brightness_shift",
+                "vision_shift_monitor_enabled",
+            ),
+        ]
+    ):
+        certs.append(
+            adapt_dreamaudit_certificate(
+                {
+                    "certificate_id": f"mapped-{idx}",
+                    "policy": {"name": "OpenVLA"},
+                    "task": {"task_id": f"task-mapped-{idx}"},
+                    "perturbation": {"type": perturbation_type, "noise_sigma": 0.2, "mean_image_l1": 0.1},
+                    "perturbed_validation": {"failure_mode": failure_mode, "steps": 100, "success": False},
+                    "native_validation": {"success": True},
+                    "minimality": {"method": "sweep", "failure_rate_at_0_75_cost": 0.7},
+                },
+                source_path=Path(f"/tmp/taco/source-mapped/mapped-{idx}.json"),
+            )
+        )
+
+    readiness = underwriting_readiness(certs)
+
+    assert readiness["unmapped_failure_families"] == []
+    assert "action_noise_envelope_monitor_enabled" in readiness["required_controls"]
+    assert "vision_shift_monitor_enabled" in readiness["required_controls"]
+    assert "Some failure families do not yet map to named required controls." not in readiness["gaps"]
+
+
 def test_underwriting_readiness_does_not_count_not_run_minimality():
     certs = [
         adapt_dreamaudit_certificate(

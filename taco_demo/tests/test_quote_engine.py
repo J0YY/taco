@@ -1,6 +1,6 @@
 from dataclasses import replace
 
-from taco_demo.quote_engine import behavioral_fragility_multiplier, generate_quote, traditional_underwriting_status
+from taco_demo.quote_engine import behavioral_fragility_multiplier, generate_quote, required_control_for_failure, traditional_underwriting_status
 from taco_demo.sample_data import DEMO_CERTIFICATES
 from taco_demo.schemas import InternalRiskMetrics, default_application
 
@@ -15,6 +15,8 @@ def enabled_controls():
         "occlusion_risk_monitor_enabled": True,
         "language_override_sanitizer_enabled": True,
         "target_identity_confirmation_enabled": True,
+        "action_noise_envelope_monitor_enabled": True,
+        "vision_shift_monitor_enabled": True,
     }
 
 
@@ -53,3 +55,24 @@ def test_disabling_specific_controls_creates_exclusions():
     quote = generate_quote(default_application(), DEMO_CERTIFICATES, metrics, controls)
     assert any("FR-001" in exclusion for exclusion in quote.exclusions)
 
+
+def test_dreamaudit_action_and_vision_failures_map_to_named_controls():
+    assert required_control_for_failure("action_noise_counterfactual_failure") == "action_noise_envelope_monitor_enabled"
+    assert required_control_for_failure("vision_perturbation_counterfactual_failure") == "vision_shift_monitor_enabled"
+
+
+def test_action_and_vision_controls_create_specific_exclusions():
+    action_cert = replace(DEMO_CERTIFICATES[0], certificate_id="DA-ACTION-001", failure_type="action_noise_counterfactual_failure")
+    vision_cert = replace(DEMO_CERTIFICATES[0], certificate_id="DA-VISION-001", failure_type="vision_perturbation_counterfactual_failure")
+    certs = [action_cert, vision_cert]
+    metrics = {cert.certificate_id: metric(cert.certificate_id) for cert in certs}
+    controls = enabled_controls()
+    controls["action_noise_envelope_monitor_enabled"] = False
+    controls["vision_shift_monitor_enabled"] = False
+
+    quote = generate_quote(default_application(), certs, metrics, controls)
+
+    assert "action_noise_envelope_monitor_enabled" in quote.required_controls
+    assert "vision_shift_monitor_enabled" in quote.required_controls
+    assert any("action-noise sensitivity" in exclusion for exclusion in quote.exclusions)
+    assert any("vision-shift sensitivity" in exclusion for exclusion in quote.exclusions)
