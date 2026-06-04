@@ -10,7 +10,9 @@ from taco_demo.data_room import (
     MAX_ZIP_MEMBER_BYTES,
     PACKET_FORMAT_V1,
     PACKET_FORMAT_V2,
+    PACKET_FORMAT_V3,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V2,
     REQUIRED_BUNDLE_FILES_V1,
     build_data_room_bundle,
     build_data_room_checklist,
@@ -27,6 +29,12 @@ from taco_demo.maniskill_suite import build_maniskill_suite_cases
 from taco_demo.quote_engine import generate_quote
 from taco_demo.sample_data import DEMO_CERTIFICATES
 from taco_demo.schemas import InternalRiskMetrics, default_application
+from taco_demo.seed_financing_plan import (
+    TARGET_SEED_RAISE_USD,
+    build_seed_financing_plan,
+    seed_financing_milestone_rows,
+    seed_financing_use_of_funds_rows,
+)
 
 
 def _carrier_ready_dreamaudit_intake() -> dict[str, object]:
@@ -285,6 +293,8 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
     assert manifest["design_partner_plan"]["status"] == "external_validation_pending"
     assert len(manifest["design_partner_plan"]["tracks"]) >= 3
+    assert manifest["seed_financing_plan"]["target_raise_usd"] == TARGET_SEED_RAISE_USD
+    assert "not committed financing" in manifest["seed_financing_plan"]["boundary"]
     assert len(manifest["suite_summary"]["video_paths"]) == 40
 
 
@@ -305,6 +315,25 @@ def test_design_partner_plan_is_structured_without_claiming_signed_partners():
     }
     assert len(plan["thirty_sixty_ninety_day_plan"]) == 3
     assert all(row["Commercial Signal"] for row in rows)
+
+
+def test_seed_financing_plan_ties_five_million_round_to_milestones_without_claiming_commitments():
+    app = default_application()
+    quote = generate_quote(app, DEMO_CERTIFICATES, {}, {})
+    plan = build_seed_financing_plan(app, quote, {"score": 85}, {"status": "external_validation_pending"})
+    use_rows = seed_financing_use_of_funds_rows(plan)
+    milestone_rows = seed_financing_milestone_rows(plan)
+
+    assert plan["plan_id"] == "SEED-APP-APEX-001"
+    assert plan["target_raise_usd"] == 5_000_000
+    assert sum(item["amount_usd"] for item in plan["use_of_funds"]) == plan["target_raise_usd"]
+    assert plan["estimated_runway_months"] == 18
+    assert "not committed financing" in plan["boundary"]
+    assert plan["current_diligence_posture"]["readiness_score"] == 85
+    assert plan["current_diligence_posture"]["external_validation_required"] is True
+    assert len(use_rows) >= 5
+    assert len(milestone_rows) >= 4
+    assert all(row["Diligence Evidence"] for row in use_rows)
 
 
 def test_data_room_bundle_exports_auditable_zip_packet():
@@ -338,6 +367,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert summary["packet_sha256"] == hashlib.sha256(bundle).hexdigest()
     assert "packet/index.json" in summary["files"]
     assert "commercial/design_partner_plan.json" in summary["files"]
+    assert "commercial/seed_financing_plan.json" in summary["files"]
     assert "insurance/workflow_examples.json" in summary["files"]
     assert "research/sources.json" in summary["files"]
     assert f"certificates/{DEMO_CERTIFICATES[0].certificate_id}.json" in summary["files"]
@@ -349,22 +379,26 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         readme = archive.read("README.md").decode("utf-8")
         metric = json.loads(archive.read(f"metrics/{metrics[0].certificate_id}.json"))
         design_partner_plan = json.loads(archive.read("commercial/design_partner_plan.json"))
+        seed_financing_plan = json.loads(archive.read("commercial/seed_financing_plan.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V2
+    assert index["packet_format"] == PACKET_FORMAT_V3
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
     assert design_partner_plan["plan_id"] == "DP-APP-APEX-001"
     assert design_partner_plan["status"] == "external_validation_pending"
+    assert seed_financing_plan["plan_id"] == "SEED-APP-APEX-001"
+    assert seed_financing_plan["target_raise_usd"] == 5_000_000
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
     assert "not an insurance offer" in readme
+    assert "not an insurance offer, filed actuarial product, committed financing" in readme
     verification = verify_data_room_bundle(bundle)
     assert verification["valid"] is True
     assert verification["packet_sha256"] == hashlib.sha256(bundle).hexdigest()
 
 
-def test_diligence_memo_includes_design_partner_plan_boundary():
+def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     app = default_application()
     metrics = [
         InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "test", {})
@@ -384,6 +418,9 @@ def test_diligence_memo_includes_design_partner_plan_boundary():
     assert "external_validation_pending" in memo
     assert "not evidence of signed design partners" in memo
     assert "robotics_oem_predeployment" in memo
+    assert "## Seed Financing Plan" in memo
+    assert "not committed financing" in memo
+    assert "$5,000,000" in memo
 
 
 def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
@@ -411,7 +448,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1 or taco_data_room_zip_v2",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, or taco_data_room_zip_v3",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -446,6 +483,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v1_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V1 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v2_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V2}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V2"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V2,
+        "manifest_id": "DR-LEGACY-V2",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V2 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

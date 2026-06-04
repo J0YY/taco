@@ -11,15 +11,18 @@ import zipfile
 import zlib
 
 from .design_partner_plan import build_design_partner_plan
+from .fundraise_readiness import build_fundraise_readiness
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
+from .seed_financing_plan import build_seed_financing_plan
 
 
 ZIP_TIMESTAMP = (2026, 6, 4, 0, 0, 0)
 PACKET_INDEX_PATH = "packet/index.json"
 PACKET_FORMAT_V1 = "taco_data_room_zip_v1"
 PACKET_FORMAT_V2 = "taco_data_room_zip_v2"
+PACKET_FORMAT_V3 = "taco_data_room_zip_v3"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -36,8 +39,11 @@ REQUIRED_BUNDLE_FILES_V1 = {
     "suite/video_index.json",
     "dreamaudit/summary.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V1 | {
+REQUIRED_BUNDLE_FILES_V2 = REQUIRED_BUNDLE_FILES_V1 | {
     "commercial/design_partner_plan.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V2 | {
+    "commercial/seed_financing_plan.json",
 }
 
 
@@ -151,6 +157,15 @@ def build_data_room_manifest(
     suite_cases = list(suite_manifest.get("cases", []))
     dreamaudit_summary = _dreamaudit_manifest_summary(dreamaudit_intake)
     design_partner_plan = build_design_partner_plan(application, quote)
+    fundraise_readiness = build_fundraise_readiness(
+        application,
+        certificates,
+        metrics,
+        quote,
+        suite_manifest,
+        dreamaudit_intake,
+    )
+    seed_financing_plan = build_seed_financing_plan(application, quote, fundraise_readiness, design_partner_plan)
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -167,6 +182,7 @@ def build_data_room_manifest(
         },
         "dreamaudit": dreamaudit_summary,
         "design_partner_plan": design_partner_plan,
+        "seed_financing_plan": seed_financing_plan,
     }
 
 
@@ -194,6 +210,7 @@ def build_data_room_bundle(
         ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
         ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
         ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
+        ("commercial/seed_financing_plan.json", _json_bytes(manifest["seed_financing_plan"])),
     ]
     certificate_names: set[str] = set()
     for cert in certificates:
@@ -293,7 +310,10 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
             if index is not None:
                 expected_required_files = _required_files_for_packet_format(str(index.get("packet_format", "")))
                 if expected_required_files is None:
-                    issues.append("Invalid packet index: packet_format must be taco_data_room_zip_v1 or taco_data_room_zip_v2")
+                    issues.append(
+                        "Invalid packet index: packet_format must be taco_data_room_zip_v1, "
+                        "taco_data_room_zip_v2, or taco_data_room_zip_v3"
+                    )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
                     issues.append("Invalid packet index: checksum_algorithm must be sha256")
@@ -441,7 +461,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V2,
+        "packet_format": PACKET_FORMAT_V3,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -461,6 +481,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V1:
         return REQUIRED_BUNDLE_FILES_V1
     if packet_format == PACKET_FORMAT_V2:
+        return REQUIRED_BUNDLE_FILES_V2
+    if packet_format == PACKET_FORMAT_V3:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -512,8 +534,9 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",
             "* `dreamaudit/summary.json` - attached DreamAudit intake summary",
             "* `commercial/design_partner_plan.json` - external-validation plan for broker/carrier/OEM pilots",
+            "* `commercial/seed_financing_plan.json` - proposed $5M seed use-of-funds and milestone plan",
             "",
-            "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer or filed actuarial product.",
+            "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, committed financing, or signed customer demand.",
             "",
         ]
     )

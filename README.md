@@ -234,7 +234,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, VC data-room checklist, design-partner diligence plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
@@ -265,6 +265,8 @@ TACO is not just robot QA. The larger opportunity is a system of record for auto
 
 The wedge is learned-policy liability for robotics OEMs and enterprise buyers before claims history exists. The expansion path is an evidence network shared by robotics companies, brokers, carriers, reinsurers, certification partners, and enterprise procurement teams.
 
+The financing plan in the Investor Case tab connects a proposed $5M seed round to 18 months of milestones: production internals integration, broader simulator evidence, design-partner pilots, insurance compliance/actuarial work, and secure enterprise data-room operations. It is a diligence artifact, not a claim that capital, capacity, or customers are already committed.
+
 ## Boundaries
 
-This repository is a local proof of concept and not an offer of insurance. The shipped evidence set is there so the workflow can be tested offline. The design-partner plan is an external-validation workflow, not evidence of signed partners. Real deployment would require carrier partnerships, compliance review, filed pricing or MGA structure, design-partner evidence, and live simulator/model integrations.
+This repository is a local proof of concept and not an offer of insurance. The shipped evidence set is there so the workflow can be tested offline. The design-partner plan is an external-validation workflow, not evidence of signed partners. The seed financing plan is a proposed use-of-funds and milestone plan, not committed financing or signed customer demand. Real deployment would require carrier partnerships, compliance review, filed pricing or MGA structure, design-partner evidence, and live simulator/model integrations.

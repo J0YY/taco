@@ -793,3 +793,22 @@
   - data-room packet smoke check generated a 17,790-byte ZIP with 16 files and manifest/memo/video index, workflow JSON, and research JSON present.
   - `.venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force` -> regenerated local demo evidence under `taco_demo/data`.
   - `git diff --check` -> clean.
+
+## 2026-06-04 - Improvement loop: seed financing plan
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `56cfc0f`.
+- Captured `_review-loop-baseline` at `56cfc0ff1d4eaee2d9ac73234c34a21461f0c743` for the independent review loop.
+- Identified the next VC diligence gap: the product had evidence, data-room, and design-partner workflows, but no structured $5M seed financing plan linking capital to milestones, diligence proof, and use of funds.
+- Added `taco_demo/seed_financing_plan.py` with:
+  - a proposed $5M target raise,
+  - 18-month runway assumption,
+  - five use-of-funds buckets tied to diligence evidence,
+  - milestone gates from transferred-packet pilots through insurance-capacity path,
+  - explicit boundary language that the plan is not committed financing, signed demand, or insurance capacity.
+- Added the seed financing plan to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and README product/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v3` while preserving verifier compatibility for legacy v1 and v2 packets.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 30 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 76 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

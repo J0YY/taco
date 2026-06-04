@@ -30,6 +30,11 @@ from taco_demo.quote_engine import generate_quote, required_control_for_failure,
 from taco_demo.renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from taco_demo.schemas import FailureCertificate, InsuranceApplication, ReplayArtifacts, dataclass_to_dict, default_application, read_json
 from taco_demo.scripts.bootstrap_demo_data import bootstrap
+from taco_demo.seed_financing_plan import (
+    build_seed_financing_plan,
+    seed_financing_milestone_rows,
+    seed_financing_use_of_funds_rows,
+)
 from taco_demo.trace_scoring import compute_internal_metrics, load_trace
 
 
@@ -560,6 +565,14 @@ with tabs[9]:
         c2.metric("Pilot tracks", len(design_partner_plan["tracks"]))
         c3.metric("Plan horizon", "90 days")
         st.dataframe(pd.DataFrame(design_partner_plan_rows(design_partner_plan)), width="stretch")
+        seed_financing_plan = build_seed_financing_plan(application, audit["quote"], readiness, design_partner_plan)
+        st.markdown("#### Seed Financing Plan")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Target raise", _money(seed_financing_plan["target_raise_usd"]))
+        c2.metric("Runway", f"{seed_financing_plan['estimated_runway_months']} months")
+        c3.metric("Milestone gates", len(seed_financing_plan["milestone_gates"]))
+        st.dataframe(pd.DataFrame(seed_financing_use_of_funds_rows(seed_financing_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(seed_financing_milestone_rows(seed_financing_plan)), width="stretch")
         manifest = build_data_room_manifest(
             application,
             audit["certificates"],

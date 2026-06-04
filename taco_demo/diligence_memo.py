@@ -12,6 +12,7 @@ from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUND
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown
+from .seed_financing_plan import build_seed_financing_plan
 
 
 def build_diligence_memo(
@@ -43,6 +44,7 @@ def build_diligence_memo(
     data_room = build_data_room_checklist(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
     data_room_manifest = build_data_room_manifest(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
     design_partner_plan = build_design_partner_plan(application, quote)
+    seed_financing_plan = build_seed_financing_plan(application, quote, fundraise_readiness, design_partner_plan)
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -102,6 +104,26 @@ def build_diligence_memo(
     lines.extend(["", "| Window | Goal | Evidence to collect |", "| --- | --- | --- |"])
     for milestone in design_partner_plan["thirty_sixty_ninety_day_plan"]:
         lines.append(f"| {milestone['window']} | {milestone['goal']} | {milestone['evidence_to_collect']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Seed Financing Plan",
+            "",
+            f"* Plan status: {seed_financing_plan['status']}",
+            f"* Boundary: {seed_financing_plan['boundary']}",
+            f"* Target raise: ${seed_financing_plan['target_raise_usd']:,.0f}",
+            f"* Estimated runway: {seed_financing_plan['estimated_runway_months']} months",
+            "",
+            "| Use of funds | Amount | Diligence evidence |",
+            "| --- | ---: | --- |",
+        ]
+    )
+    for item in seed_financing_plan["use_of_funds"]:
+        lines.append(f"| {item['category']} | ${item['amount_usd']:,.0f} | {item['diligence_evidence']} |")
+    lines.extend(["", "| Gate | Milestone | Success metric |", "| --- | --- | --- |"])
+    for gate in seed_financing_plan["milestone_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['milestone']} | {gate['success_metric']} |")
 
     lines.extend(
         [
