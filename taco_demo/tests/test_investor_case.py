@@ -108,6 +108,34 @@ def test_fundraise_readiness_requires_live_dreamaudit_scan_for_full_score():
     assert "Run the DreamAudit Intake scan" in readiness["gaps"][0]
 
 
+def test_fundraise_readiness_does_not_blame_dreamaudit_for_other_high_score_gaps():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "test", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    controls = {
+        "reaudit_required_after_model_update": True,
+        "occlusion_risk_monitor_enabled": True,
+        "language_override_sanitizer_enabled": True,
+        "target_identity_confirmation_enabled": True,
+    }
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, controls)
+    readiness = build_fundraise_readiness(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_size": 40, "cases": build_maniskill_suite_cases()},
+        _carrier_ready_dreamaudit_intake(),
+        research_foundations=[],
+    )
+
+    assert readiness["score"] == 90
+    assert readiness["posture"] == "seed_diligence_ready_with_targeted_evidence_gaps"
+    assert readiness["gaps"] == ["Add primary-source research anchors for any methodology claim that investors will diligence."]
+
+
 def test_fundraise_readiness_surfaces_gaps_for_empty_package():
     app = default_application()
     quote = generate_quote(app, [], {}, {})

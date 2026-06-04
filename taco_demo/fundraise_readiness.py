@@ -92,10 +92,13 @@ def build_fundraise_readiness(
     score = sum(gate["weight"] for gate in gates if gate["passed"])
     gaps = [gate["next_action"] for gate in gates if not gate["passed"]]
     caveats = [gate["next_action"] for gate in gates if gate.get("caveat")]
+    failed_gate_names = {gate["name"] for gate in gates if not gate["passed"]}
     if score >= 85 and not gaps:
         posture = "seed_diligence_ready_with_live_evidence_caveats"
-    elif score >= 85:
+    elif score >= 85 and "Live DreamAudit Corpus" in failed_gate_names:
         posture = "credible_seed_demo_needs_live_dreamaudit_scan"
+    elif score >= 85:
+        posture = "seed_diligence_ready_with_targeted_evidence_gaps"
     elif score >= 70:
         posture = "credible_seed_demo_needs_design_partner_validation"
     else:

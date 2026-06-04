@@ -453,3 +453,13 @@
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - real DreamAudit-backed fundraise smoke check: recommended scan limit `5000`, fundraise readiness `100/100`, posture `seed_diligence_ready_with_live_evidence_caveats`, `7/7` gates passed, gaps `[]`.
   - `git diff --check` -> clean.
+- Pushed live DreamAudit VC gate commit `884c525` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one posture-labeling issue:
+  - high-scoring packages with carrier-ready DreamAudit evidence but a different missing gate could still be labeled as needing a live DreamAudit scan.
+- Fixed posture selection to check which gate actually failed before assigning the live-DreamAudit-scan posture.
+- Added a regression test where DreamAudit passes, research anchors are missing, and posture correctly points to targeted evidence gaps.
+- Verification after review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py taco_demo/tests/test_renewal_loop.py` -> 12 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 51 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
