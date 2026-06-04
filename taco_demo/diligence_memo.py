@@ -7,6 +7,7 @@ from typing import Any
 
 from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS
 from .insurance_scenarios import INSURANCE_SCENARIOS
+from .renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown
 
 
@@ -26,6 +27,7 @@ def build_diligence_memo(
     earliest_warning = max((metric.early_warning_margin_seconds for metric in metrics), default=0.0)
     mean_risk = sum(metric.internal_risk_score for metric in metrics) / len(metrics) if metrics else 0.0
     mean_mitigability = sum(metric.causal_mitigability_score for metric in metrics) / len(metrics) if metrics else 0.0
+    renewal = renewal_summary(quote)
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -100,6 +102,32 @@ def build_diligence_memo(
             f"| {scenario['scenario_id']} | {scenario['coverage']} | {scenario['failure']} | "
             f"${pricing['with_controls_monthly_usd']:,.0f}/mo | ${pricing['without_controls_monthly_usd']:,.0f}/mo | "
             f"{scenario['required_control']} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Runtime Compliance And Renewal Loop",
+            "",
+            f"* Runtime monitor events: {renewal['runtime_events']}",
+            f"* Compliance score: {renewal['compliance_score']:.2f}",
+            f"* Prevented loss evidence: ${renewal['prevented_loss_usd']:,.0f}",
+            f"* Incurred loss evidence: ${renewal['incurred_loss_usd']:,.0f}",
+            f"* Renewal monthly premium: ${renewal['renewal_monthly_premium_usd']:,.0f}",
+            f"* Renewal delta: ${renewal['renewal_delta_usd']:,.0f}",
+            f"* Re-audit required: {renewal['re_audit_required']}",
+            "",
+            "| Event | Control | Status | Evidence |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for event in RUNTIME_EVENTS:
+        lines.append(f"| {event['event_id']} | {event['control']} | {event['status']} | {event['evidence']} |")
+    lines.extend(["", "| Incident | Severity | Loss | Coverage response |", "| --- | --- | ---: | --- |"])
+    for incident in INCIDENT_LOG:
+        lines.append(
+            f"| {incident['incident_id']} | {incident['severity']} | ${incident['estimated_loss_usd']:,.0f} | "
+            f"{incident['coverage_response']} |"
         )
 
     lines.extend(

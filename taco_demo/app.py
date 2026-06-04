@@ -14,6 +14,7 @@ from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEA
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
+from taco_demo.renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from taco_demo.schemas import FailureCertificate, InsuranceApplication, ReplayArtifacts, dataclass_to_dict, default_application, read_json
 from taco_demo.scripts.bootstrap_demo_data import bootstrap
 from taco_demo.trace_scoring import compute_internal_metrics, load_trace
@@ -165,6 +166,7 @@ tabs = st.tabs(
         "Binder",
         "ManiSkill Suite",
         "Insurance Examples",
+        "Renewal Loop",
         "Investor Case",
         "Spec",
     ]
@@ -434,6 +436,47 @@ with tabs[7]:
     st.json(scenario)
 
 with tabs[8]:
+    st.markdown("### Runtime Compliance And Renewal Loop")
+    st.caption("Monitor events and incident logs turn one-time underwriting evidence into renewal pricing, exclusions, and re-audit triggers.")
+    if not audit:
+        st.info("Run the audit first to calculate renewal impact from the current quote.")
+    else:
+        renewal = renewal_summary(audit["quote"])
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Compliance score", f"{renewal['compliance_score']:.2f}")
+        c2.metric("Prevented loss evidence", _money(renewal["prevented_loss_usd"]))
+        c3.metric("Incurred loss evidence", _money(renewal["incurred_loss_usd"]))
+        c4.metric("Renewal premium", _money(renewal["renewal_monthly_premium_usd"]), delta=_money(renewal["renewal_delta_usd"]))
+        st.markdown(f"**Re-audit required:** {renewal['re_audit_required']}")
+        event_rows = [
+            {
+                "Event": event["event_id"],
+                "Phase": event["deployment_phase"],
+                "Control": event["control"],
+                "Status": event["status"],
+                "Failure family": event["failure_family"],
+                "Prevented loss": _money(event["claim_prevented_usd"]),
+                "Evidence": event["evidence"],
+            }
+            for event in RUNTIME_EVENTS
+        ]
+        st.markdown("#### Runtime Monitor Events")
+        st.dataframe(pd.DataFrame(event_rows), width="stretch")
+        incident_rows = [
+            {
+                "Incident": incident["incident_id"],
+                "Severity": incident["severity"],
+                "Failure family": incident["failure_family"],
+                "Estimated loss": _money(incident["estimated_loss_usd"]),
+                "Coverage response": incident["coverage_response"],
+            }
+            for incident in INCIDENT_LOG
+        ]
+        st.markdown("#### Incident And Claims Response")
+        st.dataframe(pd.DataFrame(incident_rows), width="stretch")
+        st.json(renewal)
+
+with tabs[9]:
     st.markdown("### Investor Case")
     st.caption("Why this could plausibly support a venture-scale seed story if the fallback evidence is replaced with real DreamAudit and VLA traces.")
     if audit:
@@ -479,7 +522,7 @@ with tabs[8]:
     for foundation in RESEARCH_FOUNDATIONS:
         st.markdown(f"* **{foundation['source']}**: {foundation['taco_translation']} [link]({foundation['url']})")
 
-with tabs[9]:
+with tabs[10]:
     readme = Path(__file__).with_name("README.md")
     if readme.exists():
         st.markdown(readme.read_text(encoding="utf-8"))

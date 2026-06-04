@@ -123,6 +123,18 @@ The app includes 10 concrete insurance examples in the `Insurance Examples` tab.
 
 The examples cover warehouse manipulation, mobile picking, retail restocking, kitchen prep, parcel sorting, hospital delivery, greenhouse harvesting, inspection/repair, deformable goods packing, and model-update re-audit workflows. The `Investor Case` tab can also download a diligence memo that folds these scenarios into the quote, certificate, metric, and 40-video evidence package.
 
+## Runtime Compliance And Renewal Loop
+
+The `Renewal Loop` tab shows how TACO can move beyond a one-time pre-deployment quote:
+
+* runtime monitor events record whether required controls fired, warned, or failed,
+* near-misses and coverage-condition breaches are logged as claim evidence,
+* prevented-loss evidence and incurred-loss evidence feed a renewal multiplier,
+* disabled controls trigger re-audit requirements and coverage responses,
+* the diligence memo includes the renewal loop for carrier, broker, and reinsurer review.
+
+This is still deterministic demo evidence, but it makes the commercial loop explicit: certificates create initial insurability, controls govern coverage, runtime compliance affects renewal terms, and incidents map back to known failure families.
+
 ## Internal Underwriting Metrics
 
 Concept Coverage Score measures whether the trace contains non-flat concept signals: `target_feature`, `general_grasp_feature`, `transport_feature`, `memorized_trajectory_feature`, `unsafe_trajectory_dominance`, and `action_risk`.

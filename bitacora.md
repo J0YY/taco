@@ -90,3 +90,17 @@
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 19 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+
+## 2026-06-04 - Improvement loop: runtime compliance and renewal pricing
+
+- Pulled `origin/main`; repository was already up to date at `a06a861`.
+- Added deterministic runtime monitor events and incident/claims response evidence in `taco_demo/renewal_loop.py`.
+- Added a `Renewal Loop` tab that shows:
+  - runtime monitor pass/warn/fail events,
+  - prevented-loss evidence,
+  - incurred-loss evidence,
+  - renewal premium impact,
+  - re-audit requirement status,
+  - incident coverage responses.
+- Extended the investor diligence memo with the runtime compliance and renewal loop.
+- Added pytest coverage for renewal summary math, clean-compliance renewal discount behavior, and memo inclusion.
