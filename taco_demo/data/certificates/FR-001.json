@@ -4,7 +4,9 @@
   "failure_timestep": 104,
   "failure_type": "occlusion_induced_wrong_grasp",
   "metadata": {
-    "fallback": true
+    "fallback": true,
+    "real_replay_video": true,
+    "replay_provenance": "LIBERO/OpenVLA simulator replay; task 'open the middle drawer of the cabinet'; 37.9% occlusion; success=false in 151 steps vs native success in 133 steps."
   },
   "minimal_failure_cost": 0.31,
   "patch_recipe": {
@@ -13,15 +15,13 @@
     "type": "runtime_monitor"
   },
   "perturbation": {
-    "camera_yaw_deg": 4.7,
-    "center_occlusion_fraction": 0.31,
-    "distractor_similarity": 0.82,
+    "center_occlusion_fraction": 0.379,
     "grammar_family": "visual_occlusion",
     "normalized_cost": 0.31
   },
   "policy_id": "openvla_warehouse_v3",
-  "replay_command": "python -m taco_demo.scripts.bootstrap_demo_data --force",
+  "replay_command": "dreamaudit replay visual_goal_t0_e0/goal_task00_ep00_prop_s005_occ",
   "severity": "medium",
-  "source": "demo_generated_placeholder_data",
-  "task_id": "libero_pick_mug"
+  "source": "real_libero_openvla_replay_with_illustrative_trace",
+  "task_id": "libero_open_middle_drawer"
 }

@@ -1,0 +1,20 @@
+{
+  "episode_idx": 0,
+  "init_state_idx": 0,
+  "instruction": "open the middle drawer of the cabinet",
+  "perturbation_name": "prop_s005_occ",
+  "perturbation_params": {
+    "fraction": 0.379
+  },
+  "perturbation_type": "occlusion",
+  "policy_instruction": "open the middle drawer of the cabinet",
+  "steps": 151,
+  "success": false,
+  "suite": "goal",
+  "task_idx": 0,
+  "task_name": "open_the_middle_drawer_of_the_cabinet",
+  "video_files": [
+    "artifacts/supplemental_videos/visual_goal_t0_e0/goal_task00_ep00_prop_s005_occ.gif",
+    "artifacts/supplemental_videos/visual_goal_t0_e0/goal_task00_ep00_prop_s005_occ.mp4"
+  ]
+}
