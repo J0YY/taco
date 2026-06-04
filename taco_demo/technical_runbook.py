@@ -79,10 +79,10 @@ def build_technical_diligence_runbook(
             ),
             _step(
                 "verify_data_room_packet",
-                "Download or build a data-room ZIP and verify packet/index.json checksums.",
-                "Use the Investor Case tab's Data Room Packet download, then upload it under Verify Transferred Data Room Packet.",
+                "Build and verify a data-room ZIP with packet/index.json checksums.",
+                ".venv/bin/python -m taco_demo.scripts.export_data_room_packet --output /tmp/TACO-DATAROOM.zip",
                 "Verifier reports valid, indexed file count, and SHA-256 fingerprint.",
-                ["packet/index.json", "commercial/enterprise_security_plan.json"],
+                ["packet/index.json", "evidence/provenance_audit.json", "commercial/enterprise_security_plan.json"],
             ),
         ],
         "live_evidence_steps": [
@@ -140,6 +140,7 @@ def build_technical_diligence_runbook(
             "bitacora.md",
             "taco_demo/tests",
             "taco_demo/data_room.py",
+            "taco_demo/scripts/export_data_room_packet.py",
             "taco_demo/dreamaudit_adapter.py",
             "taco_demo/activation_recorder.py",
             "taco_demo/maniskill_suite.py",

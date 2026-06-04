@@ -11,6 +11,7 @@ Use the repo-local virtual environment that has already been installed on this m
 ```bash
 source .venv/bin/activate
 python -m taco_demo.scripts.bootstrap_demo_data --force
+python -m taco_demo.scripts.export_data_room_packet --output /tmp/TACO-DATAROOM.zip
 python -m pytest taco_demo/tests
 python -m streamlit run taco_demo/app.py
 ```
@@ -23,6 +24,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -r taco_demo/requirements-taco.txt
 python -m taco_demo.scripts.bootstrap_demo_data --force
+python -m taco_demo.scripts.export_data_room_packet --output /tmp/TACO-DATAROOM.zip
 python -m pytest taco_demo/tests
 python -m streamlit run taco_demo/app.py
 ```
@@ -114,6 +116,7 @@ InsuranceApplication
          insurance capacity roadmap with licensing, MGA/fronting, filing, and claims gates
          enterprise security plan with data classes, control backlog, and SOC2/NIST readiness gates
          technical diligence runbook for tests, packet verification, live evidence, and cluster regeneration
+         command-line data-room packet export with verifier JSON and SHA-256 fingerprint
          external validation capture kit for scorecards, LOIs, pilot scopes, and permission-to-quote controls
 ```
 
@@ -313,7 +316,7 @@ The insurance capacity roadmap makes the regulatory path diligence-readable. It 
 
 The enterprise security plan maps the data-room workflow to sensitive data classes, packet chain-of-custody, role-scoped reviewer access, activation-trace retention, incident response, and SOC2/NIST-style readiness gates. It is not SOC 2 certification, penetration-test evidence, customer security approval, or production control attestation.
 
-The technical diligence runbook gives reviewers exact commands and pass/fail gates for local setup, fixture regeneration, pytest, Streamlit import, packet verification, DreamAudit intake, activation recording, and ManiSkill/cluster evidence regeneration. It proves local reproducibility and integration paths, not live customer deployment or external validation.
+The technical diligence runbook gives reviewers exact commands and pass/fail gates for local setup, fixture regeneration, pytest, Streamlit import, packet verification, DreamAudit intake, activation recording, and ManiSkill/cluster evidence regeneration. The packet can be exported without opening the UI via `python -m taco_demo.scripts.export_data_room_packet --output /tmp/TACO-DATAROOM.zip`, which writes the ZIP, verifies `packet/index.json`, and prints the SHA-256 fingerprint. This proves local reproducibility and integration paths, not live customer deployment or external validation.
 
 The external validation capture kit turns reviewer meetings into an auditable workflow: decision-authority checks, artifact-usefulness scoring, missing-evidence requests, source-data paths, LOI or pilot-scope fields, evidence-status ladder, and permission-to-quote controls. It is a capture workflow, not evidence that feedback, pilots, LOIs, revenue, or capacity already exist.
 

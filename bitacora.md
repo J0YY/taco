@@ -1367,3 +1367,17 @@
   - `.venv/bin/python -m pytest taco_demo/tests -q` -> 129 passed.
 - Third independent `codex review --base _review-loop-baseline` inspected the cumulative provenance-audit diff after fixes, observed the test suite passing, and found no discrete correctness issues in the UI, diligence memo, manifest, ZIP bundle, packet versioning, verifier compatibility, or tests.
 - Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `47219`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
+
+## 2026-06-04 - Improvement loop: command-line packet export
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `7e302ce`.
+- Identified the next testrun and diligence gap: reviewers could download and upload the data-room packet through Streamlit, but there was no terminal command to build, verify, and fingerprint the complete ZIP from a fresh checkout.
+- Added `python -m taco_demo.scripts.export_data_room_packet` to bootstrap fixture evidence when needed, compute metrics from NPZ traces, build the diligence memo and v27 data-room ZIP, verify `packet/index.json`, optionally write manifest and memo sidecars, and print a JSON summary with SHA-256, packet format, file counts, premium, certificate count, metric count, and suite size.
+- Updated the technical diligence runbook and README local commands so packet export is a reviewer-facing CLI step, not only a UI download path.
+- Verification before commit:
+  - `.venv/bin/python -m py_compile taco_demo/scripts/export_data_room_packet.py taco_demo/technical_runbook.py taco_demo/tests/test_export_data_room_packet.py` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_export_data_room_packet.py -q` -> 1 passed.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -m pytest taco_demo/tests -q` -> 130 passed.
+  - `.venv/bin/python -m taco_demo.scripts.export_data_room_packet --output /tmp/TACO-DATAROOM-cli-check.zip --manifest-output /tmp/TACO-DATAROOM-cli-check-manifest.json --memo-output /tmp/TACO-DATAROOM-cli-check-memo.md` -> valid v27 packet, 43 files, 42 indexed files, SHA-256 `822df9052b72e7a2c835fa4675dee32608fda219f148afff0ab4f974efdb8390`.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
