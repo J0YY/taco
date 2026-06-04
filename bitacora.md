@@ -596,6 +596,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 64 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed parent-directory ZIP path fix commit `9deb80a` to GitHub `main`.
+- Fourth independent `codex review --base _review-loop-baseline` found one issue:
+  - Windows drive-qualified ZIP members such as `C:/evil.txt` could still pass verification if indexed with matching hashes.
+- Tightened unsafe ZIP path detection to reject leading drive-letter paths and added regression coverage for `C:/evil.txt` and `C:evil.txt`.
+- Verification after drive-qualified path fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 18 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 64 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

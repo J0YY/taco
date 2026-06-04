@@ -351,7 +351,7 @@ def test_data_room_bundle_verifier_rejects_empty_packet_index():
         assert expected_issue in verification["issues"]
 
 
-def test_data_room_bundle_verifier_rejects_trailing_parent_directory_paths():
+def test_data_room_bundle_verifier_rejects_unsafe_member_paths():
     required_files = [
         "README.md",
         "manifest.json",
@@ -364,7 +364,7 @@ def test_data_room_bundle_verifier_rejects_trailing_parent_directory_paths():
         "suite/video_index.json",
         "dreamaudit/summary.json",
     ]
-    for unsafe_name in ["..", "safe/.."]:
+    for unsafe_name in ["..", "safe/..", "C:/evil.txt", "C:evil.txt"]:
         entries = {name: b"" for name in required_files}
         entries[unsafe_name] = b"indexed hostile member"
         packet_index = {
