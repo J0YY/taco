@@ -63,3 +63,4 @@
   - log path `/work/joy/taco/logs/run_1780557030_505530330.out`,
   - remote manifest verified `suite_size=40`,
   - remote video count verified `40` GIFs.
+- Ran a second independent `codex review --base _review-loop-baseline` after adding the ManiSkill suite; reviewer found no observable regressions and noted that the added tests pass and the Streamlit app imports successfully.
