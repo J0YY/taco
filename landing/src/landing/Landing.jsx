@@ -349,10 +349,6 @@ function FailureStory() {
           ))}
         </div>
 
-        <div style={{ marginTop: 24 }}>
-          <TraceViewer />
-        </div>
-
         <div className="notice" style={{ marginTop: 20, borderLeftColor: 'var(--risk)' }}>
           <span className="dot dot-risk" />
           <span>
@@ -636,7 +632,7 @@ const POLICY_CATS = [
     { name: 'PPO · PullCube', task: 'pull cube to target · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/pullcube_success.mp4', f: '/videos/pullcube_failure.mp4' },
   ] },
   { key: 'kitchen', label: 'Home / kitchen', policies: [
-    { name: 'Pi0.5 · LIBERO kitchen', task: 'put the bowl on the stove · libero_goal · 90% success', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/kitchen_bowl_success.mp4', f: '/videos/kitchen_bowl_failure.mp4' },
+    { name: 'Pi0.5 · LIBERO kitchen', task: 'put the bowl on the stove · libero_goal · 9/10 in our eval run', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/kitchen_bowl_success.mp4', f: '/videos/kitchen_bowl_failure.mp4' },
   ] },
   { key: 'mobile', label: 'Mobile manipulators', policies: [
     { name: 'MS-HAB · Fetch pick', task: 'tidy-house pick · ReplicaCAD apartment', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/mshab_pick_success.mp4', f: '/videos/mshab_pick_failure.mp4' },
@@ -659,9 +655,9 @@ const MECH = {
   'OpenVLA · warehouse occlusion': { kind: 'vla', monitorable: true,
     finding: 'Result: under occlusion the target-object feature score collapses while an unsafe-trajectory feature rises, and the combined internal risk crosses threshold before the wrong grasp. We have a recommended second-view monitor but have not yet verified it restores success across the occlusion neighborhood.',
     tierWhy: 'Tier 2, conditional. Monitorable internal signature, but the fix is recommended not verified. Deploy only with the occlusion monitor enabled and re-audit after any model or camera change.' },
-  _vlaMon: { kind: 'vla', monitorable: true,
-    finding: 'Result: on the curated SimplerEnv set the SAE monitor first alerts at step 32, about 48 steps before the episode fails near step 80, with recall 1.0 and precision about 0.86 (one false alert on a clean success). The handoff control is recommended but not yet verified to restore success.',
-    tierWhy: 'Tier 2, conditional. A real early-warning lead exists, but the control is not yet verified. Deploy with the monitor enabled and re-audit.' },
+  _vlaMon: { kind: 'vla', monitorable: false,
+    finding: 'Result: the trained policy completes the task and the variant-shift / OOD condition makes it fail; the residual-stream features for this task are readable, so the failure regime is separable from the internal state. We have not yet fit and measured an in-time SAE monitor (lead time, false-alert rate) for this specific task and policy. The measured 48-step monitor lead we report elsewhere is from the separate sae-scope move-near exhibit, not this rollout.',
+    tierWhy: 'Tier 2, conditional. The trained policy succeeds and the failure is readable from internals, but a verified runtime monitor still needs to be fit for this task, so deploy with re-audit on any scene or model change.' },
   'Pi0.5 · LIBERO kitchen': { kind: 'vla', monitorable: true,
     finding: 'Result: the policy succeeds 9 of 10 episodes on "put the bowl on the stove". The SAE-style feature read on the action expert shows the grasp and place-progress features advancing on the 9 successes and stalling on the one failure, where the bowl is released short of the stove. The failure is detectable but we have not yet fit a verified recovery for it.',
     tierWhy: 'Tier 2, conditional. High task success and a readable failure mode, but the recovery control is not yet verified, so deploy with the place-progress monitor enabled and re-audit on any scene or model change.' },

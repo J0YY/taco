@@ -51,9 +51,12 @@ def certify(
     else:
         tier = 2
 
-    # Escalate (toward less-certified) on residual risk.
+    # Escalate (toward less-certified) on residual risk: a high neighborhood
+    # failure rate demotes both tier 1 and tier 2 by one step.
     if neighborhood_rate >= 0.8 and tier == 1:
         tier = 2
+    elif neighborhood_rate >= 0.8 and tier == 2:
+        tier = 3
     if not control_enabled and tier in (1, 2):
         tier = 3  # required control disabled -> cannot certify conditional deployment
 

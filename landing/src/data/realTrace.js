@@ -3,7 +3,7 @@ export const REAL_TRACE = {
   "duration": 4.0,
   "warningT": 0.04,
   "failureT": 3.98,
-  "leadLabel": "3.94 s",
+  "leadLabel": "elevated for most of the failing episode",
   "rows": [
     {
       "key": "risk",

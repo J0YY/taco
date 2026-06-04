@@ -99,7 +99,7 @@ export default function TraceViewer({ compact = false }) {
                   <path d={areaPath(row.series, rowTop)} fill={color} opacity="0.18" />
                   <path d={seriesPath(row.series, rowTop)} fill="none" stroke={color} strokeWidth="1.5" />
                   <text x={PLOT_X0 + PLOT_W - 4} y={rowTop + 12} fontFamily="DM Mono, monospace" fontSize="8" fill={color} textAnchor="end">
-                    wrong_object_grasp
+                    risk_predicate
                   </text>
                 </>
               ) : row.kind === 'feature' ? (
