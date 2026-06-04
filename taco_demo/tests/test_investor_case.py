@@ -12,6 +12,12 @@ from taco_demo.actuarial_readiness import (
     actuarial_validation_rows,
     build_actuarial_readiness_plan,
 )
+from taco_demo.buyer_roi import (
+    build_buyer_roi_model,
+    buyer_roi_proof_rows,
+    buyer_roi_scenario_rows,
+    buyer_value_driver_rows,
+)
 from taco_demo.capacity_roadmap import (
     build_capacity_roadmap,
     capacity_gate_rows,
@@ -42,7 +48,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V11,
     PACKET_FORMAT_V12,
     PACKET_FORMAT_V13,
+    PACKET_FORMAT_V14,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V13,
     REQUIRED_BUNDLE_FILES_V12,
     REQUIRED_BUNDLE_FILES_V11,
     REQUIRED_BUNDLE_FILES_V10,
@@ -556,6 +564,71 @@ def test_commercial_scale_model_ties_market_context_to_revenue_scenarios_without
     assert len(commercial_gate_rows(model)) >= 4
 
 
+def test_buyer_roi_model_links_stakeholder_value_to_proof_gates_without_claiming_savings():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "demo_trace_fixture", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    suite_manifest = {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()}
+    readiness = build_fundraise_readiness(app, DEMO_CERTIFICATES, metrics, quote, suite_manifest, _carrier_ready_dreamaudit_intake())
+    methodology_map = build_methodology_evidence_map(app, DEMO_CERTIFICATES, metrics, quote, suite_manifest, _carrier_ready_dreamaudit_intake())
+    pricing = build_pricing_diligence(app, DEMO_CERTIFICATES, metrics, quote)
+    design_partner_plan = build_design_partner_plan(app, quote)
+    seed_financing_plan = build_seed_financing_plan(app, quote, readiness, design_partner_plan)
+    objection_register = build_investor_objection_register(
+        readiness,
+        methodology_map,
+        pricing,
+        design_partner_plan,
+        seed_financing_plan,
+    )
+    pilot_walkthrough = build_pilot_walkthrough_playbook(
+        app,
+        quote,
+        design_partner_plan,
+        objection_register,
+        methodology_map,
+        pricing,
+    )
+    external_validation_kit = build_external_validation_capture_kit(
+        app,
+        quote,
+        design_partner_plan,
+        pilot_walkthrough,
+        {"manifest_id": "DR-APP-APEX-001", "packet_files": []},
+    )
+    commercial_model = build_commercial_scale_model(app, quote, readiness, seed_financing_plan, pilot_walkthrough)
+    model = build_buyer_roi_model(
+        app,
+        quote,
+        {"prevented_loss_usd": 74_000, "incurred_loss_usd": 12_000},
+        commercial_model,
+        external_validation_kit,
+    )
+
+    assert model["roi_id"] == "ROI-APP-APEX-001"
+    assert model["status"] == "modeled_buyer_economics_not_validated_savings"
+    assert "not guaranteed savings" in model["boundary"]
+    assert model["assumption_set"]["first_year_cost_usd"] == 165_000
+    assert len(model["buyer_value_drivers"]) == 4
+    assert len(model["roi_scenarios"]) == 3
+    assert next(item for item in model["roi_scenarios"] if item["scenario"] == "base")["net_value_usd"] > 0
+    assert {gate["gate"] for gate in model["proof_gates"]} >= {
+        "buyer_confirms_delay_cost",
+        "evidence_ops_time_study",
+        "control_credit_validated",
+        "commercial_document_signed",
+    }
+    assert model["procurement_readiness"]["required_external_validation_status"] == "capture_ready_external_evidence_not_collected"
+    assert "buyer ROI assumption confirmation" in model["procurement_readiness"]["documents_to_collect"]
+    assert any(case["case"] == "loss_evidence_only" for case in model["sensitivity_cases"])
+    assert buyer_value_driver_rows(model)
+    assert buyer_roi_scenario_rows(model)[1]["Net Value"] > 0
+    assert buyer_roi_proof_rows(model)
+
+
 def test_capacity_roadmap_separates_evidence_revenue_from_insurance_authority():
     app = default_application()
     metrics = [
@@ -1004,6 +1077,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/enterprise_security_plan.json" in summary["files"]
     assert "commercial/external_validation_capture_kit.json" in summary["files"]
     assert "commercial/actuarial_readiness_plan.json" in summary["files"]
+    assert "commercial/buyer_roi_model.json" in summary["files"]
     assert "technical/technical_diligence_runbook.json" in summary["files"]
     assert "research/methodology_evidence_map.json" in summary["files"]
     assert "insurance/workflow_examples.json" in summary["files"]
@@ -1026,11 +1100,12 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         enterprise_security_plan = json.loads(archive.read("commercial/enterprise_security_plan.json"))
         external_validation_kit = json.loads(archive.read("commercial/external_validation_capture_kit.json"))
         actuarial_plan = json.loads(archive.read("commercial/actuarial_readiness_plan.json"))
+        buyer_roi_model = json.loads(archive.read("commercial/buyer_roi_model.json"))
         technical_runbook = json.loads(archive.read("technical/technical_diligence_runbook.json"))
         methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V13
+    assert index["packet_format"] == PACKET_FORMAT_V14
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -1064,11 +1139,18 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert actuarial_plan["plan_id"] == "ACT-APP-APEX-001"
     assert actuarial_plan["status"] == "actuarial_readiness_defined_not_opinion"
     assert any(gate["gate"] == "data_quality_reviewed" for gate in actuarial_plan["data_readiness_gates"])
+    assert manifest["buyer_roi_model"]["roi_id"] == "ROI-APP-APEX-001"
+    assert "not guaranteed savings" in manifest["buyer_roi_model"]["boundary"]
+    assert any(gate["gate"] == "commercial_document_signed" for gate in manifest["buyer_roi_model"]["proof_gates"])
+    assert buyer_roi_model["roi_id"] == "ROI-APP-APEX-001"
+    assert buyer_roi_model["status"] == "modeled_buyer_economics_not_validated_savings"
+    assert next(item for item in buyer_roi_model["roi_scenarios"] if item["scenario"] == "base")["net_value_usd"] > 0
     assert methodology_map["map_id"] == "METHOD-APP-APEX-001"
     assert methodology_map["score"] >= 85
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
     assert "not an insurance offer" in readme
     assert "not an insurance offer, filed actuarial product, rate adequacy opinion" in readme
+    assert "commercial/buyer_roi_model.json" in readme
     verification = verify_data_room_bundle(bundle)
     assert verification["valid"] is True
     assert verification["packet_sha256"] == hashlib.sha256(bundle).hexdigest()
@@ -1106,6 +1188,10 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "actuarial_readiness_defined_not_opinion" in memo
     assert "data_quality_reviewed" in memo
     assert "carrier_filing_or_program_review" in memo
+    assert "## Buyer ROI Model" in memo
+    assert "modeled_buyer_economics_not_validated_savings" in memo
+    assert "buyer_confirms_delay_cost" in memo
+    assert "commercial_document_signed" in memo
     assert "## Investor Objection Register" in memo
     assert "is_this_real_or_demo_theater" in memo
     assert "## Pilot Walkthrough Playbook" in memo
@@ -1154,7 +1240,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, or taco_data_room_zip_v13",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, or taco_data_room_zip_v14",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -1519,6 +1605,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v12_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V12 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v13_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V13}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V13"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V13,
+        "manifest_id": "DR-LEGACY-V13",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V13 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

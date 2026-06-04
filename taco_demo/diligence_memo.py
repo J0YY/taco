@@ -107,6 +107,7 @@ def build_diligence_memo(
     )
     external_validation_kit = data_room_manifest["external_validation_capture_kit"]
     actuarial_plan = data_room_manifest["actuarial_readiness_plan"]
+    buyer_roi_model = data_room_manifest["buyer_roi_model"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -193,6 +194,31 @@ def build_diligence_memo(
     lines.extend(["", "| Credibility phase | Actuarial use | Blocked claims |", "| --- | --- | --- |"])
     for phase in actuarial_plan["credibility_ramp"]:
         lines.append(f"| {phase['phase']} | {phase['actuarial_use']} | {'; '.join(phase['blocked_claims'])} |")
+
+    lines.extend(
+        [
+            "",
+            "## Buyer ROI Model",
+            "",
+            f"* Status: {buyer_roi_model['status']}",
+            f"* Boundary: {buyer_roi_model['boundary']}",
+            f"* First-year modeled cost: ${buyer_roi_model['assumption_set']['first_year_cost_usd']:,.0f}",
+            "",
+            "| Buyer | Modeled value | Validation needed |",
+            "| --- | ---: | --- |",
+        ]
+    )
+    for item in buyer_roi_model["buyer_value_drivers"]:
+        lines.append(f"| {item['buyer']} | ${item['modeled_value_usd']:,.0f} | {item['validation_needed']} |")
+    lines.extend(["", "| Scenario | Modeled value | Net value | Payback months |", "| --- | ---: | ---: | ---: |"])
+    for scenario in buyer_roi_model["roi_scenarios"]:
+        lines.append(
+            f"| {scenario['scenario']} | ${scenario['modeled_value_usd']:,.0f} | "
+            f"${scenario['net_value_usd']:,.0f} | {scenario['payback_months']} |"
+        )
+    lines.extend(["", "| ROI proof gate | Proof required |", "| --- | --- |"])
+    for gate in buyer_roi_model["proof_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['proof_required']} |")
 
     lines.extend(
         [

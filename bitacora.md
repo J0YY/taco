@@ -1043,3 +1043,18 @@
 - Pushed actuarial readiness plan commit `eda3d67` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no correctness-breaking issues in the actuarial readiness plan, Investor Case UI, memo wiring, v13 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `91273`.
+
+## 2026-06-04 - Improvement loop: buyer ROI model
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `838a730`.
+- Captured `_review-loop-baseline` at `838a730c30d1bc8630fb2d2a413e2ebe057e7fcf` for the independent review loop.
+- Identified the next VC/buyer diligence gap: TACO had strong evidence, pricing, actuarial, capacity, and external-validation artifacts, but no buyer-facing economic model showing why robotics OEMs, enterprise risk teams, brokers, MGAs, carriers, or reinsurers would pay for TACO without claiming guaranteed savings or signed demand.
+- Added `taco_demo/buyer_roi.py` with stakeholder value drivers, downside/base/upside payback scenarios, sensitivity cases, procurement-readiness documents, and proof gates for buyer-confirmed delay cost, evidence-ops savings, control-credit review, and signed commercial documents.
+- Added the buyer ROI model to the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v14` while preserving verifier compatibility for legacy v1 through v13 packets.
+- Added tests for the buyer ROI contract, row helpers, manifest/ZIP export, memo section, current v14 packet indexing, invalid packet-format messaging, and legacy v13 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 55 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 101 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

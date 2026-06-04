@@ -18,6 +18,12 @@ from taco_demo.actuarial_readiness import (
     build_actuarial_readiness_plan,
 )
 from taco_demo.activation_recorder import torch_available
+from taco_demo.buyer_roi import (
+    build_buyer_roi_model,
+    buyer_roi_proof_rows,
+    buyer_roi_scenario_rows,
+    buyer_value_driver_rows,
+)
 from taco_demo.capacity_roadmap import (
     build_capacity_roadmap,
     capacity_gate_rows,
@@ -662,6 +668,13 @@ with tabs[9]:
             pricing_diligence,
             capacity_roadmap,
         )
+        buyer_roi_model = build_buyer_roi_model(
+            application,
+            audit["quote"],
+            renewal_summary(audit["quote"]),
+            commercial_model,
+            external_validation_kit,
+        )
         enterprise_security_plan = build_enterprise_security_plan(
             application,
             audit["quote"],
@@ -722,6 +735,15 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(commercial_segment_rows(commercial_model)), width="stretch")
         st.dataframe(pd.DataFrame(commercial_scenario_rows(commercial_model)), width="stretch")
         st.dataframe(pd.DataFrame(commercial_gate_rows(commercial_model)), width="stretch")
+        st.markdown("#### Buyer ROI Model")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("ROI status", str(buyer_roi_model["status"]).replace("_", " ").title())
+        c2.metric("Base net value", _money(next(item["net_value_usd"] for item in buyer_roi_model["roi_scenarios"] if item["scenario"] == "base")))
+        c3.metric("Proof gates", len(buyer_roi_model["proof_gates"]))
+        st.caption(buyer_roi_model["boundary"])
+        st.dataframe(pd.DataFrame(buyer_value_driver_rows(buyer_roi_model)), width="stretch")
+        st.dataframe(pd.DataFrame(buyer_roi_scenario_rows(buyer_roi_model)), width="stretch")
+        st.dataframe(pd.DataFrame(buyer_roi_proof_rows(buyer_roi_model)), width="stretch")
         st.markdown("#### Insurance Capacity Roadmap")
         c1, c2, c3 = st.columns(3)
         c1.metric("Capacity status", str(capacity_roadmap["status"]).replace("_", " ").title())

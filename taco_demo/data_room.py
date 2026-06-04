@@ -11,6 +11,7 @@ import zipfile
 import zlib
 
 from .actuarial_readiness import build_actuarial_readiness_plan
+from .buyer_roi import build_buyer_roi_model
 from .design_partner_plan import build_design_partner_plan
 from .external_validation import build_external_validation_capture_kit
 from .commercial_model import build_commercial_scale_model
@@ -22,6 +23,7 @@ from .investor_objections import build_investor_objection_register
 from .methodology_evidence import build_methodology_evidence_map
 from .pilot_walkthrough import build_pilot_walkthrough_playbook
 from .pricing_diligence import build_pricing_diligence
+from .renewal_loop import renewal_summary
 from .security_plan import build_enterprise_security_plan
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
 from .seed_financing_plan import build_seed_financing_plan
@@ -43,6 +45,7 @@ PACKET_FORMAT_V10 = "taco_data_room_zip_v10"
 PACKET_FORMAT_V11 = "taco_data_room_zip_v11"
 PACKET_FORMAT_V12 = "taco_data_room_zip_v12"
 PACKET_FORMAT_V13 = "taco_data_room_zip_v13"
+PACKET_FORMAT_V14 = "taco_data_room_zip_v14"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -92,8 +95,11 @@ REQUIRED_BUNDLE_FILES_V11 = REQUIRED_BUNDLE_FILES_V10 | {
 REQUIRED_BUNDLE_FILES_V12 = REQUIRED_BUNDLE_FILES_V11 | {
     "commercial/external_validation_capture_kit.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V12 | {
+REQUIRED_BUNDLE_FILES_V13 = REQUIRED_BUNDLE_FILES_V12 | {
     "commercial/actuarial_readiness_plan.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V13 | {
+    "commercial/buyer_roi_model.json",
 }
 
 
@@ -193,6 +199,12 @@ def build_data_room_checklist(
             "ready" if quote.final_monthly_premium_usd > 0 and bool(certificates) and bool(metrics) else "needs_work",
             "Future-cost elements, data-quality gates, modeling controls, credibility ramp, filing handoff, and claims-loop requirements are attached.",
             "Have an actuary, carrier, or reinsurer review the plan before using any output as pricing, rate adequacy, reserve, or filing support.",
+        ),
+        _item(
+            "Buyer ROI Model",
+            "ready" if application.deployment_units > 0 and quote.final_monthly_premium_usd > 0 else "needs_work",
+            "Modeled buyer economics, stakeholder value drivers, payback cases, procurement proof gates, and sensitivity cases are attached.",
+            "Replace modeled assumptions with buyer-confirmed delay cost, evidence-ops time study, control-credit review, and signed pilot evidence.",
         ),
         _item(
             "Design-Partner References",
@@ -322,6 +334,13 @@ def build_data_room_manifest(
         pricing_diligence,
         capacity_roadmap,
     )
+    buyer_roi_model = build_buyer_roi_model(
+        application,
+        quote,
+        renewal_summary(quote),
+        commercial_scale_model,
+        external_validation_capture_kit,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -349,6 +368,7 @@ def build_data_room_manifest(
         "technical_diligence_runbook": technical_diligence_runbook,
         "external_validation_capture_kit": external_validation_capture_kit,
         "actuarial_readiness_plan": actuarial_readiness_plan,
+        "buyer_roi_model": buyer_roi_model,
     }
 
 
@@ -386,6 +406,7 @@ def build_data_room_bundle(
         ("commercial/enterprise_security_plan.json", _json_bytes(manifest["enterprise_security_plan"])),
         ("commercial/external_validation_capture_kit.json", _json_bytes(manifest["external_validation_capture_kit"])),
         ("commercial/actuarial_readiness_plan.json", _json_bytes(manifest["actuarial_readiness_plan"])),
+        ("commercial/buyer_roi_model.json", _json_bytes(manifest["buyer_roi_model"])),
         ("technical/technical_diligence_runbook.json", _json_bytes(manifest["technical_diligence_runbook"])),
     ]
     certificate_names: set[str] = set()
@@ -491,7 +512,8 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, "
                         "taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, "
                         "taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, "
-                        "taco_data_room_zip_v11, taco_data_room_zip_v12, or taco_data_room_zip_v13"
+                        "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
+                        "or taco_data_room_zip_v14"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -640,7 +662,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V13,
+        "packet_format": PACKET_FORMAT_V14,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -682,6 +704,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V12:
         return REQUIRED_BUNDLE_FILES_V12
     if packet_format == PACKET_FORMAT_V13:
+        return REQUIRED_BUNDLE_FILES_V13
+    if packet_format == PACKET_FORMAT_V14:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -743,6 +767,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/enterprise_security_plan.json` - security, data governance, retention, incident response, and SOC2/NIST readiness plan",
             "* `commercial/external_validation_capture_kit.json` - reviewer feedback, scorecard, LOI/pilot-scope, and permission-to-quote capture kit",
             "* `commercial/actuarial_readiness_plan.json` - future-cost, data-quality, modeling, credibility, filing, and claims-loop readiness plan",
+            "* `commercial/buyer_roi_model.json` - modeled buyer economics, payback scenarios, proof gates, and ROI sensitivity cases",
             "* `technical/technical_diligence_runbook.json` - local reproduction, live-evidence, packet-verification, and cluster-regeneration runbook",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",
