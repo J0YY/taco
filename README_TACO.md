@@ -1,6 +1,6 @@
 # TACO - The Autonomous Casualty Office
 
-TACO is a self-contained hackathon demo of learned-policy liability insurance for robotics. It prices a conditional quote using replayable robot failure certificates, deterministic internal model risk traces, required runtime controls, exclusions, and binder generation.
+TACO is a self-contained hackathon demo of learned-policy liability insurance for robotics. It prices a conditional quote using replayable robot failure certificates, deterministic internal model risk traces, required runtime controls, exclusions, and binder generation. The investor thesis is that TACO can become the evidence layer that makes frontier robot autonomy insurable before claims history exists.
 
 ```bash
 python -m pip install -r taco_demo/requirements-taco.txt

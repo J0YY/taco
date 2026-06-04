@@ -26,3 +26,26 @@
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 11 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed, with expected Streamlit bare-mode warnings.
 - After independent review round 1 passed, tuned generated traces so the exact quote formula lands in the updated spec's target range: monitors enabled -> `$29,800/month`; occlusion monitor disabled -> `$51,500/month`. Re-ran tests and import verification successfully.
+
+## 2026-06-04 - Investor-grade fundraise iteration
+
+- Pulled `origin/main`; repository was already up to date and clean.
+- Added `taco_demo/investor_case.py` to make the fundraise story executable:
+  - research foundations with source links,
+  - underwriting workflow artifacts by role,
+  - moat hypotheses,
+  - seed-stage derisking milestones,
+  - investor proof-point summary derived from application, certificates, metrics, and quote.
+- Added an Investor Case tab and research/workflow expanders in the Streamlit UI.
+- Expanded `taco_demo/README.md` with:
+  - venture-scale thesis,
+  - research backing,
+  - buyer workflow,
+  - calibrated quote behavior,
+  - VC pitch track,
+  - moat and derisking milestones.
+- Research sources reviewed and linked in README/app:
+  - SIMPLER / CoRL 2024 simulation-based robot policy evaluation,
+  - Muratore et al. domain randomization / CoRL 2018,
+  - ICLR 2024 sparse autoencoder interpretability,
+  - Anthropic 2024 model-feature mapping and monitoring discussion.

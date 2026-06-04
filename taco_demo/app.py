@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from taco_demo.binder import issue_binder
+from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
 from taco_demo.schemas import FailureCertificate, InsuranceApplication, ReplayArtifacts, dataclass_to_dict, default_application, read_json
 from taco_demo.scripts.bootstrap_demo_data import bootstrap
@@ -147,7 +148,7 @@ with st.sidebar:
         else:
             st.warning("Run the audit first.")
 
-tabs = st.tabs(["Application", "Underwriting Audit", "Replay Evidence", "Internal Signals", "Quote", "Binder", "Spec"])
+tabs = st.tabs(["Application", "Underwriting Audit", "Replay Evidence", "Internal Signals", "Quote", "Binder", "Investor Case", "Spec"])
 application = st.session_state.application
 audit = st.session_state.audit
 
@@ -194,6 +195,11 @@ with tabs[1]:
                 }
             )
         st.dataframe(pd.DataFrame(rows), use_container_width=True)
+        with st.expander("Research-backed methodology"):
+            for foundation in RESEARCH_FOUNDATIONS:
+                st.markdown(f"**{foundation['claim']}**")
+                st.caption(f"{foundation['source']} - {foundation['evidence']}")
+                st.markdown(f"TACO translation: {foundation['taco_translation']} [source]({foundation['url']})")
 
 with tabs[2]:
     if not audit:
@@ -296,6 +302,17 @@ with tabs[4]:
         st.write(quote.required_controls)
         st.markdown("**Exclusions**")
         st.write(quote.exclusions or ["None while required controls remain enabled"])
+        with st.expander("Underwriter workflow explanation"):
+            workflow_rows = [
+                {
+                    "Step": item["step"],
+                    "Operator": item["operator"],
+                    "Artifact": item["artifact"],
+                    "Investor point": item["investor_point"],
+                }
+                for item in UNDERWRITING_WORKFLOW
+            ]
+            st.dataframe(pd.DataFrame(workflow_rows), use_container_width=True)
         st.json(dataclass_to_dict(quote))
 
 with tabs[5]:
@@ -319,6 +336,45 @@ with tabs[5]:
                 st.download_button("Download Markdown Binder", markdown_path.read_bytes(), file_name=markdown_path.name)
 
 with tabs[6]:
+    st.markdown("### Investor Case")
+    st.caption("Why this could plausibly support a venture-scale seed story if the fallback evidence is replaced with real DreamAudit and VLA traces.")
+    if audit:
+        summary = investor_summary(application, audit["certificates"], list(audit["metrics"].values()), audit["quote"])
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Wedge customer", summary["wedge_customer"])
+        c2.metric("Evidence objects", len(audit["certificates"]))
+        c3.metric("Aggregate internal risk", f"{summary['aggregate_internal_risk']:.2f}")
+        c4.metric("Conditional premium", _money(audit["quote"].final_monthly_premium_usd))
+        st.markdown(f"**Fundraise thesis:** {summary['fundraise_thesis']}")
+        st.markdown("**Proof points**")
+        st.write(summary["proof_points"])
+        st.markdown("**Methodology spine**")
+        st.write(summary["research_backed_method"])
+        st.markdown("**Known investor risks**")
+        st.write(summary["investor_risk"])
+    else:
+        st.info("Run the audit to populate the investor proof-point metrics.")
+
+    st.markdown("#### Why This Can Be A Venture-Scale Evidence Layer")
+    st.write(
+        "TACO is not trying to be a generic robotics dashboard. The wedge is a structured evidence layer for brokers, carriers, "
+        "robotics OEMs, and enterprise buyers who need to decide whether learned robot policies are deployable before claims history exists."
+    )
+    cols = st.columns(2)
+    with cols[0]:
+        st.markdown("**Moat hypotheses**")
+        for item in MOAT_HYPOTHESES:
+            st.markdown(f"* {item}")
+    with cols[1]:
+        st.markdown("**Seed-stage derisking milestones**")
+        for item in FUNDRAISE_MILESTONES:
+            st.markdown(f"* {item}")
+
+    st.markdown("#### Research Anchors")
+    for foundation in RESEARCH_FOUNDATIONS:
+        st.markdown(f"* **{foundation['source']}**: {foundation['taco_translation']} [link]({foundation['url']})")
+
+with tabs[7]:
     readme = Path(__file__).with_name("README.md")
     if readme.exists():
         st.markdown(readme.read_text(encoding="utf-8"))
