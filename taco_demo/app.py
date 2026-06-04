@@ -318,6 +318,8 @@ with tabs[4]:
             "target_identity_confirmation_enabled": st.toggle("Enable target identity confirmation", True),
             "action_noise_envelope_monitor_enabled": st.toggle("Enable action-noise envelope monitor", True),
             "vision_shift_monitor_enabled": st.toggle("Enable vision-shift monitor", True),
+            "calibration_revalidation_gate_enabled": st.toggle("Enable calibration revalidation gate", True),
+            "grasp_success_confirmation_enabled": st.toggle("Enable grasp-success confirmation", True),
             "reaudit_required_after_model_update": st.toggle("Reaudit after model update", True),
         }
         quote = generate_quote(application, audit["certificates"], audit["metrics"], controls)

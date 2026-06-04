@@ -33,6 +33,10 @@ def required_control_for_failure(failure_type: str) -> str | None:
         return "action_noise_envelope_monitor_enabled"
     if "vision" in failure_type or "observation" in failure_type:
         return "vision_shift_monitor_enabled"
+    if "calibration" in failure_type:
+        return "calibration_revalidation_gate_enabled"
+    if "grasp_miss" in failure_type or ("grasp" in failure_type and "miss" in failure_type):
+        return "grasp_success_confirmation_enabled"
     return None
 
 
@@ -106,6 +110,10 @@ def generate_quote(
             exclusions.append(f"{cert.certificate_id} action-noise sensitivity excluded until action-envelope monitoring is enabled.")
         elif control == "vision_shift_monitor_enabled":
             exclusions.append(f"{cert.certificate_id} vision-shift sensitivity excluded until vision-shift monitoring and re-audit triggers are enabled.")
+        elif control == "calibration_revalidation_gate_enabled":
+            exclusions.append(f"{cert.certificate_id} calibration-sensitive behavior excluded until calibration revalidation gates are enabled.")
+        elif control == "grasp_success_confirmation_enabled":
+            exclusions.append(f"{cert.certificate_id} grasp-miss behavior excluded until grasp-success confirmation is enabled.")
         else:
             exclusions.append(f"{cert.certificate_id} known failure family excluded until required internal-risk control is enabled.")
 

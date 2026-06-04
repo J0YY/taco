@@ -208,7 +208,7 @@ The Streamlit app includes:
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
-The `DreamAudit Intake` tab scans a local artifact directory and reports not just counts, but underwriting readiness: mapped controls, evidence gaps, minimality coverage, replay/certificate command coverage, and behavioral fragility. The current control taxonomy covers occlusion, language override, distractor confusion, action-noise sensitivity, and vision-shift sensitivity as named underwriting requirements rather than opaque failure labels.
+The `DreamAudit Intake` tab scans a local artifact directory and reports not just counts, but underwriting readiness: mapped controls, evidence gaps, minimality coverage, replay/certificate command coverage, and behavioral fragility. The current control taxonomy covers occlusion, language override, distractor confusion, action-noise sensitivity, vision-shift sensitivity, calibration sensitivity, and grasp-miss behavior as named underwriting requirements rather than opaque failure labels.
 
 ## Research Backing
 

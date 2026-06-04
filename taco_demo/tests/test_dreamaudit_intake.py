@@ -116,7 +116,7 @@ def test_underwriting_readiness_scores_broad_mapped_evidence():
     assert readiness["replay_commands"] == 30
 
 
-def test_underwriting_readiness_maps_action_noise_and_vision_controls():
+def test_underwriting_readiness_maps_observed_dreamaudit_controls():
     certs = []
     for idx, (failure_mode, perturbation_type, control) in enumerate(
         [
@@ -126,6 +126,8 @@ def test_underwriting_readiness_maps_action_noise_and_vision_controls():
                 "openvla_observation_brightness_shift",
                 "vision_shift_monitor_enabled",
             ),
+            ("calibration_sensitivity", "camera_calibration_offset", "calibration_revalidation_gate_enabled"),
+            ("grasp_miss", "gripper_pose_delta", "grasp_success_confirmation_enabled"),
         ]
     ):
         certs.append(
@@ -148,6 +150,8 @@ def test_underwriting_readiness_maps_action_noise_and_vision_controls():
     assert readiness["unmapped_failure_families"] == []
     assert "action_noise_envelope_monitor_enabled" in readiness["required_controls"]
     assert "vision_shift_monitor_enabled" in readiness["required_controls"]
+    assert "calibration_revalidation_gate_enabled" in readiness["required_controls"]
+    assert "grasp_success_confirmation_enabled" in readiness["required_controls"]
     assert "Some failure families do not yet map to named required controls." not in readiness["gaps"]
 
 

@@ -317,3 +317,21 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 42 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed first control-taxonomy commit `dacfa90` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` reported no discrete correctness issues in the new control mappings, exclusions, UI toggles, or tests.
+- A full-corpus scan of `/Users/joyyang/Projects/dreamaudit/artifacts` found two more mapped-evidence gaps outside the default 250-certificate slice:
+  - `calibration_sensitivity`,
+  - `grasp_miss`.
+- Added named controls for the full observed DreamAudit family set:
+  - `calibration_sensitivity` -> `calibration_revalidation_gate_enabled`,
+  - `grasp_miss` -> `grasp_success_confirmation_enabled`.
+- Added patch-recipe text, quote toggles, and specific exclusion wording for calibration-sensitive and grasp-miss behavior.
+- Expanded tests so the readiness and quote engines cover all seven observed DreamAudit failure families.
+- Re-ran DreamAudit scans:
+  - default 250-certificate scan: readiness `85/100`, status `needs_more_evidence`, unmapped families `[]`, remaining gap is low minimality coverage,
+  - full 6,531-certificate scan: readiness `100/100`, status `carrier_review_ready`, unmapped families `[]`, gaps `[]`.
+- Verification after full-corpus taxonomy patch:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_quote_engine.py taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py` -> 19 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 42 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

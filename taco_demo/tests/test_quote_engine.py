@@ -17,6 +17,8 @@ def enabled_controls():
         "target_identity_confirmation_enabled": True,
         "action_noise_envelope_monitor_enabled": True,
         "vision_shift_monitor_enabled": True,
+        "calibration_revalidation_gate_enabled": True,
+        "grasp_success_confirmation_enabled": True,
     }
 
 
@@ -59,20 +61,30 @@ def test_disabling_specific_controls_creates_exclusions():
 def test_dreamaudit_action_and_vision_failures_map_to_named_controls():
     assert required_control_for_failure("action_noise_counterfactual_failure") == "action_noise_envelope_monitor_enabled"
     assert required_control_for_failure("vision_perturbation_counterfactual_failure") == "vision_shift_monitor_enabled"
+    assert required_control_for_failure("calibration_sensitivity") == "calibration_revalidation_gate_enabled"
+    assert required_control_for_failure("grasp_miss") == "grasp_success_confirmation_enabled"
 
 
 def test_action_and_vision_controls_create_specific_exclusions():
     action_cert = replace(DEMO_CERTIFICATES[0], certificate_id="DA-ACTION-001", failure_type="action_noise_counterfactual_failure")
     vision_cert = replace(DEMO_CERTIFICATES[0], certificate_id="DA-VISION-001", failure_type="vision_perturbation_counterfactual_failure")
-    certs = [action_cert, vision_cert]
+    calibration_cert = replace(DEMO_CERTIFICATES[0], certificate_id="DA-CAL-001", failure_type="calibration_sensitivity")
+    grasp_cert = replace(DEMO_CERTIFICATES[0], certificate_id="DA-GRASP-001", failure_type="grasp_miss")
+    certs = [action_cert, vision_cert, calibration_cert, grasp_cert]
     metrics = {cert.certificate_id: metric(cert.certificate_id) for cert in certs}
     controls = enabled_controls()
     controls["action_noise_envelope_monitor_enabled"] = False
     controls["vision_shift_monitor_enabled"] = False
+    controls["calibration_revalidation_gate_enabled"] = False
+    controls["grasp_success_confirmation_enabled"] = False
 
     quote = generate_quote(default_application(), certs, metrics, controls)
 
     assert "action_noise_envelope_monitor_enabled" in quote.required_controls
     assert "vision_shift_monitor_enabled" in quote.required_controls
+    assert "calibration_revalidation_gate_enabled" in quote.required_controls
+    assert "grasp_success_confirmation_enabled" in quote.required_controls
     assert any("action-noise sensitivity" in exclusion for exclusion in quote.exclusions)
     assert any("vision-shift sensitivity" in exclusion for exclusion in quote.exclusions)
+    assert any("calibration-sensitive behavior" in exclusion for exclusion in quote.exclusions)
+    assert any("grasp-miss behavior" in exclusion for exclusion in quote.exclusions)

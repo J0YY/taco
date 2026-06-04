@@ -216,6 +216,8 @@ def _patch_recipe(payload: JsonDict, failure_type: str) -> JsonDict:
         "contact_force_overshoot": "force-envelope monitor with automatic slowdown",
         "action_noise_counterfactual_failure": "action-envelope monitor with actuator-noise re-audit trigger",
         "vision_perturbation_counterfactual_failure": "vision-shift monitor with re-audit trigger",
+        "calibration_sensitivity": "calibration revalidation gate before coverage attaches",
+        "grasp_miss": "grasp-success confirmation before irreversible motion",
     }
     recipe.setdefault("taco_required_control", controls_by_failure.get(failure_type, "known-failure runtime monitor"))
     recipe.setdefault("underwriting_use", "Required control and exclusion text for learned-policy liability quote.")
