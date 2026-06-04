@@ -56,3 +56,10 @@
   - `taco_demo/data/maniskill_suite/manifest.json`,
   - 40 generated replay GIFs across eight failure families and five ManiSkill-style RMA environments.
 - The suite records what TACO identifies from each replay: risk signal, underwriting interpretation, required control, severity, minimal failure cost, and neighborhood failure rate.
+- Pushed the suite to GitHub main at `82d02b4`, cloned it on `athena` under `/work/joy/taco`, and ran:
+  - `~/remote_srun.sh --log --setup 'source ~/miniconda3/etc/profile.d/conda.sh && conda activate rma' /work/joy/taco python -m taco_demo.scripts.generate_maniskill_video_suite --force`
+- Cluster result:
+  - SLURM job allocated host `c2-g4-24`,
+  - log path `/work/joy/taco/logs/run_1780557030_505530330.out`,
+  - remote manifest verified `suite_size=40`,
+  - remote video count verified `40` GIFs.
