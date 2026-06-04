@@ -83,6 +83,12 @@ from taco_demo.data_room import (
 from taco_demo.design_partner_plan import build_design_partner_plan, design_partner_plan_rows
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
+from taco_demo.dreamaudit_corpus_reconciliation import (
+    build_dreamaudit_corpus_reconciliation,
+    dreamaudit_claim_rows,
+    dreamaudit_gap_rows,
+    dreamaudit_gate_rows,
+)
 from taco_demo.external_validation import (
     build_external_validation_capture_kit,
     external_validation_ladder_rows,
@@ -670,6 +676,17 @@ with tabs[9]:
         c2.metric("Research sources", methodology_map["research_source_count"])
         c3.metric("Claims mapped", len(methodology_map["claims"]))
         st.dataframe(pd.DataFrame(methodology_evidence_rows(methodology_map)), width="stretch")
+        dreamaudit_reconciliation = build_dreamaudit_corpus_reconciliation(application, dreamaudit_intake)
+        st.markdown("#### DreamAudit Corpus Reconciliation")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Corpus status", str(dreamaudit_reconciliation["status"]).replace("_", " ").title())
+        c2.metric("Selected certificates", dreamaudit_reconciliation["current_evidence"]["selected_certificates"])
+        c3.metric("Failure families", dreamaudit_reconciliation["current_evidence"]["failure_family_count"])
+        c4.metric("Minimality reports", dreamaudit_reconciliation["current_evidence"]["minimality_reports"])
+        st.caption(dreamaudit_reconciliation["boundary"])
+        st.dataframe(pd.DataFrame(dreamaudit_gate_rows(dreamaudit_reconciliation)), width="stretch")
+        st.dataframe(pd.DataFrame(dreamaudit_gap_rows(dreamaudit_reconciliation)), width="stretch")
+        st.dataframe(pd.DataFrame(dreamaudit_claim_rows(dreamaudit_reconciliation)), width="stretch")
         pricing_diligence = build_pricing_diligence(
             application,
             audit["certificates"],
@@ -1223,6 +1240,15 @@ with tabs[10]:
         c2.metric("Status", str(readiness["status"]).replace("_", " ").title())
         c3.metric("Controls mapped", len(readiness["required_controls"]))
         c4.metric("Behavioral multiplier", f"{readiness['mean_behavioral_fragility_multiplier']:.2f}x")
+        reconciliation = build_dreamaudit_corpus_reconciliation(application, intake)
+        st.markdown("#### Corpus Reconciliation")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Reconciliation status", str(reconciliation["status"]).replace("_", " ").title())
+        c2.metric("Source directories", reconciliation["current_evidence"]["source_directories"])
+        c3.metric("Recommended depth", reconciliation["current_evidence"]["recommended_scan_limit"] or "not found")
+        st.caption(reconciliation["boundary"])
+        st.dataframe(pd.DataFrame(dreamaudit_gate_rows(reconciliation)), width="stretch")
+        st.dataframe(pd.DataFrame(dreamaudit_gap_rows(reconciliation)), width="stretch")
         st.markdown("**Required controls implied by imported evidence**")
         st.write(readiness["required_controls"] or ["No mapped controls yet"])
         if readiness["gaps"]:

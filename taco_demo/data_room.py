@@ -18,6 +18,7 @@ from .commercial_traction import build_commercial_traction_plan
 from .commercial_unit_economics import build_commercial_unit_economics
 from .competitive_positioning import build_competitive_positioning
 from .design_partner_plan import build_design_partner_plan
+from .dreamaudit_corpus_reconciliation import build_dreamaudit_corpus_reconciliation
 from .external_validation import build_external_validation_capture_kit
 from .external_proof_registry import build_external_proof_registry
 from .commercial_model import build_commercial_scale_model
@@ -66,6 +67,7 @@ PACKET_FORMAT_V21 = "taco_data_room_zip_v21"
 PACKET_FORMAT_V22 = "taco_data_room_zip_v22"
 PACKET_FORMAT_V23 = "taco_data_room_zip_v23"
 PACKET_FORMAT_V24 = "taco_data_room_zip_v24"
+PACKET_FORMAT_V25 = "taco_data_room_zip_v25"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -148,8 +150,11 @@ REQUIRED_BUNDLE_FILES_V22 = REQUIRED_BUNDLE_FILES_V21 | {
 REQUIRED_BUNDLE_FILES_V23 = REQUIRED_BUNDLE_FILES_V22 | {
     "commercial/competitive_positioning.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V23 | {
+REQUIRED_BUNDLE_FILES_V24 = REQUIRED_BUNDLE_FILES_V23 | {
     "research/activation_evidence_contract.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V24 | {
+    "dreamaudit/corpus_reconciliation.json",
 }
 
 
@@ -171,6 +176,10 @@ def build_data_room_checklist(
     metric_sources = sorted({metric.metrics_source for metric in metrics})
     metric_source_text = ", ".join(metric_sources) if metric_sources else "none"
     dreamaudit = _dreamaudit_status(dreamaudit_intake)
+    dreamaudit_reconciliation = build_dreamaudit_corpus_reconciliation(application, dreamaudit_intake)
+    dreamaudit_gate_failures = [
+        gate for gate in dreamaudit_reconciliation["evidence_gates"] if gate["status"] != "pass"
+    ]
     items = [
         _item(
             "Application And Coverage File",
@@ -213,6 +222,15 @@ def build_data_room_checklist(
             dreamaudit["status"],
             dreamaudit["evidence"],
             dreamaudit["next_action"],
+        ),
+        _item(
+            "DreamAudit Corpus Reconciliation",
+            "ready" if dreamaudit_reconciliation["status"] != "not_scanned" else "needs_live_scan",
+            (
+                f"{dreamaudit_reconciliation['current_evidence']['selected_certificates']} selected certificates; "
+                f"{len(dreamaudit_gate_failures)} corpus gates still failing."
+            ),
+            "Close the listed corpus gates before upgrading DreamAudit evidence beyond private diligence import.",
         ),
         _item(
             "Research And Methodology Sources",
@@ -364,6 +382,7 @@ def build_data_room_manifest(
     checklist = build_data_room_checklist(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
     suite_cases = list(suite_manifest.get("cases", []))
     dreamaudit_summary = _dreamaudit_manifest_summary(dreamaudit_intake)
+    dreamaudit_corpus_reconciliation = build_dreamaudit_corpus_reconciliation(application, dreamaudit_intake)
     design_partner_plan = build_design_partner_plan(application, quote)
     fundraise_readiness = build_fundraise_readiness(
         application,
@@ -564,6 +583,7 @@ def build_data_room_manifest(
             "video_paths": [str(case.get("video_path", "")) for case in suite_cases if case.get("video_path")],
         },
         "dreamaudit": dreamaudit_summary,
+        "dreamaudit_corpus_reconciliation": dreamaudit_corpus_reconciliation,
         "design_partner_plan": design_partner_plan,
         "seed_financing_plan": seed_financing_plan,
         "methodology_evidence_map": methodology_evidence_map,
@@ -618,6 +638,7 @@ def build_data_room_bundle(
         ("research/activation_evidence_contract.json", _json_bytes(manifest["activation_evidence_contract"])),
         ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
         ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
+        ("dreamaudit/corpus_reconciliation.json", _json_bytes(manifest["dreamaudit_corpus_reconciliation"])),
         ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
         ("commercial/seed_financing_plan.json", _json_bytes(manifest["seed_financing_plan"])),
         ("commercial/pricing_diligence.json", _json_bytes(manifest["pricing_diligence"])),
@@ -744,7 +765,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, "
                         "taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, "
                         "taco_data_room_zip_v20, taco_data_room_zip_v21, taco_data_room_zip_v22, "
-                        "taco_data_room_zip_v23, or taco_data_room_zip_v24"
+                        "taco_data_room_zip_v23, taco_data_room_zip_v24, or taco_data_room_zip_v25"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -893,7 +914,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V24,
+        "packet_format": PACKET_FORMAT_V25,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -957,6 +978,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V23:
         return REQUIRED_BUNDLE_FILES_V23
     if packet_format == PACKET_FORMAT_V24:
+        return REQUIRED_BUNDLE_FILES_V24
+    if packet_format == PACKET_FORMAT_V25:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -1012,6 +1035,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `metrics/` - internal-risk metric contracts",
             "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",
             "* `dreamaudit/summary.json` - attached DreamAudit intake summary",
+            "* `dreamaudit/corpus_reconciliation.json` - live corpus gates, gaps, claim-upgrade paths, and source-path policy",
             "* `commercial/design_partner_plan.json` - external-validation plan for broker/carrier/OEM pilots",
             "* `commercial/seed_financing_plan.json` - proposed $5M seed use-of-funds and milestone plan",
             "* `commercial/pricing_diligence.json` - quote-factor and control-sensitivity diligence artifact",

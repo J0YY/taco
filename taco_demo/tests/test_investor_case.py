@@ -91,7 +91,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V22,
     PACKET_FORMAT_V23,
     PACKET_FORMAT_V24,
+    PACKET_FORMAT_V25,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V24,
     REQUIRED_BUNDLE_FILES_V23,
     REQUIRED_BUNDLE_FILES_V22,
     REQUIRED_BUNDLE_FILES_V21,
@@ -123,6 +125,12 @@ from taco_demo.data_room import (
     verify_data_room_bundle,
 )
 from taco_demo.design_partner_plan import build_design_partner_plan, design_partner_plan_rows
+from taco_demo.dreamaudit_corpus_reconciliation import (
+    build_dreamaudit_corpus_reconciliation,
+    dreamaudit_claim_rows,
+    dreamaudit_gap_rows,
+    dreamaudit_gate_rows,
+)
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.external_validation import (
     build_external_validation_capture_kit,
@@ -194,7 +202,29 @@ def _carrier_ready_dreamaudit_intake() -> dict[str, object]:
         "root": "/tmp/dreamaudit",
         "root_exists": True,
         "summary": {"certificates": 250},
-        "readiness": {"readiness_score": 85, "status": "needs_more_evidence", "gaps": ["Less than half of certificates include minimality reports."]},
+        "failure_counts": {
+            "action_noise_counterfactual_failure": 30,
+            "language_override_instruction_conflict": 33,
+            "occlusion_induced_wrong_grasp": 72,
+            "vision_perturbation_counterfactual_failure": 115,
+        },
+        "schema_counts": {"compact": 250},
+        "backend_counts": {"LIBERO": 250},
+        "readiness": {
+            "readiness_score": 85,
+            "status": "needs_more_evidence",
+            "required_controls": [
+                "action_noise_envelope_monitor_enabled",
+                "language_override_sanitizer_enabled",
+                "occlusion_risk_monitor_enabled",
+                "vision_shift_monitor_enabled",
+            ],
+            "unmapped_failure_families": [],
+            "minimality_reports": 21,
+            "replay_commands": 250,
+            "source_directories": 18,
+            "gaps": ["Less than half of certificates include minimality reports."],
+        },
         "evidence_depth_ladder": [
             {"scan_limit": 250, "status": "needs_more_evidence"},
             {"scan_limit": 5000, "status": "carrier_review_ready"},
@@ -645,7 +675,7 @@ def test_external_proof_registry_tracks_artifact_slots_without_counting_uncollec
     assert registry["registry_id"] == "EPROOF-APP-APEX-001"
     assert registry["status"] == "registry_ready_no_external_artifacts_collected"
     assert "not evidence that reviewer memos" in registry["boundary"]
-    assert registry["packet_context"]["packet_format_expected"] == "taco_data_room_zip_v24"
+    assert registry["packet_context"]["packet_format_expected"] == "taco_data_room_zip_v25"
     assert registry["packet_context"]["packet_sha256_required"] is True
     assert registry["current_counts"]["proof_slots"] == 6
     assert registry["current_counts"]["countable_external_artifacts"] == 0
@@ -1160,7 +1190,7 @@ def test_methodology_validation_protocol_predeclares_endpoints_baselines_and_art
     assert protocol["protocol_id"] == "VALPROTO-APP-APEX-001"
     assert protocol["status"] == "protocol_ready_pre_registration_required"
     assert "not evidence that TACO has completed external validation" in protocol["boundary"]
-    assert protocol["packet_context"]["target_packet_format"] == "taco_data_room_zip_v24"
+    assert protocol["packet_context"]["target_packet_format"] == "taco_data_room_zip_v25"
     assert protocol["packet_context"]["pre_registration_required"] is True
     assert protocol["packet_context"]["external_registry"] == "EPROOF-APP-APEX-001"
     assert protocol["current_design_inputs"]["real_activation_metric_count"] == len(metrics)
@@ -1738,6 +1768,30 @@ def test_data_room_checklist_marks_live_dreamaudit_missing_without_scan():
     assert checklist["internal_packet_score"] < 100
 
 
+def test_dreamaudit_corpus_reconciliation_turns_live_scan_into_countable_gates():
+    app = default_application()
+    reconciliation = build_dreamaudit_corpus_reconciliation(app, _carrier_ready_dreamaudit_intake())
+    gate_rows = dreamaudit_gate_rows(reconciliation)
+    gap_rows = dreamaudit_gap_rows(reconciliation)
+    claim_rows = dreamaudit_claim_rows(reconciliation)
+
+    assert reconciliation["reconciliation_id"] == "DA-CORPUS-APP-APEX-001"
+    assert reconciliation["status"] == "carrier_review_ready_pending_external_acceptance"
+    assert "not proof of external acceptance" in reconciliation["boundary"]
+    assert reconciliation["current_evidence"]["selected_certificates"] == 250
+    assert reconciliation["current_evidence"]["failure_family_count"] == 4
+    assert reconciliation["current_evidence"]["minimality_reports"] == 21
+    assert reconciliation["evidence_counts"]["schema_counts"] == {"compact": 250}
+    assert any(gate["gate"] == "minimality_coverage" and gate["status"] == "fail" for gate in reconciliation["evidence_gates"])
+    assert any(gate["gate"] == "carrier_depth_ladder" and gate["status"] == "pass" for gate in reconciliation["evidence_gates"])
+    assert any(gap["blocks"] == "minimal_failure_boundary_claim" for gap in reconciliation["carrier_gap_register"])
+    assert any(item["claim"] == "minimal_failure_boundary" for item in reconciliation["claim_upgrade_paths"])
+    assert any(item["policy"] == "packet_hash_required" for item in reconciliation["source_path_policy"])
+    assert any(row["Gate"] == "minimality_coverage" for row in gate_rows)
+    assert any(row["Blocks"] == "minimal_failure_boundary_claim" for row in gap_rows)
+    assert any(row["Claim"] == "underwriting_control_mapping" for row in claim_rows)
+
+
 def test_data_room_manifest_exports_machine_readable_packet():
     app = default_application()
     metrics = [
@@ -1765,6 +1819,11 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert len(manifest["primary_certificates"]) == len(DEMO_CERTIFICATES)
     assert len(manifest["internal_metrics"]) == len(metrics)
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
+    assert manifest["dreamaudit_corpus_reconciliation"]["reconciliation_id"] == "DA-CORPUS-APP-APEX-001"
+    assert any(
+        gate["gate"] == "minimality_coverage"
+        for gate in manifest["dreamaudit_corpus_reconciliation"]["evidence_gates"]
+    )
     assert manifest["design_partner_plan"]["status"] == "external_validation_pending"
     assert len(manifest["design_partner_plan"]["tracks"]) >= 3
     assert manifest["seed_financing_plan"]["target_raise_usd"] == TARGET_SEED_RAISE_USD
@@ -1939,6 +1998,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/commercial_scale_model.json" in summary["files"]
     assert "commercial/competitive_positioning.json" in summary["files"]
     assert "research/activation_evidence_contract.json" in summary["files"]
+    assert "dreamaudit/corpus_reconciliation.json" in summary["files"]
     assert "commercial/capacity_roadmap.json" in summary["files"]
     assert "commercial/enterprise_security_plan.json" in summary["files"]
     assert "commercial/external_validation_capture_kit.json" in summary["files"]
@@ -1960,6 +2020,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert f"metrics/{metrics[0].certificate_id}.json" in summary["files"]
 
     with zipfile.ZipFile(io.BytesIO(bundle), mode="r") as archive:
+        assert len(archive.namelist()) == len(set(archive.namelist()))
         manifest = json.loads(archive.read("manifest.json"))
         index = json.loads(archive.read("packet/index.json"))
         readme = archive.read("README.md").decode("utf-8")
@@ -1972,6 +2033,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         commercial_model = json.loads(archive.read("commercial/commercial_scale_model.json"))
         competitive_positioning = json.loads(archive.read("commercial/competitive_positioning.json"))
         activation_evidence_contract = json.loads(archive.read("research/activation_evidence_contract.json"))
+        dreamaudit_reconciliation = json.loads(archive.read("dreamaudit/corpus_reconciliation.json"))
         capacity_roadmap = json.loads(archive.read("commercial/capacity_roadmap.json"))
         enterprise_security_plan = json.loads(archive.read("commercial/enterprise_security_plan.json"))
         external_validation_kit = json.loads(archive.read("commercial/external_validation_capture_kit.json"))
@@ -1989,10 +2051,13 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V24
+    assert index["packet_format"] == PACKET_FORMAT_V25
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
+    assert manifest["dreamaudit_corpus_reconciliation"]["reconciliation_id"] == "DA-CORPUS-APP-APEX-001"
+    assert dreamaudit_reconciliation["status"] == "carrier_review_ready_pending_external_acceptance"
+    assert any(gate["gate"] == "source_path_presence" for gate in dreamaudit_reconciliation["evidence_gates"])
     assert design_partner_plan["plan_id"] == "DP-APP-APEX-001"
     assert design_partner_plan["status"] == "external_validation_pending"
     assert seed_financing_plan["plan_id"] == "SEED-APP-APEX-001"
@@ -2045,7 +2110,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert any(item["hypothesis_id"] == "internal_activations_add_signal" for item in research_validation_plan["hypotheses"])
     assert any(rule["rule"] == "sim_to_real_failure_mismatch" for rule in research_validation_plan["downgrade_rules"])
     assert methodology_validation_protocol["protocol_id"] == "VALPROTO-APP-APEX-001"
-    assert methodology_validation_protocol["packet_context"]["target_packet_format"] == "taco_data_room_zip_v24"
+    assert methodology_validation_protocol["packet_context"]["target_packet_format"] == "taco_data_room_zip_v25"
     assert any(item["baseline"] == "slide_or_screenshot_review" for item in methodology_validation_protocol["baseline_comparisons"])
     assert any(item["workflow"] == "update_claim_ledger" for item in methodology_validation_protocol["execution_workflows"])
     assert activation_evidence_contract["contract_id"] == "AEV-APP-APEX-001"
@@ -2079,6 +2144,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/commercial_unit_economics.json" in readme
     assert "commercial/seed_round_close_plan.json" in readme
     assert "commercial/external_proof_registry.json" in readme
+    assert "dreamaudit/corpus_reconciliation.json" in readme
     assert "research/claim_validation_ledger.json" in readme
     assert "research/research_validation_plan.json" in readme
     assert "research/methodology_validation_protocol.json" in readme
@@ -2114,6 +2180,10 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "## Methodology Evidence Map" in memo
     assert "does not claim actuarial validation" in memo
     assert "internal_activation_risk_path" in memo
+    assert "## DreamAudit Corpus Reconciliation" in memo
+    assert "not proof of external acceptance" in memo
+    assert "minimality_coverage" in memo
+    assert "minimal_failure_boundary_claim" in memo
     assert "## Research Validation Plan" in memo
     assert "research_plan_strong_local_basis_needs_partner_validation" in memo
     assert "activation_incrementality" in memo
@@ -2214,7 +2284,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, taco_data_room_zip_v20, taco_data_room_zip_v21, taco_data_room_zip_v22, taco_data_room_zip_v23, or taco_data_room_zip_v24",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, taco_data_room_zip_v20, taco_data_room_zip_v21, taco_data_room_zip_v22, taco_data_room_zip_v23, taco_data_room_zip_v24, or taco_data_room_zip_v25",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -2909,6 +2979,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v23_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V23 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v24_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V24}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V24"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V24,
+        "manifest_id": "DR-LEGACY-V24",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V24 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

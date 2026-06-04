@@ -1297,3 +1297,23 @@
 - Final testrun checks:
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `35474`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
+
+## 2026-06-04 - Improvement loop: DreamAudit corpus reconciliation
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `2606f2a`.
+- Identified the next diligence gap: the live DreamAudit adapter could scan real artifacts, but the data room did not yet separate import-ready evidence from non-countable carrier-review gaps like minimality coverage, source-path privacy, and external acceptance.
+- Ran live DreamAudit intake against `/Users/joyyang/Projects/dreamaudit/artifacts` with limit 250:
+  - 250 adapted certificates.
+  - Failure families: action noise, language override, occlusion, and vision perturbation.
+  - Readiness score 85/100 with 21 completed minimality reports, 250 replay/inspection commands, and 18 source directories.
+  - Reconciliation gates passed for source paths, family mapping, replay commands, source diversity, and carrier-depth ladder; minimality coverage remains a failing gate.
+- Added `taco_demo/dreamaudit_corpus_reconciliation.py` with corpus evidence gates, gap register, claim-upgrade paths, source-path policy, and do-not-claim boundaries.
+- Wired DreamAudit corpus reconciliation into the Investor Case UI, DreamAudit Intake UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README product-surface language.
+- Bumped generated data-room packets to `taco_data_room_zip_v25` while preserving verifier compatibility for legacy v1 through v24 packets.
+- Added packet hygiene coverage asserting no duplicate ZIP members in generated data-room bundles.
+- Verification before commit:
+  - `.venv/bin/python -m py_compile taco_demo/dreamaudit_corpus_reconciliation.py taco_demo/data_room.py taco_demo/app.py taco_demo/diligence_memo.py taco_demo/external_proof_registry.py taco_demo/methodology_validation_protocol.py taco_demo/tests/test_investor_case.py` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 75 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 124 passed.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.

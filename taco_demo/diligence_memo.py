@@ -114,6 +114,7 @@ def build_diligence_memo(
     research_validation_plan = data_room_manifest["research_validation_plan"]
     methodology_validation_protocol = data_room_manifest["methodology_validation_protocol"]
     activation_evidence_contract = data_room_manifest["activation_evidence_contract"]
+    dreamaudit_reconciliation = data_room_manifest["dreamaudit_corpus_reconciliation"]
     competitive_positioning = data_room_manifest["competitive_positioning"]
     commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
     commercial_unit_economics = data_room_manifest["commercial_unit_economics"]
@@ -157,6 +158,27 @@ def build_diligence_memo(
         lines.append(
             f"| {claim['claim_id']} | {claim['status']} | {claim['current_evidence']} | {claim['boundary']} |"
         )
+
+    lines.extend(
+        [
+            "",
+            "## DreamAudit Corpus Reconciliation",
+            "",
+            f"* Status: {dreamaudit_reconciliation['status']}",
+            f"* Boundary: {dreamaudit_reconciliation['boundary']}",
+            f"* Selected certificates: {dreamaudit_reconciliation['current_evidence']['selected_certificates']}",
+            f"* Minimality reports: {dreamaudit_reconciliation['current_evidence']['minimality_reports']}",
+            f"* Recommended scan depth: {dreamaudit_reconciliation['current_evidence']['recommended_scan_limit']}",
+            "",
+            "| Gate | Status | Evidence | Failure action |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for gate in dreamaudit_reconciliation["evidence_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['status']} | {gate['evidence']} | {gate['failure_action']} |")
+    lines.extend(["", "| Gap | Blocks | Next action |", "| --- | --- | --- |"])
+    for gap in dreamaudit_reconciliation["carrier_gap_register"]:
+        lines.append(f"| {gap['gap']} | {gap['blocks']} | {gap['next_action']} |")
 
     lines.extend(
         [
