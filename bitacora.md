@@ -1040,3 +1040,6 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 99 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed actuarial readiness plan commit `eda3d67` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found no correctness-breaking issues in the actuarial readiness plan, Investor Case UI, memo wiring, v13 data-room packet versioning, or legacy packet verification.
+- Restarted Streamlit at `http://127.0.0.1:8501` with PID `91273`.
