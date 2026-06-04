@@ -105,6 +105,7 @@ InsuranceApplication
          research validation plan with falsifiable hypotheses, workstreams, thresholds, and downgrade rules
          investor claim validation ledger with safe claims, evidence levels, upgrade gates, and disallowed overclaims
          investor proof pipeline with weekly reviewer cadence, proof gates, packet fingerprints, and data-room upgrade rules
+         external proof registry with proof slots, permission-to-quote state, redaction gates, and claim-upgrade rules
          actuarial readiness plan with future-cost, data-quality, modeling, credibility, and claims gates
          insurance capacity roadmap with licensing, MGA/fronting, filing, and claims gates
          enterprise security plan with data classes, control backlog, and SOC2/NIST readiness gates
@@ -255,7 +256,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, methodology evidence map, research validation plan, investor claim validation ledger, investor proof pipeline, commercial traction plan, commercial unit economics, seed round close plan, pricing diligence sensitivity, actuarial readiness plan, buyer ROI model, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, methodology evidence map, research validation plan, investor claim validation ledger, investor proof pipeline, external proof registry, commercial traction plan, commercial unit economics, seed round close plan, pricing diligence sensitivity, actuarial readiness plan, buyer ROI model, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 

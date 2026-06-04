@@ -76,6 +76,12 @@ from taco_demo.external_validation import (
     external_validation_scorecard_rows,
     external_validation_track_rows,
 )
+from taco_demo.external_proof_registry import (
+    build_external_proof_registry,
+    external_proof_redaction_rows,
+    external_proof_rule_rows,
+    external_proof_slot_rows,
+)
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.investor_objections import build_investor_objection_register, investor_objection_rows
@@ -796,6 +802,14 @@ with tabs[9]:
             commercial_unit_economics,
             claim_validation_ledger,
         )
+        external_proof_registry = build_external_proof_registry(
+            application,
+            audit["quote"],
+            external_validation_kit,
+            investor_proof_pipeline,
+            claim_validation_ledger,
+            seed_round_close_plan,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -818,6 +832,15 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(external_validation_track_rows(external_validation_kit)), width="stretch")
         st.dataframe(pd.DataFrame(external_validation_scorecard_rows(external_validation_kit)), width="stretch")
         st.dataframe(pd.DataFrame(external_validation_ladder_rows(external_validation_kit)), width="stretch")
+        st.markdown("#### External Proof Registry")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Registry status", str(external_proof_registry["status"]).replace("_", " ").title())
+        c2.metric("Proof slots", external_proof_registry["current_counts"]["proof_slots"])
+        c3.metric("Countable artifacts", external_proof_registry["current_counts"]["countable_external_artifacts"])
+        st.caption(external_proof_registry["boundary"])
+        st.dataframe(pd.DataFrame(external_proof_slot_rows(external_proof_registry)), width="stretch")
+        st.dataframe(pd.DataFrame(external_proof_rule_rows(external_proof_registry)), width="stretch")
+        st.dataframe(pd.DataFrame(external_proof_redaction_rows(external_proof_registry)), width="stretch")
         st.markdown("#### Actuarial Readiness Plan")
         c1, c2, c3 = st.columns(3)
         c1.metric("Actuarial status", str(actuarial_plan["status"]).replace("_", " ").title())

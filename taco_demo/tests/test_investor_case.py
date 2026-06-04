@@ -74,7 +74,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V18,
     PACKET_FORMAT_V19,
     PACKET_FORMAT_V20,
+    PACKET_FORMAT_V21,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V20,
     REQUIRED_BUNDLE_FILES_V19,
     REQUIRED_BUNDLE_FILES_V18,
     REQUIRED_BUNDLE_FILES_V17,
@@ -108,6 +110,12 @@ from taco_demo.external_validation import (
     external_validation_ladder_rows,
     external_validation_scorecard_rows,
     external_validation_track_rows,
+)
+from taco_demo.external_proof_registry import (
+    build_external_proof_registry,
+    external_proof_redaction_rows,
+    external_proof_rule_rows,
+    external_proof_slot_rows,
 )
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
@@ -565,6 +573,67 @@ def test_external_validation_capture_kit_scores_reviewer_feedback_without_claimi
     assert external_validation_track_rows(kit)
     assert external_validation_scorecard_rows(kit)[0]["Weight"] == 20
     assert external_validation_ladder_rows(kit)[-1]["Investor Weight"] == "round_anchor"
+
+
+def test_external_proof_registry_tracks_artifact_slots_without_counting_uncollected_evidence():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(
+            cert.certificate_id,
+            1.0,
+            0.6,
+            0.4,
+            0.8,
+            0.9,
+            0.2,
+            "signature",
+            True,
+            "recorded_activation_forward_hooks",
+            {},
+        )
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    manifest = build_data_room_manifest(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        _carrier_ready_dreamaudit_intake(),
+    )
+    registry = manifest["external_proof_registry"]
+    rebuilt = build_external_proof_registry(
+        app,
+        quote,
+        manifest["external_validation_capture_kit"],
+        manifest["investor_proof_pipeline"],
+        manifest["claim_validation_ledger"],
+        manifest["seed_round_close_plan"],
+    )
+    slot_rows = external_proof_slot_rows(registry)
+    rule_rows = external_proof_rule_rows(registry)
+    redaction_rows = external_proof_redaction_rows(registry)
+
+    assert rebuilt["registry_id"] == registry["registry_id"]
+    assert registry["registry_id"] == "EPROOF-APP-APEX-001"
+    assert registry["status"] == "registry_ready_no_external_artifacts_collected"
+    assert "not evidence that reviewer memos" in registry["boundary"]
+    assert registry["packet_context"]["packet_format_expected"] == "taco_data_room_zip_v21"
+    assert registry["packet_context"]["packet_sha256_required"] is True
+    assert registry["current_counts"]["proof_slots"] == 6
+    assert registry["current_counts"]["countable_external_artifacts"] == 0
+    assert registry["current_counts"]["claims_with_external_upgrade_path"] == 10
+    assert {slot["slot_id"] for slot in registry["proof_slots"]} >= {
+        "recorded_activation_trace_bundle",
+        "permission_to_quote_register",
+    }
+    assert all(slot["countable_now"] is False for slot in registry["proof_slots"])
+    assert any(gate["gate"] == "activation_trace_redaction" for gate in registry["redaction_gates"])
+    assert any(rule["claim_id"] == "internals_based_risk_signal" for rule in registry["claim_upgrade_rules"])
+    assert slot_rows and rule_rows and redaction_rows
+    assert any(row["Slot"] == "recorded_activation_trace_bundle" for row in slot_rows)
+    assert any(row["Gate"] == "reviewer_quote_redaction" for row in redaction_rows)
 
 
 def test_commercial_scale_model_ties_market_context_to_revenue_scenarios_without_claiming_revenue():
@@ -1484,6 +1553,9 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert manifest["seed_round_close_plan"]["close_plan_id"] == "CLOSE-APP-APEX-001"
     assert "not committed financing" in manifest["seed_round_close_plan"]["boundary"]
     assert any(item["gate"] == "commercial_conversion" for item in manifest["seed_round_close_plan"]["closing_gates"])
+    assert manifest["external_proof_registry"]["registry_id"] == "EPROOF-APP-APEX-001"
+    assert "not evidence that reviewer memos" in manifest["external_proof_registry"]["boundary"]
+    assert any(slot["slot_id"] == "commercial_conversion_document" for slot in manifest["external_proof_registry"]["proof_slots"])
     assert manifest["claim_validation_ledger"]["ledger_id"] == "CLAIM-APP-APEX-001"
     assert "disallowed overclaims" in manifest["claim_validation_ledger"]["boundary"]
     assert any(claim["claim_id"] == "buyer_roi_economic_case" for claim in manifest["claim_validation_ledger"]["claims"])
@@ -1635,6 +1707,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/commercial_traction_plan.json" in summary["files"]
     assert "commercial/commercial_unit_economics.json" in summary["files"]
     assert "commercial/seed_round_close_plan.json" in summary["files"]
+    assert "commercial/external_proof_registry.json" in summary["files"]
     assert "research/claim_validation_ledger.json" in summary["files"]
     assert "research/research_validation_plan.json" in summary["files"]
     assert "technical/technical_diligence_runbook.json" in summary["files"]
@@ -1664,13 +1737,14 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         commercial_traction_plan = json.loads(archive.read("commercial/commercial_traction_plan.json"))
         commercial_unit_economics = json.loads(archive.read("commercial/commercial_unit_economics.json"))
         seed_round_close_plan = json.loads(archive.read("commercial/seed_round_close_plan.json"))
+        external_proof_registry = json.loads(archive.read("commercial/external_proof_registry.json"))
         claim_validation_ledger = json.loads(archive.read("research/claim_validation_ledger.json"))
         research_validation_plan = json.loads(archive.read("research/research_validation_plan.json"))
         technical_runbook = json.loads(archive.read("technical/technical_diligence_runbook.json"))
         methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V20
+    assert index["packet_format"] == PACKET_FORMAT_V21
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -1733,6 +1807,10 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert seed_round_close_plan["target_raise_usd"] == 5_000_000
     assert any(gate["gate"] == "packet_reproducibility" for gate in seed_round_close_plan["closing_gates"])
     assert any(rule["rule"] == "investor_interest" for rule in seed_round_close_plan["no_count_rules"])
+    assert external_proof_registry["registry_id"] == "EPROOF-APP-APEX-001"
+    assert external_proof_registry["current_counts"]["countable_external_artifacts"] == 0
+    assert any(slot["slot_id"] == "reviewer_feedback_memo_primary" for slot in external_proof_registry["proof_slots"])
+    assert any(gate["gate"] == "reviewer_quote_redaction" for gate in external_proof_registry["redaction_gates"])
     assert methodology_map["map_id"] == "METHOD-APP-APEX-001"
     assert methodology_map["score"] >= 85
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
@@ -1743,6 +1821,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/commercial_traction_plan.json" in readme
     assert "commercial/commercial_unit_economics.json" in readme
     assert "commercial/seed_round_close_plan.json" in readme
+    assert "commercial/external_proof_registry.json" in readme
     assert "research/claim_validation_ledger.json" in readme
     assert "research/research_validation_plan.json" in readme
     verification = verify_data_room_bundle(bundle)
@@ -1832,6 +1911,10 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "capture_ready_external_evidence_not_collected" in memo
     assert "commercial_document_path" in memo
     assert "loi_or_paid_pilot" in memo
+    assert "## External Proof Registry" in memo
+    assert "registry_ready_no_external_artifacts_collected" in memo
+    assert "recorded_activation_trace_bundle" in memo
+    assert "reviewer_quote_redaction" in memo
 
 
 def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
@@ -1859,7 +1942,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, or taco_data_room_zip_v20",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, taco_data_room_zip_v20, or taco_data_room_zip_v21",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -2434,6 +2517,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v19_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V19 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v20_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V20}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V20"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V20,
+        "manifest_id": "DR-LEGACY-V20",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V20 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

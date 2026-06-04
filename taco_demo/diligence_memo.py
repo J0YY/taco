@@ -106,6 +106,7 @@ def build_diligence_memo(
         enterprise_security_plan,
     )
     external_validation_kit = data_room_manifest["external_validation_capture_kit"]
+    external_proof_registry = data_room_manifest["external_proof_registry"]
     actuarial_plan = data_room_manifest["actuarial_readiness_plan"]
     buyer_roi_model = data_room_manifest["buyer_roi_model"]
     claim_validation_ledger = data_room_manifest["claim_validation_ledger"]
@@ -560,6 +561,32 @@ def build_diligence_memo(
     lines.extend(["", "| Evidence status | Investor weight | Proof required |", "| --- | --- | --- |"])
     for item in external_validation_kit["evidence_status_ladder"]:
         lines.append(f"| {item['status']} | {item['investor_weight']} | {item['proof_required']} |")
+
+    lines.extend(
+        [
+            "",
+            "## External Proof Registry",
+            "",
+            f"* Status: {external_proof_registry['status']}",
+            f"* Boundary: {external_proof_registry['boundary']}",
+            f"* Proof slots: {external_proof_registry['current_counts']['proof_slots']}",
+            f"* Countable external artifacts: {external_proof_registry['current_counts']['countable_external_artifacts']}",
+            "",
+            "| Proof slot | Track | Status | Permission | Redaction | Required artifact |",
+            "| --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    for slot in external_proof_registry["proof_slots"]:
+        lines.append(
+            f"| {slot['slot_id']} | {slot['reviewer_track']} | {slot['evidence_status']} | "
+            f"{slot['permission_to_quote']} | {slot['redaction_status']} | {slot['required_artifact']} |"
+        )
+    lines.extend(["", "| Claim | Current level | External proof required |", "| --- | --- | --- |"])
+    for rule in external_proof_registry["claim_upgrade_rules"]:
+        lines.append(f"| {rule['claim_id']} | {rule['current_evidence_level']} | {rule['external_proof_required']} |")
+    lines.extend(["", "| Redaction gate | Pass condition | Blocked until |", "| --- | --- | --- |"])
+    for gate in external_proof_registry["redaction_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['pass_condition']} | {gate['blocked_until']} |")
 
     lines.extend(
         [

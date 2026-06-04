@@ -17,6 +17,7 @@ from .commercial_traction import build_commercial_traction_plan
 from .commercial_unit_economics import build_commercial_unit_economics
 from .design_partner_plan import build_design_partner_plan
 from .external_validation import build_external_validation_capture_kit
+from .external_proof_registry import build_external_proof_registry
 from .commercial_model import build_commercial_scale_model
 from .capacity_roadmap import build_capacity_roadmap
 from .fundraise_readiness import build_fundraise_readiness
@@ -58,6 +59,7 @@ PACKET_FORMAT_V17 = "taco_data_room_zip_v17"
 PACKET_FORMAT_V18 = "taco_data_room_zip_v18"
 PACKET_FORMAT_V19 = "taco_data_room_zip_v19"
 PACKET_FORMAT_V20 = "taco_data_room_zip_v20"
+PACKET_FORMAT_V21 = "taco_data_room_zip_v21"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -128,8 +130,11 @@ REQUIRED_BUNDLE_FILES_V18 = REQUIRED_BUNDLE_FILES_V17 | {
 REQUIRED_BUNDLE_FILES_V19 = REQUIRED_BUNDLE_FILES_V18 | {
     "commercial/commercial_unit_economics.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V19 | {
+REQUIRED_BUNDLE_FILES_V20 = REQUIRED_BUNDLE_FILES_V19 | {
     "commercial/seed_round_close_plan.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V20 | {
+    "commercial/external_proof_registry.json",
 }
 
 
@@ -271,6 +276,12 @@ def build_data_room_checklist(
             "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
             "Investor segmenting, weekly close motion, lead-partner gates, minimum close package, meeting prompts, and no-count rules are attached.",
             "Use the close plan to convert reviewer proof and commercial artifacts into a lead-process path without overstating investor interest or customer demand.",
+        ),
+        _item(
+            "External Proof Registry",
+            "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
+            "Proof slots, packet fingerprint requirements, permission-to-quote states, redaction gates, claim-upgrade rules, and investor-update controls are attached.",
+            "Fill the registry with written reviewer artifacts only after packet SHA-256, permission, redaction, and claim-linkage fields are complete.",
         ),
         _item(
             "Design-Partner References",
@@ -472,6 +483,14 @@ def build_data_room_manifest(
         commercial_unit_economics,
         claim_validation_ledger,
     )
+    external_proof_registry = build_external_proof_registry(
+        application,
+        quote,
+        external_validation_capture_kit,
+        investor_proof_pipeline,
+        claim_validation_ledger,
+        seed_round_close_plan,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -506,6 +525,7 @@ def build_data_room_manifest(
         "commercial_traction_plan": commercial_traction_plan,
         "commercial_unit_economics": commercial_unit_economics,
         "seed_round_close_plan": seed_round_close_plan,
+        "external_proof_registry": external_proof_registry,
     }
 
 
@@ -550,6 +570,7 @@ def build_data_room_bundle(
         ("commercial/commercial_traction_plan.json", _json_bytes(manifest["commercial_traction_plan"])),
         ("commercial/commercial_unit_economics.json", _json_bytes(manifest["commercial_unit_economics"])),
         ("commercial/seed_round_close_plan.json", _json_bytes(manifest["seed_round_close_plan"])),
+        ("commercial/external_proof_registry.json", _json_bytes(manifest["external_proof_registry"])),
         ("technical/technical_diligence_runbook.json", _json_bytes(manifest["technical_diligence_runbook"])),
     ]
     certificate_names: set[str] = set()
@@ -658,7 +679,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
                         "taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, "
                         "taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, "
-                        "or taco_data_room_zip_v20"
+                        "taco_data_room_zip_v20, or taco_data_room_zip_v21"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -807,7 +828,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V20,
+        "packet_format": PACKET_FORMAT_V21,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -863,6 +884,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V19:
         return REQUIRED_BUNDLE_FILES_V19
     if packet_format == PACKET_FORMAT_V20:
+        return REQUIRED_BUNDLE_FILES_V20
+    if packet_format == PACKET_FORMAT_V21:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -931,6 +954,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/commercial_traction_plan.json` - ICP targets, paid package ladder, weekly traction metrics, investor reporting rules, and count/do-not-count controls",
             "* `commercial/commercial_unit_economics.json` - modeled revenue mix, delivery cost, gross margin, CAC/payback assumptions, and seed milestone gates",
             "* `commercial/seed_round_close_plan.json` - investor segmentation, weekly close motion, lead-partner gates, minimum close package, and no-count rules",
+            "* `commercial/external_proof_registry.json` - proof slots, packet fingerprint requirements, permission-to-quote states, redaction gates, and claim-upgrade rules",
             "* `technical/technical_diligence_runbook.json` - local reproduction, live-evidence, packet-verification, and cluster-regeneration runbook",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",
