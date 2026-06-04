@@ -551,3 +551,5 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 58 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed calibration fix commit `46b3183` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found no discrete, actionable bugs in the cumulative activation trace bridge changes.
