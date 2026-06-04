@@ -24,6 +24,22 @@ from .sae_features import render_sae_panel
 
 DATA_ROOT = Path(__file__).resolve().parent / "data"
 RISK_THRESHOLD = 0.65
+EXPLAINER_ROOT = DATA_ROOT / "videos" / "explainer"
+EXPLAINER_CHAPTERS = [
+    ("01_opening", "Opening claim"),
+    ("02_activations", "Activations, weights, and neurons"),
+    ("03_features", "What a feature is"),
+    ("04_superposition", "Superposition and polysemantic neurons"),
+    ("05_sae_mechanics", "Sparse autoencoder mechanics"),
+    ("06_topk", "TopK sparsity"),
+    ("07_monitor_rule", "Feature monitor rule"),
+    ("08_replay_timing", "Replay behavior versus internal timing"),
+    ("09_sae_prism", "SAE as a prism"),
+    ("10_feature_quality", "General versus memorized features"),
+    ("11_dreamaudit", "DreamAudit evidence timing"),
+    ("12_readiness_tier", "Readiness tier from model internals"),
+    ("13_certificate_claim", "Final certification claim"),
+]
 
 
 def _prov(real: bool, source: str) -> str:
@@ -225,6 +241,28 @@ def _show(path, caption=None) -> None:
         st.info("Replay not found.")
 
 
+def _show_interpretability_explainer() -> None:
+    st.markdown("**SAE + DreamAudit interpretability explainer**")
+    st.caption("Standalone Manim chapters rendered as GIFs; each MP4 source is stored beside the GIF.")
+
+    missing = []
+    for slug, title in EXPLAINER_CHAPTERS:
+        gif_path = EXPLAINER_ROOT / f"{slug}.gif"
+        mp4_path = EXPLAINER_ROOT / f"{slug}.mp4"
+        if not gif_path.exists():
+            missing.append(gif_path.name)
+            continue
+        st.markdown(f"**{title}**")
+        st.image(str(gif_path))
+        if mp4_path.exists():
+            st.caption(f"{gif_path.name} · source MP4: {mp4_path.name}")
+        else:
+            st.caption(gif_path.name)
+
+    if missing:
+        st.info("Missing explainer GIFs: " + ", ".join(missing))
+
+
 # --- main render --------------------------------------------------------------
 
 def render_guided_flow() -> None:
@@ -240,8 +278,9 @@ def render_guided_flow() -> None:
                        format_func=lambda c: f"{c} · {EXHIBITS[c]['title']}")
     ex = EXHIBITS[cid]
 
-    t1, t2, t3, t4 = st.tabs(["① Nominal success", "② Forced failure",
-                              "③ Mechanistic finding", "④ Certificate"])
+    t1, t2, t3, t4, t5 = st.tabs(["① Nominal success", "② Forced failure",
+                                  "③ Mechanistic finding", "④ Certificate",
+                                  "⑤ SAE explainer"])
 
     with t1:
         st.markdown(f"**Task:** {ex['task']}")
@@ -296,3 +335,6 @@ def render_guided_flow() -> None:
         with st.expander("Pre-deployment certificate (issuable)"):
             st.json(cert)
         st.caption(_prov(False, "certification tier is deterministic demo logic, not an accredited standard"))
+
+    with t5:
+        _show_interpretability_explainer()
