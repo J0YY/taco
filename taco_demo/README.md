@@ -109,6 +109,43 @@ Generate it locally or on the cluster with:
 python -m taco_demo.scripts.generate_maniskill_video_suite --force
 ```
 
+## DreamAudit Adapter And Activation Recorder
+
+The repo now has the real integration path for replacing fallback certificates and placeholder traces:
+
+* `taco_demo.dreamaudit_adapter` reads DreamAudit certificate JSONs without importing DreamAudit and normalizes them into TACO `FailureCertificate` objects.
+* It supports the compact LIBERO/OpenVLA counterfactual certificate shape and the richer `dreamaudit.types.Certificate` dataclass-style JSON shape.
+* It preserves source paths, simulator validation, perturbed validation, world-model discovery, minimality, patch recipes, raw perturbation data, and a replay command.
+* `taco_demo.activation_recorder` attaches torch-style forward hooks to selected model layers and writes captured activations to NPZ files for internal-risk scoring.
+* Torch is optional for the demo environment. The recorder only needs modules that expose `register_forward_hook`, so the MVP remains lightweight while the production path can attach to `torch.nn.Module` policies.
+
+Adapt real DreamAudit certificates:
+
+```python
+from taco_demo.dreamaudit_adapter import adapt_dreamaudit_certificates, summarize_adapted_certificates
+
+certs = adapt_dreamaudit_certificates(
+    "/Users/joyyang/Projects/dreamaudit/artifacts/libero_openvla_observation_proposal_balanced_lp2_h160/validate/counterfactual_certificates",
+    limit=30,
+)
+print(summarize_adapted_certificates(certs))
+```
+
+Record activations from a torch policy:
+
+```python
+from taco_demo.activation_recorder import ActivationRecorder
+
+recorder = ActivationRecorder(layer_names=["vision_encoder", "action_head"], max_batches=16)
+recorder.attach(model)
+for observation in rollout_observations:
+    model(observation)
+recorder.save_npz("taco_demo/data/traces/openvla_activations.npz")
+recorder.remove()
+```
+
+Commercially, this closes the largest methodology gap in the demo: TACO can ingest real replayable failure certificates and can collect model-internal activations rather than relying only on behavior videos or synthetic trace placeholders.
+
 ## Insurance Failure And Pricing Workflows
 
 The app includes 10 concrete insurance examples in the `Insurance Examples` tab. Each example shows:

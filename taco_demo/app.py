@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from taco_demo.binder import issue_binder
+from taco_demo.activation_recorder import torch_available
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
@@ -521,6 +522,34 @@ with tabs[9]:
     st.markdown("#### Research Anchors")
     for foundation in RESEARCH_FOUNDATIONS:
         st.markdown(f"* **{foundation['source']}**: {foundation['taco_translation']} [link]({foundation['url']})")
+
+    st.markdown("#### Real Internals Path")
+    cols = st.columns(2)
+    with cols[0]:
+        st.markdown("**DreamAudit adapter**")
+        st.write(
+            "Normalizes real DreamAudit certificate JSONs into TACO FailureCertificate objects, preserving simulator validation, "
+            "minimality, patch recipes, and source paths for replay."
+        )
+        st.code(
+            'from taco_demo.dreamaudit_adapter import adapt_dreamaudit_certificates\n'
+            'certs = adapt_dreamaudit_certificates("/Users/joyyang/Projects/dreamaudit/artifacts", limit=30)',
+            language="python",
+        )
+    with cols[1]:
+        st.markdown("**Torch activation recorder**")
+        st.write(
+            "Attaches forward hooks to selected policy layers and writes activation NPZ files for the internal-risk metrics path."
+        )
+        st.metric("Torch installed in this environment", "yes" if torch_available() else "optional")
+        st.code(
+            "from taco_demo.activation_recorder import ActivationRecorder\n"
+            'recorder = ActivationRecorder(layer_names=["vision_encoder", "action_head"])\n'
+            "recorder.attach(model)\n"
+            "model(observation)\n"
+            'recorder.save_npz("taco_demo/data/traces/openvla_activations.npz")',
+            language="python",
+        )
 
 with tabs[10]:
     readme = Path(__file__).with_name("README.md")

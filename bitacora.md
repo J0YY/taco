@@ -104,3 +104,22 @@
   - incident coverage responses.
 - Extended the investor diligence memo with the runtime compliance and renewal loop.
 - Added pytest coverage for renewal summary math, clean-compliance renewal discount behavior, and memo inclusion.
+
+## 2026-06-04 - Improvement loop: DreamAudit adapter and activation recorder
+
+- Pulled `origin/main`; repository was already up to date at `1b193e5`.
+- Added `taco_demo/dreamaudit_adapter.py`:
+  - loads DreamAudit certificate JSONs without importing DreamAudit,
+  - supports compact LIBERO/OpenVLA observation certificates,
+  - supports richer `dreamaudit.types.Certificate`-style JSON,
+  - normalizes certificate IDs, policy IDs, task IDs, failure families, perturbation costs, neighborhood failure rates, replay commands, patch recipes, and source metadata into TACO `FailureCertificate` objects.
+- Added `taco_demo/activation_recorder.py`:
+  - optional torch-compatible forward-hook recorder,
+  - no torch dependency at import time,
+  - selected-layer capture, summaries, hook cleanup, and NPZ persistence.
+- Added app and README explanation for the real internals path from DreamAudit certificates to activation NPZ traces.
+- Added pytest coverage for compact DreamAudit certificates, rich DreamAudit certificates, directory adaptation, activation recording, NPZ save, and hook removal.
+- Verification before independent review:
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 26 passed.
+  - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
