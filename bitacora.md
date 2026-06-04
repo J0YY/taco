@@ -349,3 +349,19 @@
   - full 6,531-certificate DreamAudit scan: readiness `100/100`, status `carrier_review_ready`, unmapped families `[]`, gaps `[]`.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed generic action-noise review-fix commit `7f5b125` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found the same metadata-inference class for generic calibration and grasp perturbations.
+- Fixed DreamAudit normalization to infer:
+  - `calibration_sensitivity` from metadata such as `camera_calibration_offset`,
+  - `grasp_miss` from metadata such as `gripper_pose_delta`.
+- Added regression coverage for generic calibration and grasp certificates with `counterfactual_policy_failure`.
+- Verified reviewer repros now print:
+  - `camera_calibration_offset calibration_sensitivity calibration_revalidation_gate_enabled calibration revalidation gate before coverage attaches`,
+  - `gripper_pose_delta grasp_miss grasp_success_confirmation_enabled grasp-success confirmation before irreversible motion`.
+- Verification after second metadata-inference fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_quote_engine.py` -> 21 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 44 passed.
+  - default 250-certificate DreamAudit scan: readiness `85/100`, unmapped families `[]`, remaining gap is low minimality coverage.
+  - full 6,531-certificate DreamAudit scan: readiness `100/100`, status `carrier_review_ready`, unmapped families `[]`, gaps `[]`.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

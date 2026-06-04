@@ -192,3 +192,25 @@ def test_generic_action_noise_certificate_maps_from_perturbation_metadata():
 
     assert cert.failure_type == "action_noise_counterfactual_failure"
     assert cert.patch_recipe["taco_required_control"] == "action-envelope monitor with actuator-noise re-audit trigger"
+
+
+def test_generic_calibration_and_grasp_certificates_map_from_perturbation_metadata():
+    examples = [
+        ("camera_calibration_offset", "calibration_sensitivity", "calibration revalidation gate before coverage attaches"),
+        ("gripper_pose_delta", "grasp_miss", "grasp-success confirmation before irreversible motion"),
+    ]
+    for perturbation_type, expected_failure, expected_control in examples:
+        cert = adapt_dreamaudit_certificate(
+            {
+                "certificate_id": perturbation_type,
+                "native_validation": {"success": True},
+                "perturbed_validation": {"failure_mode": "counterfactual_policy_failure", "success": False},
+                "policy": {"name": "OpenVLA"},
+                "task": {"task_id": "generic-metadata-task"},
+                "perturbation": {"type": perturbation_type, "perturbation_cost": 0.25},
+                "minimality": {"smallest_failing_cost_found": 0.25},
+            }
+        )
+
+        assert cert.failure_type == expected_failure
+        assert cert.patch_recipe["taco_required_control"] == expected_control
