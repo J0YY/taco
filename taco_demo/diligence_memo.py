@@ -108,6 +108,7 @@ def build_diligence_memo(
     external_validation_kit = data_room_manifest["external_validation_capture_kit"]
     actuarial_plan = data_room_manifest["actuarial_readiness_plan"]
     buyer_roi_model = data_room_manifest["buyer_roi_model"]
+    claim_validation_ledger = data_room_manifest["claim_validation_ledger"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -146,6 +147,26 @@ def build_diligence_memo(
     for claim in methodology_map["claims"]:
         lines.append(
             f"| {claim['claim_id']} | {claim['status']} | {claim['current_evidence']} | {claim['boundary']} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Investor Claim Validation Ledger",
+            "",
+            f"* Status: {claim_validation_ledger['status']}",
+            f"* Evidence score: {claim_validation_ledger['evidence_score']}/100",
+            f"* Boundary: {claim_validation_ledger['boundary']}",
+            f"* External validation needed: {claim_validation_ledger['external_validation_needed']}",
+            "",
+            "| Claim | Evidence level | Upgrade gate | Disallowed overclaim |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for claim in claim_validation_ledger["claims"]:
+        lines.append(
+            f"| {claim['claim_id']} | {claim['evidence_level']} | {claim['upgrade_gate']} | "
+            f"{claim['disallowed_overclaim']} |"
         )
 
     lines.extend(

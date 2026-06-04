@@ -12,6 +12,7 @@ import zlib
 
 from .actuarial_readiness import build_actuarial_readiness_plan
 from .buyer_roi import build_buyer_roi_model
+from .claim_validation import build_claim_validation_ledger
 from .design_partner_plan import build_design_partner_plan
 from .external_validation import build_external_validation_capture_kit
 from .commercial_model import build_commercial_scale_model
@@ -46,6 +47,7 @@ PACKET_FORMAT_V11 = "taco_data_room_zip_v11"
 PACKET_FORMAT_V12 = "taco_data_room_zip_v12"
 PACKET_FORMAT_V13 = "taco_data_room_zip_v13"
 PACKET_FORMAT_V14 = "taco_data_room_zip_v14"
+PACKET_FORMAT_V15 = "taco_data_room_zip_v15"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -98,8 +100,11 @@ REQUIRED_BUNDLE_FILES_V12 = REQUIRED_BUNDLE_FILES_V11 | {
 REQUIRED_BUNDLE_FILES_V13 = REQUIRED_BUNDLE_FILES_V12 | {
     "commercial/actuarial_readiness_plan.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V13 | {
+REQUIRED_BUNDLE_FILES_V14 = REQUIRED_BUNDLE_FILES_V13 | {
     "commercial/buyer_roi_model.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V14 | {
+    "research/claim_validation_ledger.json",
 }
 
 
@@ -205,6 +210,12 @@ def build_data_room_checklist(
             "ready" if application.deployment_units > 0 and quote.final_monthly_premium_usd > 0 else "needs_work",
             "Modeled buyer economics, stakeholder value drivers, payback cases, procurement proof gates, and sensitivity cases are attached.",
             "Replace modeled assumptions with buyer-confirmed delay cost, evidence-ops time study, control-credit review, and signed pilot evidence.",
+        ),
+        _item(
+            "Investor Claim Validation Ledger",
+            "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
+            "Investor-safe claims, evidence levels, upgrade gates, and disallowed overclaims are attached.",
+            "Use the ledger during VC, broker, carrier, and design-partner reviews so demo-backed claims are not overstated.",
         ),
         _item(
             "Design-Partner References",
@@ -342,6 +353,19 @@ def build_data_room_manifest(
         external_validation_capture_kit,
         pricing_diligence,
     )
+    claim_validation_ledger = build_claim_validation_ledger(
+        application,
+        quote,
+        fundraise_readiness,
+        methodology_evidence_map,
+        pricing_diligence,
+        commercial_scale_model,
+        buyer_roi_model,
+        actuarial_readiness_plan,
+        external_validation_capture_kit,
+        technical_diligence_runbook,
+        dreamaudit_intake,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -370,6 +394,7 @@ def build_data_room_manifest(
         "external_validation_capture_kit": external_validation_capture_kit,
         "actuarial_readiness_plan": actuarial_readiness_plan,
         "buyer_roi_model": buyer_roi_model,
+        "claim_validation_ledger": claim_validation_ledger,
     }
 
 
@@ -395,6 +420,7 @@ def build_data_room_bundle(
         ("insurance/workflow_examples.json", _json_bytes(INSURANCE_SCENARIOS)),
         ("research/sources.json", _json_bytes(RESEARCH_FOUNDATIONS)),
         ("research/methodology_evidence_map.json", _json_bytes(manifest["methodology_evidence_map"])),
+        ("research/claim_validation_ledger.json", _json_bytes(manifest["claim_validation_ledger"])),
         ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
         ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
         ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
@@ -514,7 +540,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, "
                         "taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, "
                         "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
-                        "or taco_data_room_zip_v14"
+                        "taco_data_room_zip_v14, or taco_data_room_zip_v15"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -663,7 +689,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V14,
+        "packet_format": PACKET_FORMAT_V15,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -707,6 +733,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V13:
         return REQUIRED_BUNDLE_FILES_V13
     if packet_format == PACKET_FORMAT_V14:
+        return REQUIRED_BUNDLE_FILES_V14
+    if packet_format == PACKET_FORMAT_V15:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -754,6 +782,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `insurance/workflow_examples.json` - priced workflow examples",
             "* `research/sources.json` - research-methodology anchors",
             "* `research/methodology_evidence_map.json` - claim-by-claim methodology evidence map",
+            "* `research/claim_validation_ledger.json` - investor-safe claims, evidence levels, upgrade gates, and disallowed overclaims",
             "* `certificates/` - primary replay failure certificates",
             "* `metrics/` - internal-risk metric contracts",
             "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",

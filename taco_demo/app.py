@@ -31,6 +31,11 @@ from taco_demo.capacity_roadmap import (
     capacity_phase_rows,
     regulatory_workstream_rows,
 )
+from taco_demo.claim_validation import (
+    build_claim_validation_ledger,
+    claim_validation_rows,
+    claim_validation_summary_rows,
+)
 from taco_demo.commercial_model import (
     build_commercial_scale_model,
     commercial_gate_rows,
@@ -694,6 +699,19 @@ with tabs[9]:
             {"attached": bool(dreamaudit_intake), "status": dreamaudit_intake.get("readiness", {}).get("status", "not_scanned") if dreamaudit_intake else "not_scanned"},
             enterprise_security_plan,
         )
+        claim_validation_ledger = build_claim_validation_ledger(
+            application,
+            audit["quote"],
+            readiness,
+            methodology_map,
+            pricing_diligence,
+            commercial_model,
+            buyer_roi_model,
+            actuarial_plan,
+            external_validation_kit,
+            technical_runbook,
+            dreamaudit_intake,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -774,6 +792,14 @@ with tabs[9]:
         st.caption(technical_runbook["boundary"])
         st.dataframe(pd.DataFrame(technical_step_rows(technical_runbook)), width="stretch")
         st.dataframe(pd.DataFrame(technical_gate_rows(technical_runbook)), width="stretch")
+        st.markdown("#### Investor Claim Validation Ledger")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Claim status", str(claim_validation_ledger["status"]).replace("_", " ").title())
+        c2.metric("Evidence score", f"{claim_validation_ledger['evidence_score']}/100")
+        c3.metric("External gates", claim_validation_ledger["external_validation_needed"])
+        st.caption(claim_validation_ledger["boundary"])
+        st.dataframe(pd.DataFrame(claim_validation_summary_rows(claim_validation_ledger)), width="stretch")
+        st.dataframe(pd.DataFrame(claim_validation_rows(claim_validation_ledger)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

@@ -1077,3 +1077,18 @@
 - Pushed aggregate control-delta fix commit `a86a7ba` to GitHub `main`.
 - Third independent `codex review --base _review-loop-baseline` found no correctness-breaking regression in the buyer ROI model, app wiring, memo wiring, v14 data-room packet, or legacy verifier paths.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `96881`.
+
+## 2026-06-04 - Improvement loop: investor claim validation ledger
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `4bd7234`.
+- Captured `_review-loop-baseline` at `4bd723401ce3de3fd99e9508df46b9486ab55f23` for the independent review loop.
+- Identified the next VC diligence gap: TACO now has strong commercial, actuarial, security, ROI, and external-validation artifacts, but no single claim-control artifact that tells investors which claims are currently safe to make, which are only locally demo-backed, which require external validation, and which overclaims are explicitly disallowed.
+- Added `taco_demo/claim_validation.py` with investor-safe claims, evidence levels, current artifacts, upgrade gates, disallowed overclaims, pitch-safe wording, unsafe wording, and the next two external proofs to collect.
+- Added the claim validation ledger to the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v15` while preserving verifier compatibility for legacy v1 through v14 packets.
+- Added tests for the claim ledger contract, row helpers, manifest/ZIP export, memo section, current v15 packet indexing, invalid packet-format messaging, and legacy v14 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 57 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 103 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
