@@ -1114,4 +1114,4 @@
   - `git diff --check` -> clean.
 - Pushed investor proof pipeline commit `119661c` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no correctness-breaking regression in the investor proof pipeline, Investor Case UI, memo wiring, v16 data-room packet, or legacy verifier paths.
-- Restarted Streamlit at `http://127.0.0.1:8501` with PID `6805`.
+- Restarted Streamlit at `http://127.0.0.1:8501`; first PID `6805` exited without an error log, then relaunched successfully with active PID `6919`.
