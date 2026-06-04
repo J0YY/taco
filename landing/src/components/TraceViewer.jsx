@@ -1,4 +1,4 @@
-import { TRACE } from '../data/stub.js'
+import { REAL_TRACE as TRACE } from '../data/realTrace.js'
 
 // Perfetto-style internal-trace viewer rendered as a single SVG so the
 // warning/failure marker lines align across every lane.
@@ -124,10 +124,14 @@ export default function TraceViewer({ compact = false }) {
 
       {!compact && (
         <div className="trace-legend">
-          <span><span className="dot dot-warn" /> risk threshold crossed at {TRACE.warningT.toFixed(2)}s</span>
-          <span><span className="dot dot-risk" /> physical failure at {TRACE.failureT.toFixed(2)}s</span>
+          <span><span className="dot dot-warn" /> internal risk threshold crossed at {TRACE.warningT.toFixed(2)}s</span>
+          <span><span className="dot dot-risk" /> episode failed at {TRACE.failureT.toFixed(2)}s</span>
           <span className="mono text-mute">lead time {TRACE.leadLabel}</span>
         </div>
+      )}
+      {!compact && (
+        <div className="label-mono" style={{ marginTop: 10, fontSize: 11, color: 'var(--text-mute)' }}>
+          REAL captured internals · {TRACE.source}
       )}
     </div>
   )

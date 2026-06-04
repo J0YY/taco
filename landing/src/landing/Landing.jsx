@@ -484,52 +484,71 @@ function Commercial() {
   )
 }
 
-/* ================= SECTION 4b — AUDITED POLICIES (real rollouts) ================= */
-function RobotGallery() {
-  const items = [
-    { title: 'OpenVLA · warehouse arm', task: 'open the middle drawer · 37.9% occlusion', tier: 'Tier 2 · Conditional', tone: 'dot-warn',
-      s: '/videos/fr001_occlusion_success.mp4', f: '/videos/fr001_occlusion_failure.mp4' },
-    { title: 'OpenVLA · SimplerEnv', task: 'pick coke can · variant-shift OOD', tier: 'Tier 2 · Conditional', tone: 'dot-warn',
-      s: '/videos/openvla_coke_success.mp4', f: '/videos/openvla_coke_failure.mp4' },
-    { title: 'ANYmal-C · quadruped (robot dog)', task: 'walk to goal · AnymalC-Reach (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk',
-      s: '/videos/anymal_success.mp4', f: '/videos/anymal_fall.mp4' },
-    { title: 'Unitree Go2 · quadruped (robot dog)', task: 'walk to goal · UnitreeGo2-Reach (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk',
-      s: '/videos/go2_success.mp4', f: '/videos/go2_fall.mp4' },
-    { title: 'MS-HAB · mobile pick (Fetch)', task: 'tidy-house pick · ReplicaCAD apartment', tier: 'Tier 3 · Remediate', tone: 'dot-risk',
-      s: '/videos/mshab_pick_success.mp4', f: '/videos/mshab_pick_failure.mp4' },
-  ]
-  const vstyle = { width: '100%', display: 'block', borderRadius: 6, background: '#221e1b', aspectRatio: '16 / 10', objectFit: 'cover' }
+/* ================= SECTION 4b — AUDITED POLICIES (real rollouts, by type) ================= */
+const POLICY_CATS = [
+  { key: 'quad', label: 'Quadrupeds · robot dogs', policies: [
+    { name: 'ANYmal-C (ManiSkill PPO)', task: 'walk to goal · AnymalC-Reach · trained vs early checkpoint', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/anymal_success.mp4', f: '/videos/anymal_fall.mp4' },
+    { name: 'Unitree Go2 (ManiSkill PPO)', task: 'walk to goal · UnitreeGo2-Reach · trained vs early checkpoint', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/go2_success.mp4', f: '/videos/go2_fall.mp4' },
+  ] },
+  { key: 'arm', label: 'Manipulation arms · VLA', policies: [
+    { name: 'OpenVLA · language override', task: 'pick & place · injected instruction suffix vs sanitizer', tier: 'Tier 1 · Certified', tone: 'dot-ok', s: '/videos/fr002_language_success.mp4', f: '/videos/fr002_language_failure.mp4' },
+    { name: 'OpenVLA · warehouse occlusion', task: 'open the middle drawer · 37.9% occlusion', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/fr001_occlusion_success.mp4', f: '/videos/fr001_occlusion_failure.mp4' },
+    { name: 'OpenVLA · SimplerEnv pick-coke', task: 'pick coke can · variant-shift OOD', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/openvla_coke_success.mp4', f: '/videos/openvla_coke_failure.mp4' },
+  ] },
+  { key: 'mobile', label: 'Mobile manipulators', policies: [
+    { name: 'MS-HAB · Fetch pick', task: 'tidy-house pick · ReplicaCAD apartment', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/mshab_pick_success.mp4', f: '/videos/mshab_pick_failure.mp4' },
+  ] },
+]
+const VSTYLE = { width: '100%', display: 'block', borderRadius: 6, background: '#221e1b', aspectRatio: '16 / 10', objectFit: 'cover' }
+
+function PolicyExplorer() {
+  const [cat, setCat] = useState(0)
+  const [pol, setPol] = useState(0)
+  const C = POLICY_CATS[cat]
+  const p = C.policies[Math.min(pol, C.policies.length - 1)]
   return (
     <section id="policies" className="band">
       <div className="container">
         <div className="section-head">
           <div className="eyebrow" style={{ marginBottom: 16 }}>Audited policies · real rollouts</div>
-          <h2 className="display-lg">Every policy, attempted and replayed.</h2>
+          <h2 className="display-lg">Browse audited policies by type.</h2>
           <p className="body-lg" style={{ marginTop: 16 }}>
-            Real simulator rollouts across embodiments — each policy attempts a task and is captured
-            succeeding and failing, then assigned a certification tier.
+            Each policy attempts a real task in simulation and is captured succeeding and failing,
+            then assigned a certification tier.
           </p>
         </div>
-        <div className="grid grid-3">
-          {items.map((it) => (
-            <div className="card" key={it.title}>
-              <div className="card-title">{it.title}</div>
-              <p className="label-mono" style={{ marginBottom: 12 }}>{it.task}</p>
-              <div style={{ display: 'grid', gap: 10 }}>
-                <div>
-                  <div className="replay-head"><span className="lbl">success</span><span className="dot dot-ok" /></div>
-                  <video src={it.s} autoPlay loop muted playsInline preload="metadata" style={vstyle} />
-                </div>
-                <div>
-                  <div className="replay-head"><span className="lbl">failure</span><span className="dot dot-risk" /></div>
-                  <video src={it.f} autoPlay loop muted playsInline preload="metadata" style={vstyle} />
-                </div>
-              </div>
-              <div style={{ marginTop: 12 }}>
-                <span className="status-pill"><span className={`dot ${it.tone}`} /> {it.tier}</span>
-              </div>
-            </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+          {POLICY_CATS.map((c, i) => (
+            <button key={c.key} onClick={() => { setCat(i); setPol(0) }}
+              style={{ cursor: 'pointer', borderRadius: 999, padding: '7px 14px', fontFamily: 'DM Mono, monospace', fontSize: 12,
+                border: `1px solid ${i === cat ? '#f7f5f0' : '#4d4641'}`, background: i === cat ? '#2a2521' : 'transparent',
+                color: i === cat ? '#f7f5f0' : '#aea69c' }}>
+              {c.label} · {c.policies.length}
+            </button>
           ))}
+        </div>
+        <div style={{ marginBottom: 18 }}>
+          <select value={pol} onChange={(e) => setPol(+e.target.value)}
+            style={{ background: '#2a2521', color: '#f7f5f0', border: '1px solid #4d4641', borderRadius: 6, padding: '9px 14px', fontFamily: 'DM Mono, monospace', fontSize: 13, minWidth: 320 }}>
+            {C.policies.map((pp, i) => (<option key={i} value={i}>{pp.name}</option>))}
+          </select>
+        </div>
+        <div className="card">
+          <div className="card-title">{p.name}</div>
+          <p className="label-mono" style={{ marginBottom: 14 }}>{p.task}</p>
+          <div className="grid grid-2" style={{ gap: 14 }}>
+            <div>
+              <div className="replay-head"><span className="lbl">success</span><span className="dot dot-ok" /></div>
+              <video key={p.s} src={p.s} autoPlay loop muted playsInline preload="metadata" style={VSTYLE} />
+            </div>
+            <div>
+              <div className="replay-head"><span className="lbl">failure</span><span className="dot dot-risk" /></div>
+              <video key={p.f} src={p.f} autoPlay loop muted playsInline preload="metadata" style={VSTYLE} />
+            </div>
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <span className="status-pill"><span className={`dot ${p.tone}`} /> {p.tier}</span>
+          </div>
         </div>
       </div>
     </section>
@@ -546,7 +565,7 @@ export default function Landing() {
         <WhatTaco />
         <Pipeline />
         <FailureStory />
-        <RobotGallery />
+        <PolicyExplorer />
         <CertModel />
         <CustomersGet />
         <Commercial />
