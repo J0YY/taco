@@ -660,6 +660,8 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 69 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed packet-index metadata validation commit `a973cba` to GitHub `main`.
+- Eleventh independent `codex review --base _review-loop-baseline` found no discrete, actionable bugs in the packet indexing and verification diff.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
