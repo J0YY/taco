@@ -7,6 +7,34 @@ from taco_demo.dreamaudit_intake import build_dreamaudit_intake_summary, certifi
 from taco_demo.dreamaudit_adapter import adapt_dreamaudit_certificate
 
 
+def _ready_certificate_payload(idx: int, failure_family: str) -> dict[str, object]:
+    common = {
+        "certificate_id": f"{failure_family}-{idx:02d}",
+        "backend": "LIBERO",
+        "policy": {"name": "OpenVLA"},
+        "task": {"task_id": f"task-{idx:02d}", "task_name": "pick_up_soup"},
+        "native_validation": {"success": True, "steps": 100},
+        "minimality": {"method": "sweep", "failure_rate_at_0_75_cost": 0.7},
+    }
+    if failure_family == "occlusion":
+        return {
+            **common,
+            "perturbation": {"type": "openvla_observation_occlusion", "mean_image_l1": 0.08},
+            "perturbed_validation": {"failure_mode": "observation_counterfactual_failure", "success": False},
+        }
+    if failure_family == "language":
+        return {
+            **common,
+            "perturbation": {"type": "openvla_language_language_append", "instruction_changed": True},
+            "perturbed_validation": {"failure_mode": "language_counterfactual_failure", "success": False},
+        }
+    return {
+        **common,
+        "perturbation": {"type": "semantic_distractor", "perturbation_cost": 0.2},
+        "perturbed_validation": {"failure_mode": "wrong_object_grasp", "success": False},
+    }
+
+
 def test_build_dreamaudit_intake_summary_handles_missing_root(tmp_path):
     summary = build_dreamaudit_intake_summary(tmp_path / "missing")
 
@@ -14,6 +42,8 @@ def test_build_dreamaudit_intake_summary_handles_missing_root(tmp_path):
     assert summary["summary"]["certificates"] == 0
     assert summary["rows"] == []
     assert summary["readiness"]["status"] == "no_evidence"
+    assert summary["evidence_depth_ladder"] == []
+    assert summary["recommended_scan_limit"] is None
 
 
 def test_build_dreamaudit_intake_summary_counts_adapted_certificates(tmp_path):
@@ -44,6 +74,26 @@ def test_build_dreamaudit_intake_summary_counts_adapted_certificates(tmp_path):
     assert summary["readiness"]["readiness_score"] < 80
     assert "occlusion_risk_monitor_enabled" in summary["readiness"]["required_controls"]
     assert summary["rows"][0]["Policy"] == "OpenVLA"
+
+
+def test_build_dreamaudit_intake_summary_recommends_carrier_ready_scan_depth(tmp_path):
+    families = ("occlusion", "language", "distractor")
+    for idx in range(30):
+        source_dir = tmp_path / ("source-a" if idx < 15 else "source-b")
+        source_dir.mkdir(exist_ok=True)
+        payload = _ready_certificate_payload(idx, families[idx % len(families)])
+        (source_dir / f"{idx:02d}-cert.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    summary = build_dreamaudit_intake_summary(tmp_path, limit=2, readiness_ladder_limits=(2, 30))
+
+    assert summary["summary"]["certificates"] == 2
+    assert summary["readiness"]["status"] != "carrier_review_ready"
+    assert summary["recommended_scan_limit"] == 30
+    assert summary["evidence_depth_ladder"][0]["scan_limit"] == 2
+    assert summary["evidence_depth_ladder"][0]["status"] != "carrier_review_ready"
+    assert summary["evidence_depth_ladder"][1]["scan_limit"] == 30
+    assert summary["evidence_depth_ladder"][1]["status"] == "carrier_review_ready"
+    assert summary["evidence_depth_ladder"][1]["gaps"] == []
 
 
 def test_certificate_rows_limits_output():

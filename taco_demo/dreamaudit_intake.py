@@ -12,6 +12,7 @@ from .schemas import FailureCertificate
 
 
 DEFAULT_DREAMAUDIT_ARTIFACTS = Path("/Users/joyyang/Projects/dreamaudit/artifacts")
+DEFAULT_READINESS_LADDER_LIMITS = (250, 1000, 5000)
 
 
 def certificate_rows(certificates: list[FailureCertificate], max_rows: int = 25) -> list[dict[str, Any]]:
@@ -112,11 +113,44 @@ def underwriting_readiness(certificates: list[FailureCertificate]) -> dict[str, 
     }
 
 
+def evidence_depth_ladder(certificates: list[FailureCertificate], limits: tuple[int, ...]) -> list[dict[str, Any]]:
+    """Return readiness snapshots for progressively deeper DreamAudit scans."""
+
+    rows = []
+    for scan_limit in sorted({limit for limit in limits if limit > 0}):
+        subset = certificates[:scan_limit]
+        readiness = underwriting_readiness(subset)
+        rows.append(
+            {
+                "scan_limit": scan_limit,
+                "certificates": len(subset),
+                "readiness_score": readiness["readiness_score"],
+                "status": readiness["status"],
+                "failure_families": len({cert.failure_type for cert in subset}),
+                "minimality_reports": readiness["minimality_reports"],
+                "replay_commands": readiness["replay_commands"],
+                "source_directories": readiness.get("source_directories", 0),
+                "gaps": readiness["gaps"],
+            }
+        )
+    return rows
+
+
+def recommended_scan_limit(ladder: list[dict[str, Any]]) -> int | None:
+    """Return the first scan depth that is carrier-review-ready, if any."""
+
+    for row in ladder:
+        if row["status"] == "carrier_review_ready":
+            return int(row["scan_limit"])
+    return None
+
+
 def build_dreamaudit_intake_summary(
     root: Path | str = DEFAULT_DREAMAUDIT_ARTIFACTS,
     *,
-    limit: int = 250,
+    limit: int | None = 250,
     max_rows: int = 25,
+    readiness_ladder_limits: tuple[int, ...] = DEFAULT_READINESS_LADDER_LIMITS,
 ) -> dict[str, Any]:
     """Scan a DreamAudit artifact directory and summarize adapted evidence."""
 
@@ -130,9 +164,19 @@ def build_dreamaudit_intake_summary(
             "schema_counts": {},
             "backend_counts": {},
             "readiness": underwriting_readiness([]),
+            "evidence_depth_ladder": [],
+            "recommended_scan_limit": None,
             "rows": [],
         }
-    certs = adapt_dreamaudit_certificates(root_path, limit=limit)
+    ladder_limits = tuple(limit for limit in readiness_ladder_limits if limit > 0)
+    if limit is not None and limit > 0:
+        ladder_limits = tuple(sorted(set((*ladder_limits, limit))))
+    scan_limit = max(ladder_limits) if limit is None and ladder_limits else None
+    if limit is not None:
+        scan_limit = max((*ladder_limits, limit), default=limit)
+    all_certs = adapt_dreamaudit_certificates(root_path, limit=scan_limit)
+    certs = all_certs if limit is None else all_certs[:limit]
+    ladder = evidence_depth_ladder(all_certs, ladder_limits)
     failure_counts = Counter(cert.failure_type for cert in certs)
     schema_counts = Counter(str(cert.metadata.get("dreamaudit_schema", "unknown")) for cert in certs)
     backend_counts = Counter(str(cert.metadata.get("backend") or "unknown") for cert in certs)
@@ -144,5 +188,7 @@ def build_dreamaudit_intake_summary(
         "schema_counts": dict(sorted(schema_counts.items())),
         "backend_counts": dict(sorted(backend_counts.items())),
         "readiness": underwriting_readiness(certs),
+        "evidence_depth_ladder": ladder,
+        "recommended_scan_limit": recommended_scan_limit(ladder),
         "rows": certificate_rows(certs, max_rows=max_rows),
     }

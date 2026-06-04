@@ -594,6 +594,33 @@ with tabs[10]:
             st.markdown("**Evidence gaps before carrier review**")
             for gap in readiness["gaps"]:
                 st.markdown(f"* {gap}")
+        ladder = intake.get("evidence_depth_ladder", [])
+        if ladder:
+            st.markdown("#### Evidence Depth Ladder")
+            recommended_limit = intake.get("recommended_scan_limit")
+            if recommended_limit:
+                st.caption(f"First carrier-review-ready scan depth: {recommended_limit:,} certificates.")
+            else:
+                st.caption("No scanned depth is carrier-review-ready yet; use the listed gaps to target the next DreamAudit run.")
+            st.dataframe(
+                pd.DataFrame(
+                    [
+                        {
+                            "Scan limit": row["scan_limit"],
+                            "Certificates": row["certificates"],
+                            "Readiness": f"{row['readiness_score']}/100",
+                            "Status": str(row["status"]).replace("_", " ").title(),
+                            "Failure families": row["failure_families"],
+                            "Minimality reports": row["minimality_reports"],
+                            "Replay commands": row["replay_commands"],
+                            "Source dirs": row["source_directories"],
+                            "Gaps": "; ".join(row["gaps"]) if row["gaps"] else "None",
+                        }
+                        for row in ladder
+                    ]
+                ),
+                width="stretch",
+            )
         cols = st.columns(3)
         with cols[0]:
             st.markdown("**Failure families**")

@@ -367,3 +367,25 @@
   - `git diff --check` -> clean.
 - Pushed generic calibration/grasp review-fix commit `3f8a41c` to GitHub `main`.
 - Final independent `codex review --base _review-loop-baseline` reported no discrete correctness issues in the cumulative control-taxonomy, normalization, exclusion, UI, and test changes.
+
+## 2026-06-04 - Improvement loop: DreamAudit evidence-depth ladder
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean.
+- Captured `_review-loop-baseline` at `26b5ee7698061db11f8bb6e14eb421dd5de4b35d` for the independent review loop.
+- Added a DreamAudit intake evidence-depth ladder:
+  - scans enough certificates to compare staged evidence depths,
+  - reports readiness score, status, failure-family coverage, minimality coverage, replay-command coverage, source-directory diversity, and gaps at each depth,
+  - recommends the first scan limit that is carrier-review-ready.
+- Updated the Streamlit `DreamAudit Intake` tab to display the ladder below the selected-slice readiness panel.
+- Updated the root README to describe the evidence-depth ladder as a live evidence workflow rather than a hardcoded deterministic claim.
+- Confirmed the repo-local virtualenv already has `taco_demo/requirements-taco.txt` installed.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_quote_engine.py` -> 22 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 45 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
+- Re-ran the real DreamAudit artifact ladder:
+  - selected 250-certificate scan: readiness `85/100`, status `needs_more_evidence`, gap is low minimality coverage,
+  - 1,000-certificate ladder rung: readiness `85/100`, status `needs_more_evidence`, gap is low minimality coverage,
+  - 5,000-certificate ladder rung: readiness `100/100`, status `carrier_review_ready`, gaps `[]`,
+  - recommended scan limit: `5000`.
