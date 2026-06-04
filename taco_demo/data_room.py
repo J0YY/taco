@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+import io
+import json
 from typing import Any
+import zipfile
 
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
+
+
+ZIP_TIMESTAMP = (2026, 6, 4, 0, 0, 0)
 
 
 def build_data_room_checklist(
@@ -136,6 +142,51 @@ def build_data_room_manifest(
     }
 
 
+def build_data_room_bundle(
+    application: InsuranceApplication,
+    certificates: list[FailureCertificate],
+    metrics: list[InternalRiskMetrics],
+    quote: QuoteBreakdown,
+    suite_manifest: dict[str, Any],
+    diligence_memo: str,
+    dreamaudit_intake: dict[str, Any] | None = None,
+) -> bytes:
+    """Build a ZIP diligence packet with machine-readable contracts and memo."""
+
+    manifest = build_data_room_manifest(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        _write_zip_text(archive, "README.md", _bundle_readme(manifest))
+        _write_zip_json(archive, "manifest.json", manifest)
+        _write_zip_json(archive, "application.json", manifest["application"])
+        _write_zip_json(archive, "quote.json", manifest["quote"])
+        _write_zip_json(archive, "checklist.json", manifest["checklist"])
+        _write_zip_text(archive, "diligence_memo.md", diligence_memo)
+        _write_zip_json(archive, "insurance/workflow_examples.json", INSURANCE_SCENARIOS)
+        _write_zip_json(archive, "research/sources.json", RESEARCH_FOUNDATIONS)
+        _write_zip_json(archive, "suite/video_index.json", manifest["suite_summary"])
+        _write_zip_json(archive, "dreamaudit/summary.json", manifest["dreamaudit"])
+        for cert in certificates:
+            _write_zip_json(archive, f"certificates/{cert.certificate_id}.json", dataclass_to_dict(cert))
+        for metric in metrics:
+            _write_zip_json(archive, f"metrics/{metric.certificate_id}.json", dataclass_to_dict(metric))
+    return buffer.getvalue()
+
+
+def data_room_bundle_summary(bundle_bytes: bytes) -> dict[str, Any]:
+    """Return lightweight facts about a generated data-room ZIP."""
+
+    with zipfile.ZipFile(io.BytesIO(bundle_bytes), mode="r") as archive:
+        names = sorted(archive.namelist())
+    return {
+        "file_count": len(names),
+        "contains_manifest": "manifest.json" in names,
+        "contains_memo": "diligence_memo.md" in names,
+        "contains_video_index": "suite/video_index.json" in names,
+        "files": names,
+    }
+
+
 def _dreamaudit_status(dreamaudit_intake: dict[str, Any] | None) -> dict[str, str]:
     if not dreamaudit_intake:
         return {
@@ -194,3 +245,43 @@ def _item(artifact: str, status: str, evidence: str, next_action: str) -> dict[s
         "evidence": evidence,
         "next_action": next_action,
     }
+
+
+def _write_zip_json(archive: zipfile.ZipFile, name: str, payload: Any) -> None:
+    _write_zip_text(archive, name, json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _write_zip_text(archive: zipfile.ZipFile, name: str, payload: str) -> None:
+    info = zipfile.ZipInfo(name, ZIP_TIMESTAMP)
+    info.compress_type = zipfile.ZIP_DEFLATED
+    archive.writestr(info, payload.encode("utf-8"))
+
+
+def _bundle_readme(manifest: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# TACO Data Room Packet",
+            "",
+            f"Manifest: {manifest['manifest_id']}",
+            "",
+            "This packet contains the machine-readable underwriting contracts and diligence memo for the TACO learned-policy liability demo.",
+            "Replay videos and DreamAudit source artifacts are indexed by path rather than embedded, so reviewers can verify local evidence without treating generated media as opaque marketing collateral.",
+            "",
+            "Core files:",
+            "",
+            "* `manifest.json` - full packet index",
+            "* `application.json` - insurance application",
+            "* `quote.json` - quote breakdown",
+            "* `checklist.json` - VC/carrier readiness checklist",
+            "* `diligence_memo.md` - investor and underwriting memo",
+            "* `insurance/workflow_examples.json` - priced workflow examples",
+            "* `research/sources.json` - research-methodology anchors",
+            "* `certificates/` - primary replay failure certificates",
+            "* `metrics/` - internal-risk metric contracts",
+            "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",
+            "* `dreamaudit/summary.json` - attached DreamAudit intake summary",
+            "",
+            "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer or filed actuarial product.",
+            "",
+        ]
+    )

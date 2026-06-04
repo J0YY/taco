@@ -553,3 +553,21 @@
   - `git diff --check` -> clean.
 - Pushed calibration fix commit `46b3183` to GitHub `main`.
 - Second independent `codex review --base _review-loop-baseline` found no discrete, actionable bugs in the cumulative activation trace bridge changes.
+
+## 2026-06-04 - Improvement loop: data-room packet export
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `6706ca9`.
+- Captured `_review-loop-baseline` at `6706ca9008fd24e6583a6a7c03270ef4b2c7978c` for the independent review loop.
+- Identified a diligence workflow gap: reviewers could download a manifest and memo separately, but not a single auditable data-room packet containing the JSON contracts and memo.
+- Added an in-memory ZIP packet builder in `taco_demo/data_room.py`:
+  - `build_data_room_bundle` packages manifest, application, quote, checklist, diligence memo, primary certificates, internal metrics, ManiSkill/RMA video index, and DreamAudit summary,
+  - `data_room_bundle_summary` reports generated ZIP contents for tests and smoke checks,
+  - packet README states the boundary clearly: evidence packet for local diligence, not an insurance offer.
+- Added a Streamlit `Download Data Room Packet` button in the Investor Case tab and updated the README product surface.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 13 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 59 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - data-room packet smoke check generated a 17,790-byte ZIP with 16 files and manifest/memo/video index, workflow JSON, and research JSON present.
+  - `.venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force` -> regenerated local demo evidence under `taco_demo/data`.
+  - `git diff --check` -> clean.

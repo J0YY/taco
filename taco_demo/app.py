@@ -11,7 +11,7 @@ import streamlit as st
 
 from taco_demo.binder import issue_binder
 from taco_demo.activation_recorder import torch_available
-from taco_demo.data_room import build_data_room_checklist, build_data_room_manifest, data_room_rows
+from taco_demo.data_room import build_data_room_bundle, build_data_room_checklist, build_data_room_manifest, data_room_rows
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
@@ -572,6 +572,21 @@ with tabs[9]:
             memo.encode("utf-8"),
             file_name=f"TACO-DILIGENCE-{application.application_id}.md",
             mime="text/markdown",
+        )
+        bundle = build_data_room_bundle(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            suite_manifest,
+            memo,
+            dreamaudit_intake,
+        )
+        st.download_button(
+            "Download Data Room Packet",
+            bundle,
+            file_name=f"TACO-DATAROOM-{application.application_id}.zip",
+            mime="application/zip",
         )
     else:
         st.info("Run the audit to populate the investor proof-point metrics.")
