@@ -518,3 +518,5 @@
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - real DreamAudit-backed manifest smoke check serialized JSON successfully: manifest `DR-APP-APEX-001`, internal packet score `100`, recommended DreamAudit scan limit `5000`.
   - `git diff --check` -> clean.
+- Pushed data-room manifest export commit `ab046d9` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` reported that the manifest export is consistently wired into the Streamlit app, diligence memo, and tests, with no discrete introduced bug found.
