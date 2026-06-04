@@ -235,9 +235,22 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
             if PACKET_INDEX_PATH not in names:
                 issues.append(f"Missing required file: {PACKET_INDEX_PATH}")
             else:
-                index = json.loads(archive.read(PACKET_INDEX_PATH))
-            if index:
-                indexed_files = {item["path"]: item for item in index.get("files", [])}
+                raw_index = json.loads(archive.read(PACKET_INDEX_PATH))
+                if isinstance(raw_index, dict):
+                    index = raw_index
+                else:
+                    issues.append("Invalid packet index: expected JSON object")
+            if index is not None:
+                indexed_items = index.get("files")
+                if not isinstance(indexed_items, list) or not indexed_items:
+                    issues.append("Invalid packet index: files must be a non-empty list")
+                    indexed_items = []
+                indexed_files = {}
+                for item in indexed_items:
+                    if not isinstance(item, dict) or not isinstance(item.get("path"), str):
+                        issues.append("Invalid packet index: file entries must be objects with string paths")
+                        continue
+                    indexed_files[item["path"]] = item
                 for name, item in indexed_files.items():
                     if name not in names:
                         issues.append(f"Indexed file missing from ZIP: {name}")
@@ -252,7 +265,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                 unindexed = sorted(set(names) - set(indexed_files) - {PACKET_INDEX_PATH})
                 if unindexed:
                     issues.extend(f"ZIP file missing from packet index: {name}" for name in unindexed)
-    except (KeyError, ValueError, zipfile.BadZipFile, json.JSONDecodeError) as exc:
+    except (KeyError, TypeError, ValueError, zipfile.BadZipFile, json.JSONDecodeError) as exc:
         issues.append(f"Invalid data-room packet: {exc}")
     return {
         "valid": not issues,

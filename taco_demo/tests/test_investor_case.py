@@ -319,6 +319,36 @@ def test_data_room_bundle_verifier_fails_closed_on_malformed_zip():
     assert verification["issues"][0].startswith("Invalid data-room packet:")
 
 
+def test_data_room_bundle_verifier_rejects_empty_packet_index():
+    required_files = [
+        "README.md",
+        "manifest.json",
+        "application.json",
+        "quote.json",
+        "checklist.json",
+        "diligence_memo.md",
+        "insurance/workflow_examples.json",
+        "research/sources.json",
+        "suite/video_index.json",
+        "dreamaudit/summary.json",
+    ]
+    for index_payload, expected_issue in [
+        ("[]", "Invalid packet index: expected JSON object"),
+        ("{}", "Invalid packet index: files must be a non-empty list"),
+        ('{"files":[]}', "Invalid packet index: files must be a non-empty list"),
+    ]:
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for name in required_files:
+                archive.writestr(name, b"")
+            archive.writestr("packet/index.json", index_payload)
+
+        verification = verify_data_room_bundle(buffer.getvalue())
+
+        assert verification["valid"] is False
+        assert expected_issue in verification["issues"]
+
+
 def test_data_room_bundle_sanitizes_external_certificate_ids_in_zip_paths():
     app = default_application()
     certs = [

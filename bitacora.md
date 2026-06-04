@@ -569,6 +569,15 @@
   - data-room packet smoke check generated a 19,031-byte ZIP with 17 files, packet index present, verifier valid, and 16 indexed payload files.
   - `.venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force` -> regenerated local demo evidence under `taco_demo/data`.
   - `git diff --check` -> clean.
+- Pushed data-room packet verification commit `c2cea46` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one issue:
+  - malformed but parseable packet indexes such as `{}` or `[]` could bypass checksum coverage and be reported valid.
+- Fixed packet index validation to reject non-object indexes, empty/missing `files` lists, and malformed file entries; added regression tests for empty and non-object indexes.
+- Verification after packet-index validation fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 17 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 63 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 - Pushed activation trace bridge commit `912edd8` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found one issue:
   - independent min-max normalization per saved trace could erase cross-rollout differences when raw activation ranges differ, making mitigability and feature-stability metrics misleading.
