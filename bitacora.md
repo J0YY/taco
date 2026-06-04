@@ -1366,3 +1366,4 @@
   - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 80 passed.
   - `.venv/bin/python -m pytest taco_demo/tests -q` -> 129 passed.
 - Third independent `codex review --base _review-loop-baseline` inspected the cumulative provenance-audit diff after fixes, observed the test suite passing, and found no discrete correctness issues in the UI, diligence memo, manifest, ZIP bundle, packet versioning, verifier compatibility, or tests.
+- Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `47219`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
