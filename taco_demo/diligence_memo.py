@@ -112,6 +112,7 @@ def build_diligence_memo(
     investor_proof_pipeline = data_room_manifest["investor_proof_pipeline"]
     research_validation_plan = data_room_manifest["research_validation_plan"]
     commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
+    commercial_unit_economics = data_room_manifest["commercial_unit_economics"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -250,6 +251,41 @@ def build_diligence_memo(
     lines.extend(["", "| Counting rule | Count | Do not count |", "| --- | --- | --- |"])
     for rule in commercial_traction_plan["counting_rules"]:
         lines.append(f"| {rule['rule']} | {rule['count']} | {rule['do_not_count']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Commercial Unit Economics",
+            "",
+            f"* Status: {commercial_unit_economics['status']}",
+            f"* Boundary: {commercial_unit_economics['boundary']}",
+            f"* Base modeled ARR: ${commercial_unit_economics['assumption_set']['base_modeled_arr_usd']:,.0f}",
+            f"* Revenue boundary: {commercial_unit_economics['assumption_set']['revenue_recognition_boundary']}",
+            "",
+            "| Revenue line | Units | Unit price | Delivery cost | Gross margin | Boundary |",
+            "| --- | ---: | ---: | ---: | ---: | --- |",
+        ]
+    )
+    for line in commercial_unit_economics["base_revenue_mix"]:
+        lines.append(
+            f"| {line['line_id']} | {line['modeled_units']} | ${line['unit_price_usd']:,.0f} | "
+            f"${line['delivery_cost_usd']:,.0f} | {line['gross_margin_pct']} | {line['boundary']} |"
+        )
+    lines.extend(["", "| Scenario | Revenue | Gross margin | What must be true |", "| --- | ---: | ---: | --- |"])
+    for scenario in commercial_unit_economics["margin_scenarios"]:
+        lines.append(
+            f"| {scenario['scenario_id']} | ${scenario['modeled_revenue_usd']:,.0f} | "
+            f"{scenario['gross_margin_pct']} | {scenario['what_must_be_true']} |"
+        )
+    lines.extend(["", "| Motion | CAC | ACV | Payback months | Upgrade gate |", "| --- | ---: | ---: | ---: | --- |"])
+    for motion in commercial_unit_economics["cac_payback_model"]:
+        lines.append(
+            f"| {motion['motion']} | ${motion['modeled_cac_usd']:,.0f} | ${motion['modeled_acv_usd']:,.0f} | "
+            f"{motion['payback_months']} | {motion['upgrade_gate']} |"
+        )
+    lines.extend(["", "| Gate | Metric | Pass condition | Do not count |", "| --- | --- | --- | --- |"])
+    for gate in commercial_unit_economics["seed_milestone_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['metric']} | {gate['pass_condition']} | {gate['do_not_count']} |")
 
     lines.extend(
         [

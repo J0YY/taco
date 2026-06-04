@@ -44,6 +44,13 @@ from taco_demo.commercial_traction import (
     commercial_traction_rule_rows,
     commercial_traction_segment_rows,
 )
+from taco_demo.commercial_unit_economics import (
+    build_commercial_unit_economics,
+    unit_economics_gate_rows,
+    unit_economics_payback_rows,
+    unit_economics_revenue_rows,
+    unit_economics_scenario_rows,
+)
 from taco_demo.data_room import (
     MAX_ZIP_MEMBERS,
     MAX_ZIP_MEMBER_BYTES,
@@ -65,7 +72,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V16,
     PACKET_FORMAT_V17,
     PACKET_FORMAT_V18,
+    PACKET_FORMAT_V19,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V18,
     REQUIRED_BUNDLE_FILES_V17,
     REQUIRED_BUNDLE_FILES_V16,
     REQUIRED_BUNDLE_FILES_V15,
@@ -1081,6 +1090,32 @@ def test_commercial_traction_plan_converts_proof_workflows_into_countable_seed_t
     assert commercial_traction_metric_rows(traction_plan)
     assert commercial_traction_rule_rows(traction_plan)
 
+    unit_model = build_commercial_unit_economics(
+        app,
+        quote,
+        commercial_model,
+        traction_plan,
+        seed_financing_plan,
+        buyer_roi_model,
+    )
+
+    assert unit_model["unit_id"] == "UNIT-APP-APEX-001"
+    assert unit_model["status"] == "unit_economics_model_ready_not_financial_forecast"
+    assert "not audited financials" in unit_model["boundary"]
+    assert unit_model["assumption_set"]["base_modeled_arr_usd"] == 3_800_000
+    assert unit_model["assumption_set"]["base_platform_accounts"] == 20
+    assert "exclude insurance premium" in unit_model["assumption_set"]["revenue_recognition_boundary"]
+    assert any(line["line_id"] == "evidence_platform_subscription" for line in unit_model["base_revenue_mix"])
+    assert next(item for item in unit_model["margin_scenarios"] if item["scenario_id"] == "base_packet_platform")["gross_margin_pct"] >= 65
+    assert any(item["motion"] == "broker_mga_platform_motion" for item in unit_model["cac_payback_model"])
+    assert any(gate["gate"] == "cac_payback_evidence" for gate in unit_model["seed_milestone_gates"])
+    assert "No insurance premium is counted as TACO revenue in this unit-economics model." in unit_model["risk_bearing_exclusions"]
+    assert unit_model["linked_buyer_value"]["roi_id"] == "ROI-APP-APEX-001"
+    assert unit_economics_revenue_rows(unit_model)
+    assert unit_economics_scenario_rows(unit_model)
+    assert unit_economics_payback_rows(unit_model)
+    assert unit_economics_gate_rows(unit_model)
+
 
 def test_capacity_roadmap_separates_evidence_revenue_from_insurance_authority():
     app = default_application()
@@ -1434,6 +1469,9 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert manifest["commercial_traction_plan"]["plan_id"] == "TRACT-APP-APEX-001"
     assert "not evidence of signed customers" in manifest["commercial_traction_plan"]["boundary"]
     assert any(package["package_id"] == "policy_evidence_sprint" for package in manifest["commercial_traction_plan"]["commercial_packages"])
+    assert manifest["commercial_unit_economics"]["unit_id"] == "UNIT-APP-APEX-001"
+    assert "not audited financials" in manifest["commercial_unit_economics"]["boundary"]
+    assert any(item["scenario_id"] == "base_packet_platform" for item in manifest["commercial_unit_economics"]["margin_scenarios"])
     assert manifest["claim_validation_ledger"]["ledger_id"] == "CLAIM-APP-APEX-001"
     assert "disallowed overclaims" in manifest["claim_validation_ledger"]["boundary"]
     assert any(claim["claim_id"] == "buyer_roi_economic_case" for claim in manifest["claim_validation_ledger"]["claims"])
@@ -1545,6 +1583,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/buyer_roi_model.json" in summary["files"]
     assert "commercial/investor_proof_pipeline.json" in summary["files"]
     assert "commercial/commercial_traction_plan.json" in summary["files"]
+    assert "commercial/commercial_unit_economics.json" in summary["files"]
     assert "research/claim_validation_ledger.json" in summary["files"]
     assert "research/research_validation_plan.json" in summary["files"]
     assert "technical/technical_diligence_runbook.json" in summary["files"]
@@ -1572,13 +1611,14 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         buyer_roi_model = json.loads(archive.read("commercial/buyer_roi_model.json"))
         investor_proof_pipeline = json.loads(archive.read("commercial/investor_proof_pipeline.json"))
         commercial_traction_plan = json.loads(archive.read("commercial/commercial_traction_plan.json"))
+        commercial_unit_economics = json.loads(archive.read("commercial/commercial_unit_economics.json"))
         claim_validation_ledger = json.loads(archive.read("research/claim_validation_ledger.json"))
         research_validation_plan = json.loads(archive.read("research/research_validation_plan.json"))
         technical_runbook = json.loads(archive.read("technical/technical_diligence_runbook.json"))
         methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V18
+    assert index["packet_format"] == PACKET_FORMAT_V19
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -1633,6 +1673,10 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert commercial_traction_plan["status"] == "traction_operating_plan_ready_not_revenue_claim"
     assert any(rule["rule"] == "signed_or_paid_commercial_artifact" for rule in commercial_traction_plan["counting_rules"])
     assert any(metric["metric"] == "verified_packet_walkthroughs" for metric in commercial_traction_plan["weekly_metrics"])
+    assert commercial_unit_economics["unit_id"] == "UNIT-APP-APEX-001"
+    assert commercial_unit_economics["status"] == "unit_economics_model_ready_not_financial_forecast"
+    assert any(gate["gate"] == "repeatable_platform_margin" for gate in commercial_unit_economics["seed_milestone_gates"])
+    assert any(item["motion"] == "paid_policy_evidence_sprint" for item in commercial_unit_economics["cac_payback_model"])
     assert methodology_map["map_id"] == "METHOD-APP-APEX-001"
     assert methodology_map["score"] >= 85
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
@@ -1641,6 +1685,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/buyer_roi_model.json" in readme
     assert "commercial/investor_proof_pipeline.json" in readme
     assert "commercial/commercial_traction_plan.json" in readme
+    assert "commercial/commercial_unit_economics.json" in readme
     assert "research/claim_validation_ledger.json" in readme
     assert "research/research_validation_plan.json" in readme
     verification = verify_data_room_bundle(bundle)
@@ -1690,6 +1735,10 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "traction_operating_plan_ready_not_revenue_claim" in memo
     assert "policy_evidence_sprint" in memo
     assert "packet_fingerprinted_review" in memo
+    assert "## Commercial Unit Economics" in memo
+    assert "unit_economics_model_ready_not_financial_forecast" in memo
+    assert "base_packet_platform" in memo
+    assert "cac_payback_evidence" in memo
     assert "## Pricing Diligence Sensitivity" in memo
     assert "not filed actuarial pricing" in memo
     assert "## Actuarial Readiness Plan" in memo
@@ -1748,7 +1797,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, taco_data_room_zip_v17, or taco_data_room_zip_v18",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, taco_data_room_zip_v17, taco_data_room_zip_v18, or taco_data_room_zip_v19",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -2263,6 +2312,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v17_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V17 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v18_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V18}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V18"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V18,
+        "manifest_id": "DR-LEGACY-V18",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V18 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

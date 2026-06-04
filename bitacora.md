@@ -1165,3 +1165,18 @@
   - `git diff --check` -> clean.
 - Third independent `codex review --base _review-loop-baseline` found no actionable regressions in the commercial traction plan, app wiring, memo wiring, v18 data-room packet, verifier compatibility, or tests.
 - Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `14667`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
+
+## 2026-06-04 - Improvement loop: commercial unit economics
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `4745f7f`.
+- Identified the next VC diligence gap: the packet models traction and ARR but did not show whether TACO can become a high-margin evidence platform rather than services-heavy consulting or unlicensed insurance-risk economics.
+- Added `taco_demo/commercial_unit_economics.py` with modeled revenue mix, delivery-cost assumptions, gross-margin scenarios, CAC/payback assumptions, seed milestone gates, risk-bearing exclusions, and upgrade proof requirements.
+- Wired commercial unit economics into the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v19` while preserving verifier compatibility for legacy v1 through v18 packets.
+- Added tests for unit-economics rows, manifest/ZIP export, memo section, current v19 packet indexing, invalid packet-format messaging, and legacy v18 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 64 passed after aligning the base margin scenario to its own revenue mix and delivery-cost totals.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 110 passed.
+  - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

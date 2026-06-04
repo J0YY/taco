@@ -50,6 +50,13 @@ from taco_demo.commercial_traction import (
     commercial_traction_rule_rows,
     commercial_traction_segment_rows,
 )
+from taco_demo.commercial_unit_economics import (
+    build_commercial_unit_economics,
+    unit_economics_gate_rows,
+    unit_economics_payback_rows,
+    unit_economics_revenue_rows,
+    unit_economics_scenario_rows,
+)
 from taco_demo.data_room import (
     MAX_PACKET_BYTES,
     PACKET_INDEX_PATH,
@@ -764,6 +771,14 @@ with tabs[9]:
             design_partner_plan,
             seed_financing_plan,
         )
+        commercial_unit_economics = build_commercial_unit_economics(
+            application,
+            audit["quote"],
+            commercial_model,
+            commercial_traction_plan,
+            seed_financing_plan,
+            buyer_roi_model,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -883,6 +898,21 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(commercial_traction_package_rows(commercial_traction_plan)), width="stretch")
         st.dataframe(pd.DataFrame(commercial_traction_metric_rows(commercial_traction_plan)), width="stretch")
         st.dataframe(pd.DataFrame(commercial_traction_rule_rows(commercial_traction_plan)), width="stretch")
+        st.markdown("#### Commercial Unit Economics")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Unit status", str(commercial_unit_economics["status"]).replace("_", " ").title())
+        base_margin = next(
+            item["gross_margin_pct"]
+            for item in commercial_unit_economics["margin_scenarios"]
+            if item["scenario_id"] == "base_packet_platform"
+        )
+        c2.metric("Base gross margin", f"{base_margin}%")
+        c3.metric("Payback motions", len(commercial_unit_economics["cac_payback_model"]))
+        st.caption(commercial_unit_economics["boundary"])
+        st.dataframe(pd.DataFrame(unit_economics_revenue_rows(commercial_unit_economics)), width="stretch")
+        st.dataframe(pd.DataFrame(unit_economics_scenario_rows(commercial_unit_economics)), width="stretch")
+        st.dataframe(pd.DataFrame(unit_economics_payback_rows(commercial_unit_economics)), width="stretch")
+        st.dataframe(pd.DataFrame(unit_economics_gate_rows(commercial_unit_economics)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],
