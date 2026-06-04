@@ -1,0 +1,248 @@
+{
+  "per_task": [
+    {
+      "task_group": "NavigateKitchen",
+      "task_id": 0,
+      "metrics": {
+        "sum_rewards": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_rewards": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "successes": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "video_paths": [
+          "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_0.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_1.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_2.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_3.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_4.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_5.mp4"
+        ]
+      }
+    },
+    {
+      "task_group": "OpenDrawer",
+      "task_id": 0,
+      "metrics": {
+        "sum_rewards": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_rewards": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "successes": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "video_paths": [
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_0.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_1.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_2.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_3.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_4.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_5.mp4"
+        ]
+      }
+    },
+    {
+      "task_group": "OpenCabinet",
+      "task_id": 0,
+      "metrics": {
+        "sum_rewards": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_rewards": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "successes": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "video_paths": [
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_0.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_1.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_2.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_3.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_4.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_5.mp4"
+        ]
+      }
+    },
+    {
+      "task_group": "CloseFridge",
+      "task_id": 0,
+      "metrics": {
+        "sum_rewards": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "max_rewards": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "successes": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "video_paths": [
+          "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_0.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_1.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_2.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_3.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_4.mp4",
+          "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_5.mp4"
+        ]
+      }
+    }
+  ],
+  "per_group": {
+    "NavigateKitchen": {
+      "avg_sum_reward": 0.0,
+      "avg_max_reward": 0.0,
+      "pc_success": 0.0,
+      "n_episodes": 6,
+      "video_paths": [
+        "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_0.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_1.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_2.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_3.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_4.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_5.mp4"
+      ]
+    },
+    "OpenDrawer": {
+      "avg_sum_reward": 0.0,
+      "avg_max_reward": 0.0,
+      "pc_success": 0.0,
+      "n_episodes": 6,
+      "video_paths": [
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_0.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_1.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_2.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_3.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_4.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_5.mp4"
+      ]
+    },
+    "OpenCabinet": {
+      "avg_sum_reward": 0.0,
+      "avg_max_reward": 0.0,
+      "pc_success": 0.0,
+      "n_episodes": 6,
+      "video_paths": [
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_0.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_1.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_2.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_3.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_4.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_5.mp4"
+      ]
+    },
+    "CloseFridge": {
+      "avg_sum_reward": 0.0,
+      "avg_max_reward": 0.0,
+      "pc_success": 0.0,
+      "n_episodes": 6,
+      "video_paths": [
+        "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_0.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_1.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_2.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_3.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_4.mp4",
+        "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_5.mp4"
+      ]
+    }
+  },
+  "overall": {
+    "avg_sum_reward": 0.0,
+    "avg_max_reward": 0.0,
+    "pc_success": 0.0,
+    "n_episodes": 24,
+    "eval_s": 1152.6380653381348,
+    "eval_ep_s": 48.02658609549204,
+    "video_paths": [
+      "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_0.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_1.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_2.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_3.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_4.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/NavigateKitchen_0/eval_episode_5.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_0.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_1.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_2.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_3.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_4.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenDrawer_0/eval_episode_5.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_0.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_1.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_2.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_3.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_4.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/OpenCabinet_0/eval_episode_5.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_0.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_1.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_2.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_3.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_4.mp4",
+      "/work/joy/taco_kitchen/eval/fixed/videos/CloseFridge_0/eval_episode_5.mp4"
+    ]
+  }
+}
