@@ -35,10 +35,14 @@ def build_methodology_evidence_map(
     dreamaudit_summary = dreamaudit_intake.get("summary", {}) if dreamaudit_intake else {}
     dreamaudit_count = int(dreamaudit_summary.get("certificates", 0) or 0)
     dreamaudit_readiness = dreamaudit_intake.get("readiness", {}) if dreamaudit_intake else {}
+    dreamaudit_ladder = list(dreamaudit_intake.get("evidence_depth_ladder", [])) if dreamaudit_intake else []
     dreamaudit_ready = (
         bool(dreamaudit_intake)
         and bool(dreamaudit_intake.get("root_exists"))
-        and str(dreamaudit_readiness.get("status", "")) == "carrier_review_ready"
+        and (
+            str(dreamaudit_readiness.get("status", "")) == "carrier_review_ready"
+            or any(row.get("status") == "carrier_review_ready" for row in dreamaudit_ladder)
+        )
     )
 
     claims = [
@@ -157,7 +161,13 @@ def _internals_status(
     if not complete:
         return "needs_work"
     real_activation_sources = {"recorded_activation_forward_hooks", "activation_recorder_npz"}
-    if any(metric.metrics_source in real_activation_sources for metric in metrics):
+    primary_ids = {cert.certificate_id for cert in certificates}
+    primary_metrics = [metric for metric in metrics if metric.certificate_id in primary_ids]
+    if (
+        primary_metrics
+        and {metric.certificate_id for metric in primary_metrics} == primary_ids
+        and all(metric.metrics_source in real_activation_sources for metric in primary_metrics)
+    ):
         return "research_and_artifact_backed"
     return "demo_backed_needs_live_evidence"
 

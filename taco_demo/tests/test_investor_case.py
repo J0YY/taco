@@ -134,6 +134,8 @@ def test_methodology_evidence_map_separates_backed_claims_from_open_risks():
     assert any(claim["claim_id"] == "internal_activation_risk_path" for claim in evidence_map["claims"])
     assert all(row["Current Evidence"] for row in rows)
     assert all(claim["boundary"] for claim in evidence_map["claims"])
+    claims_by_id = {claim["claim_id"]: claim for claim in evidence_map["claims"]}
+    assert claims_by_id["live_corpus_transfer"]["status"] == "research_and_artifact_backed"
 
 
 def test_methodology_evidence_map_does_not_treat_carrier_ready_dreamaudit_as_activation_evidence():
@@ -156,6 +158,41 @@ def test_methodology_evidence_map_does_not_treat_carrier_ready_dreamaudit_as_act
     claims_by_id = {claim["claim_id"]: claim for claim in evidence_map["claims"]}
 
     assert claims_by_id["live_corpus_transfer"]["status"] == "research_and_artifact_backed"
+    assert claims_by_id["internal_activation_risk_path"]["status"] == "demo_backed_needs_live_evidence"
+
+
+def test_methodology_evidence_map_requires_real_activation_sources_for_every_primary_metric():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(
+            cert.certificate_id,
+            1.0,
+            0.6,
+            0.4,
+            0.8,
+            0.9,
+            0.2,
+            "signature",
+            True,
+            "recorded_activation_forward_hooks" if index == 0 else "demo_trace_fixture",
+            {},
+        )
+        for index, cert in enumerate(DEMO_CERTIFICATES)
+    ]
+    metrics.append(
+        InternalRiskMetrics("FR-EXTRA", 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "recorded_activation_forward_hooks", {})
+    )
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    evidence_map = build_methodology_evidence_map(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        _carrier_ready_dreamaudit_intake(),
+    )
+    claims_by_id = {claim["claim_id"]: claim for claim in evidence_map["claims"]}
+
     assert claims_by_id["internal_activation_risk_path"]["status"] == "demo_backed_needs_live_evidence"
 
 

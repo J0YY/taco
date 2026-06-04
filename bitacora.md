@@ -844,3 +844,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 80 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed first methodology review-fix commit `9832caa` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found two remaining scoring issues:
+  - `live_corpus_transfer` did not honor carrier-ready evidence-depth ladder rungs,
+  - one real activation metric could upgrade the internals claim even when other primary certificate metrics were still demo-sourced.
+- Fixed both:
+  - DreamAudit readiness now matches the fundraise gate by accepting a carrier-ready selected scan or ladder rung,
+  - internals evidence now requires real activation metric sources for every primary certificate metric and ignores extra unrelated real metrics.
+- Verification after second review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 35 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 81 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
