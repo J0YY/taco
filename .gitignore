@@ -2,3 +2,6 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# Modal smoke-test render outputs (throwaway)
+taco_demo/data/videos/incoming/modal_*.mp4
