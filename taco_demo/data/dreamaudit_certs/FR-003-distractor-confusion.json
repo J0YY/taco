@@ -1,0 +1,27 @@
+{
+  "certificate_id": "FR-003",
+  "failure_rate_neighborhood": 0.52,
+  "failure_timestep": 119,
+  "failure_type": "distractor_object_confusion",
+  "metadata": {
+    "fallback": true
+  },
+  "minimal_failure_cost": 0.44,
+  "patch_recipe": {
+    "recommended_control": "target_identity_confirmation",
+    "risk_axis": "semantic_distractor_confusion",
+    "type": "runtime_monitor"
+  },
+  "perturbation": {
+    "distractor_similarity": 0.86,
+    "grammar_family": "semantic_distractor",
+    "normalized_cost": 0.44,
+    "target_pose_shift_cm": 2.4
+  },
+  "policy_id": "openvla_warehouse_v3",
+  "replay_command": "python scripts/replay_dreamaudit_certificate.py --certificate FR-003",
+  "severity": "material",
+  "source": "demo_generated_placeholder_data",
+  "source_path": null,
+  "task_id": "libero_pick_can"
+}

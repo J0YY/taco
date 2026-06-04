@@ -1,0 +1,14 @@
+{
+  "application_id": "APP-APEX-001",
+  "company_name": "Apex Robotics",
+  "coverage_requested_usd": 10000000,
+  "created_at": "2026-06-04T04:36:38+00:00",
+  "deployment_stage": "pre_deployment",
+  "deployment_units": 200,
+  "metadata": {
+    "source": "demo_generated_placeholder_data"
+  },
+  "policy_id": "openvla_warehouse_v3",
+  "robot_type": "warehouse_manipulation_arm",
+  "telemetry_available": false
+}

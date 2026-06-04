@@ -1,0 +1,528 @@
+{
+  "examples": [
+    {
+      "dreamaudit_result": {
+        "env_id": "RopeLoopPlacementRMA-v1",
+        "final_info": {},
+        "metrics": {
+          "eval_episode_len": 100.0,
+          "eval_return": 29.198078155517578,
+          "eval_reward": 0.2919807732105255,
+          "eval_step_center_near_target": 0.0,
+          "eval_step_controlled_hold_steps": 0.0,
+          "eval_step_elapsed_steps": 49.5,
+          "eval_step_encloses_target": 0.0,
+          "eval_step_has_interacted": 0.0,
+          "eval_step_has_loop_area": 1.0,
+          "eval_step_has_target_clearance": 0.6237499713897705,
+          "eval_step_is_closed_enough": 0.5037499666213989,
+          "eval_step_is_controlled_placement": 0.0,
+          "eval_step_is_grasped_any": 0.0,
+          "eval_step_is_loop_geometrically_placed": 0.0,
+          "eval_step_is_loop_placed": 0.0,
+          "eval_step_is_robot_static": 0.8862499594688416,
+          "eval_step_is_rope_stable": 0.9899999499320984,
+          "eval_step_is_round_enough": 1.0,
+          "eval_step_level_id": 4.0,
+          "eval_step_level_priority": 1.0,
+          "eval_step_level_sample_count": 0.0,
+          "eval_step_level_sample_prob": 1.0,
+          "eval_step_level_score_ema": 0.0,
+          "eval_step_level_shape_noise": 0.15707962214946747,
+          "eval_step_level_start_xy_span": 0.07999999821186066,
+          "eval_step_level_success_ema": 0.5,
+          "eval_step_level_target_offset": 0.14999999105930328,
+          "eval_step_loop_area": 0.01040197629481554,
+          "eval_step_loop_center_to_target_dist": 0.1511652022600174,
+          "eval_step_loop_closure_dist": 0.05459951236844063,
+          "eval_step_loop_radius_consistency": 0.1917148232460022,
+          "eval_step_loop_radius_mean": 0.058928582817316055,
+          "eval_step_loop_radius_std": 0.011273562908172607,
+          "eval_step_obj_dist_mean": 0.2054692804813385,
+          "eval_step_obj_dist_min": 0.15501908957958221,
+          "eval_step_rope_qvel_norm": 0.35725530982017517,
+          "eval_step_success": 0.0,
+          "eval_step_success_once": 0.0,
+          "eval_step_target_clearance": 0.09168457984924316,
+          "eval_step_task_score": 0.29356247186660767,
+          "eval_success_at_end": 0.0,
+          "eval_success_once": 0.0
+        },
+        "num_envs": 1,
+        "ok": true,
+        "source_path": "/Users/joyyang/Projects/dreamaudit/artifacts/maniskill_rma_policy_rope_eval_bash2/result.json"
+      },
+      "env_id": "PickSingleYCBRMA-v1",
+      "example_id": "MS-PICK-001",
+      "failure_family": "object_pose_shift",
+      "mode": "random_policy",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 0,
+      "source": "dreamaudit_result_plus_demo_generated_video",
+      "summary": "approaches object but misses goal placement",
+      "video_path": "videos/maniskill_examples/MS-PICK-001.gif"
+    },
+    {
+      "dreamaudit_result": {
+        "env_id": "PickSingleYCBRMA-v1",
+        "final_info": {
+          "elapsed_steps": [
+            20
+          ],
+          "is_grasped": [
+            false
+          ],
+          "is_grasping": [
+            false
+          ],
+          "is_obj_placed": [
+            false
+          ],
+          "is_robot_static": [
+            false
+          ],
+          "obj_to_goal_pos": [
+            [
+              0.03261704742908478,
+              0.04350468888878822,
+              0.1191304624080658
+            ]
+          ],
+          "success": [
+            false
+          ]
+        },
+        "metrics": {},
+        "num_envs": 1,
+        "ok": true,
+        "source_path": "/Users/joyyang/Projects/dreamaudit/artifacts/maniskill_rma_smoke/result.json"
+      },
+      "env_id": "PickSingleYCBRMA-v1",
+      "example_id": "MS-PICK-002",
+      "failure_family": "grasp_contact_dropout",
+      "mode": "random_policy",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 1,
+      "source": "dreamaudit_result_plus_demo_generated_video",
+      "summary": "gripper contact appears but stable grasp is not achieved",
+      "video_path": "videos/maniskill_examples/MS-PICK-002.gif"
+    },
+    {
+      "dreamaudit_result": {
+        "env_id": "PickSingleYCBRMA-v1",
+        "final_info": {
+          "elapsed_steps": [
+            50,
+            50,
+            50,
+            50,
+            50,
+            50,
+            50,
+            50
+          ],
+          "is_grasped": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "is_grasping": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "is_obj_placed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "is_robot_static": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "obj_to_goal_pos": [
+            [
+              -0.06740951538085938,
+              0.1418147087097168,
+              0.21408414840698242
+            ],
+            [
+              0.13874568045139313,
+              -0.12400054931640625,
+              0.016706954687833786
+            ],
+            [
+              -0.10027408599853516,
+              -0.03662300109863281,
+              0.18306584656238556
+            ],
+            [
+              0.13599538803100586,
+              -0.07424809783697128,
+              0.07891949266195297
+            ],
+            [
+              -0.05354583263397217,
+              0.015562735497951508,
+              0.1390485167503357
+            ],
+            [
+              -0.027595996856689453,
+              0.07790712267160416,
+              0.1851562112569809
+            ],
+            [
+              -0.06711483001708984,
+              -0.015758037567138672,
+              0.046109165996313095
+            ],
+            [
+              -0.1283271461725235,
+              -0.0016942024230957031,
+              0.05637475475668907
+            ]
+          ],
+          "success": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ]
+        },
+        "metrics": {},
+        "num_envs": 8,
+        "ok": true,
+        "source_path": "/Users/joyyang/Projects/dreamaudit/artifacts/maniskill_rma_smoke_8env/result.json"
+      },
+      "env_id": "PickSingleYCBRMA-v1",
+      "example_id": "MS-PICK-003",
+      "failure_family": "goal_offset_boundary",
+      "mode": "random_policy",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 2,
+      "source": "dreamaudit_result_plus_demo_generated_video",
+      "summary": "object remains outside goal tolerance",
+      "video_path": "videos/maniskill_examples/MS-PICK-003.gif"
+    },
+    {
+      "dreamaudit_result": {
+        "env_id": "RopeLoopPlacementRMA-v1",
+        "final_info": {},
+        "metrics": {
+          "eval_episode_len": 100.0,
+          "eval_return": 29.198078155517578,
+          "eval_reward": 0.2919807732105255,
+          "eval_step_center_near_target": 0.0,
+          "eval_step_controlled_hold_steps": 0.0,
+          "eval_step_elapsed_steps": 49.5,
+          "eval_step_encloses_target": 0.0,
+          "eval_step_has_interacted": 0.0,
+          "eval_step_has_loop_area": 1.0,
+          "eval_step_has_target_clearance": 0.6237499713897705,
+          "eval_step_is_closed_enough": 0.5037499666213989,
+          "eval_step_is_controlled_placement": 0.0,
+          "eval_step_is_grasped_any": 0.0,
+          "eval_step_is_loop_geometrically_placed": 0.0,
+          "eval_step_is_loop_placed": 0.0,
+          "eval_step_is_robot_static": 0.8862499594688416,
+          "eval_step_is_rope_stable": 0.9899999499320984,
+          "eval_step_is_round_enough": 1.0,
+          "eval_step_level_id": 4.0,
+          "eval_step_level_priority": 1.0,
+          "eval_step_level_sample_count": 0.0,
+          "eval_step_level_sample_prob": 1.0,
+          "eval_step_level_score_ema": 0.0,
+          "eval_step_level_shape_noise": 0.15707962214946747,
+          "eval_step_level_start_xy_span": 0.07999999821186066,
+          "eval_step_level_success_ema": 0.5,
+          "eval_step_level_target_offset": 0.14999999105930328,
+          "eval_step_loop_area": 0.01040197629481554,
+          "eval_step_loop_center_to_target_dist": 0.1511652022600174,
+          "eval_step_loop_closure_dist": 0.05459951236844063,
+          "eval_step_loop_radius_consistency": 0.1917148232460022,
+          "eval_step_loop_radius_mean": 0.058928582817316055,
+          "eval_step_loop_radius_std": 0.011273562908172607,
+          "eval_step_obj_dist_mean": 0.2054692804813385,
+          "eval_step_obj_dist_min": 0.15501908957958221,
+          "eval_step_rope_qvel_norm": 0.35725530982017517,
+          "eval_step_success": 0.0,
+          "eval_step_success_once": 0.0,
+          "eval_step_target_clearance": 0.09168457984924316,
+          "eval_step_task_score": 0.29356247186660767,
+          "eval_success_at_end": 0.0,
+          "eval_success_once": 0.0
+        },
+        "num_envs": 1,
+        "ok": true,
+        "source_path": "/Users/joyyang/Projects/dreamaudit/artifacts/maniskill_rma_policy_rope_eval_bash2/result.json"
+      },
+      "env_id": "PickSingleYCBRMA-v1",
+      "example_id": "MS-PICK-004",
+      "failure_family": "robot_static_violation",
+      "mode": "random_policy",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 3,
+      "source": "dreamaudit_result_plus_demo_generated_video",
+      "summary": "motion persists after attempted placement",
+      "video_path": "videos/maniskill_examples/MS-PICK-004.gif"
+    },
+    {
+      "dreamaudit_result": {
+        "env_id": "PickSingleYCBRMA-v1",
+        "final_info": {
+          "elapsed_steps": [
+            20
+          ],
+          "is_grasped": [
+            false
+          ],
+          "is_grasping": [
+            false
+          ],
+          "is_obj_placed": [
+            false
+          ],
+          "is_robot_static": [
+            false
+          ],
+          "obj_to_goal_pos": [
+            [
+              0.03261704742908478,
+              0.04350468888878822,
+              0.1191304624080658
+            ]
+          ],
+          "success": [
+            false
+          ]
+        },
+        "metrics": {},
+        "num_envs": 1,
+        "ok": true,
+        "source_path": "/Users/joyyang/Projects/dreamaudit/artifacts/maniskill_rma_smoke/result.json"
+      },
+      "env_id": "PickSingleYCBRMA-v1",
+      "example_id": "MS-PICK-005",
+      "failure_family": "workspace_edge_case",
+      "mode": "random_policy",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 4,
+      "source": "dreamaudit_result_plus_demo_generated_video",
+      "summary": "target lies near reachable workspace boundary",
+      "video_path": "videos/maniskill_examples/MS-PICK-005.gif"
+    },
+    {
+      "dreamaudit_result": {
+        "env_id": "PickSingleYCBRMA-v1",
+        "final_info": {
+          "elapsed_steps": [
+            50,
+            50,
+            50,
+            50,
+            50,
+            50,
+            50,
+            50
+          ],
+          "is_grasped": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "is_grasping": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "is_obj_placed": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "is_robot_static": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "obj_to_goal_pos": [
+            [
+              -0.06740951538085938,
+              0.1418147087097168,
+              0.21408414840698242
+            ],
+            [
+              0.13874568045139313,
+              -0.12400054931640625,
+              0.016706954687833786
+            ],
+            [
+              -0.10027408599853516,
+              -0.03662300109863281,
+              0.18306584656238556
+            ],
+            [
+              0.13599538803100586,
+              -0.07424809783697128,
+              0.07891949266195297
+            ],
+            [
+              -0.05354583263397217,
+              0.015562735497951508,
+              0.1390485167503357
+            ],
+            [
+              -0.027595996856689453,
+              0.07790712267160416,
+              0.1851562112569809
+            ],
+            [
+              -0.06711483001708984,
+              -0.015758037567138672,
+              0.046109165996313095
+            ],
+            [
+              -0.1283271461725235,
+              -0.0016942024230957031,
+              0.05637475475668907
+            ]
+          ],
+          "success": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ]
+        },
+        "metrics": {},
+        "num_envs": 8,
+        "ok": true,
+        "source_path": "/Users/joyyang/Projects/dreamaudit/artifacts/maniskill_rma_smoke_8env/result.json"
+      },
+      "env_id": "PickSingleYCBRMA-v1",
+      "example_id": "MS-PICK-006",
+      "failure_family": "occluded_ycb_object",
+      "mode": "random_policy",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 5,
+      "source": "dreamaudit_result_plus_demo_generated_video",
+      "summary": "camera evidence is insufficient for robust target lock",
+      "video_path": "videos/maniskill_examples/MS-PICK-006.gif"
+    },
+    {
+      "env_id": "PickSingleYCBRMA-v1",
+      "example_id": "MS-PICK-007",
+      "failure_family": "distractor_ycb_similarity",
+      "mode": "random_policy",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 6,
+      "source": "demo_generated_placeholder_data",
+      "summary": "semantic target representation competes with distractor",
+      "video_path": "videos/maniskill_examples/MS-PICK-007.gif"
+    },
+    {
+      "env_id": "PickSingleYCBRMA-v1",
+      "example_id": "MS-PICK-008",
+      "failure_family": "late_action_instability",
+      "mode": "random_policy",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 7,
+      "source": "demo_generated_placeholder_data",
+      "summary": "action risk rises after near-correct approach",
+      "video_path": "videos/maniskill_examples/MS-PICK-008.gif"
+    },
+    {
+      "env_id": "RopeLoopPlacementRMA-v1",
+      "example_id": "MS-ROPE-001",
+      "failure_family": "loop_not_enclosing_target",
+      "mode": "rma_policy_eval",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 8,
+      "source": "demo_generated_placeholder_data",
+      "summary": "rope loop forms but does not enclose target",
+      "video_path": "videos/maniskill_examples/MS-ROPE-001.gif"
+    },
+    {
+      "env_id": "RopeLoopPlacementRMA-v1",
+      "example_id": "MS-ROPE-002",
+      "failure_family": "closure_distance_high",
+      "mode": "rma_policy_eval",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 9,
+      "source": "demo_generated_placeholder_data",
+      "summary": "loop closure distance remains above control threshold",
+      "video_path": "videos/maniskill_examples/MS-ROPE-002.gif"
+    },
+    {
+      "env_id": "RopeLoopPlacementRMA-v1",
+      "example_id": "MS-ROPE-003",
+      "failure_family": "center_offset_failure",
+      "mode": "rma_policy_eval",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 10,
+      "source": "demo_generated_placeholder_data",
+      "summary": "loop center remains offset from target",
+      "video_path": "videos/maniskill_examples/MS-ROPE-003.gif"
+    },
+    {
+      "env_id": "RopeLoopPlacementRMA-v1",
+      "example_id": "MS-ROPE-004",
+      "failure_family": "controlled_hold_missing",
+      "mode": "rma_policy_eval",
+      "pipeline_stage": "DreamAudit -> ManiSkill/RMA simulator replay -> TACO internal underwriting evidence",
+      "seed": 11,
+      "source": "demo_generated_placeholder_data",
+      "summary": "policy never reaches controlled hold condition",
+      "video_path": "videos/maniskill_examples/MS-ROPE-004.gif"
+    }
+  ]
+}
