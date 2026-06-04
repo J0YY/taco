@@ -1074,3 +1074,6 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 101 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed aggregate control-delta fix commit `a86a7ba` to GitHub `main`.
+- Third independent `codex review --base _review-loop-baseline` found no correctness-breaking regression in the buyer ROI model, app wiring, memo wiring, v14 data-room packet, or legacy verifier paths.
+- Restarted Streamlit at `http://127.0.0.1:8501` with PID `96881`.
