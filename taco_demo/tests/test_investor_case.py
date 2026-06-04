@@ -129,6 +129,7 @@ from taco_demo.data_room import (
     verify_data_room_bundle,
 )
 from taco_demo.design_partner_plan import build_design_partner_plan, design_partner_plan_rows
+from taco_demo.dreamaudit_adapter import adapt_dreamaudit_certificate
 from taco_demo.dreamaudit_corpus_reconciliation import (
     build_dreamaudit_corpus_reconciliation,
     dreamaudit_claim_rows,
@@ -1352,6 +1353,62 @@ def test_evidence_provenance_audit_classifies_sources_without_overclaiming():
     assert provenance_video_rows(audit)[0]["Evidence Class"] == "generated_maniskill_rma_replay"
     assert any(row["Claim"] == "internals_based_underwriting" for row in provenance_upgrade_rows(audit))
     assert any("Hand-authored metric JSON" in rule["do_not_count"] for rule in audit["claim_upgrade_rules"])
+
+
+def test_evidence_provenance_audit_handles_pathless_dreamaudit_and_non_primary_metrics():
+    app = default_application()
+    dreamaudit_cert = adapt_dreamaudit_certificate(
+        {
+            "certificate_id": "dreamaudit-pathless-001",
+            "policy": {"name": "OpenVLA"},
+            "task": {"task_id": "pathless"},
+            "perturbation": {"type": "openvla_observation_occlusion", "perturbation_cost": 0.2},
+            "simulator_validation": {"simulator_success": False, "failure_mode": "observation_counterfactual_failure"},
+        }
+    )
+    primary_metric = InternalRiskMetrics(
+        dreamaudit_cert.certificate_id,
+        1.0,
+        0.6,
+        0.4,
+        0.8,
+        0.9,
+        0.2,
+        "demo_signature",
+        True,
+        "demo_trace_fixture",
+        {},
+    )
+    extra_metric = InternalRiskMetrics(
+        "unrelated-recorded-trace",
+        1.0,
+        0.6,
+        0.4,
+        0.8,
+        0.9,
+        0.2,
+        "activation_signature",
+        True,
+        "recorded_activation_forward_hooks",
+        {"recorded_required_signal_count": 6},
+    )
+    quote = generate_quote(app, [dreamaudit_cert], {primary_metric.certificate_id: primary_metric}, {})
+
+    audit = build_evidence_provenance_audit(
+        app,
+        [dreamaudit_cert],
+        [primary_metric, extra_metric],
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+    )
+
+    assert audit["certificate_sources"][0]["evidence_class"] == "adapted_dreamaudit_certificate"
+    assert audit["current_counts"]["adapted_dreamaudit_certificates"] == 1
+    assert audit["current_counts"]["recorded_activation_metrics"] == 0
+    assert audit["current_counts"]["all_recorded_activation_metrics"] == 1
+    assert audit["current_counts"]["non_primary_metric_count"] == 1
+    assert audit["status"] == "provenance_audit_ready_recorded_activations_pending"
+    assert "Attach DreamAudit source path" in audit["certificate_sources"][0]["upgrade_gate"]
 
 
 def test_commercial_traction_plan_converts_proof_workflows_into_countable_seed_traction():

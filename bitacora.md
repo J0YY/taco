@@ -1351,3 +1351,10 @@
   - `.venv/bin/python -m pytest taco_demo/tests -q` -> 128 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all requirements already satisfied.
+- Independent `codex review --base _review-loop-baseline` found two P2 provenance-audit correctness issues: pathless DreamAudit certificates were classified as local fixtures, and unrelated recorded activation metrics could inflate readiness status.
+- Fixed both review findings by treating `dreamaudit_certificate` as adapted DreamAudit evidence, counting recorded activation metrics only for primary certificate IDs when computing readiness, retaining an all-recorded metric count for transparency, and adding regression tests for both edge cases.
+- Verification after review fixes:
+  - `.venv/bin/python -m py_compile taco_demo/evidence_provenance.py taco_demo/tests/test_investor_case.py` -> passed.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 80 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests -q` -> 129 passed.

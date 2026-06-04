@@ -19,16 +19,17 @@ def build_evidence_provenance_audit(
     """Return source classification and claim boundaries for packet evidence."""
 
     suite_cases = list(suite_manifest.get("cases", []))
+    primary_certificate_ids = {cert.certificate_id for cert in certificates}
     certificate_rows = [_certificate_row(cert) for cert in certificates]
     metric_rows = [_metric_row(metric) for metric in metrics]
     video_rows = [_video_row(case) for case in suite_cases]
     live_dreamaudit_sources = sum(1 for row in certificate_rows if row["evidence_class"] == "adapted_dreamaudit_certificate")
-    recorded_activation_metrics = sum(1 for row in metric_rows if row["evidence_class"] == "recorded_activation_trace")
+    primary_metric_rows = [row for row in metric_rows if row["certificate_id"] in primary_certificate_ids]
+    recorded_activation_metrics = sum(1 for row in primary_metric_rows if row["evidence_class"] == "recorded_activation_trace")
+    all_recorded_activation_metrics = sum(1 for row in metric_rows if row["evidence_class"] == "recorded_activation_trace")
     generated_video_count = sum(1 for row in video_rows if row["evidence_class"] == "generated_maniskill_rma_replay")
     fixture_certificate_count = sum(1 for row in certificate_rows if row["evidence_class"] == "local_fixture_certificate")
-    complete_primary_coverage = bool(certificates) and {metric.certificate_id for metric in metrics} >= {
-        cert.certificate_id for cert in certificates
-    }
+    complete_primary_coverage = bool(certificates) and {metric.certificate_id for metric in metrics} >= primary_certificate_ids
     status = _status(
         certificate_count=len(certificates),
         complete_primary_coverage=complete_primary_coverage,
@@ -57,6 +58,8 @@ def build_evidence_provenance_audit(
             "adapted_dreamaudit_certificates": live_dreamaudit_sources,
             "local_fixture_certificates": fixture_certificate_count,
             "recorded_activation_metrics": recorded_activation_metrics,
+            "all_recorded_activation_metrics": all_recorded_activation_metrics,
+            "non_primary_metric_count": len(metric_rows) - len(primary_metric_rows),
             "generated_suite_videos": generated_video_count,
             "dreamaudit_intake_attached": bool(dreamaudit_intake and dreamaudit_intake.get("root_exists")),
             "complete_primary_metric_coverage": complete_primary_coverage,
@@ -136,8 +139,15 @@ def provenance_upgrade_rows(audit: dict[str, Any]) -> list[dict[str, str]]:
 
 def _certificate_row(cert: FailureCertificate) -> dict[str, Any]:
     source = str(cert.source)
-    is_dreamaudit = source.startswith("dreamaudit:")
+    is_dreamaudit = source.startswith("dreamaudit:") or source == "dreamaudit_certificate"
     evidence_class = "adapted_dreamaudit_certificate" if is_dreamaudit else "local_fixture_certificate"
+    upgrade_gate = (
+        "External reviewer reproduces the DreamAudit source path and accepts the certificate family."
+        if source.startswith("dreamaudit:")
+        else "Attach DreamAudit source path, replay command, and external reviewer reproduction note."
+        if is_dreamaudit
+        else "Replace fixture with partner-specific DreamAudit certificate or simulator run artifact."
+    )
     return {
         "certificate_id": cert.certificate_id,
         "failure_type": cert.failure_type,
@@ -156,11 +166,7 @@ def _certificate_row(cert: FailureCertificate) -> dict[str, Any]:
         "cannot_claim": (
             "Cannot claim external reviewer acceptance, customer deployment, or carrier approval from certificate presence alone."
         ),
-        "upgrade_gate": (
-            "External reviewer reproduces the DreamAudit source path and accepts the certificate family."
-            if is_dreamaudit
-            else "Replace fixture with partner-specific DreamAudit certificate or simulator run artifact."
-        ),
+        "upgrade_gate": upgrade_gate,
     }
 
 
