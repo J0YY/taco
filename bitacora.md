@@ -733,6 +733,8 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 71 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed oversized-upload precheck commit `034103b` to GitHub `main`.
+- Sixth independent `codex review --base _review-loop-baseline` found no actionable correctness or security issue in the packet hashing, upload verification, or bounded ZIP validation paths.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
