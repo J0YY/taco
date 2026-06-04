@@ -62,6 +62,14 @@ def _int(value: Any, default: int = 0) -> int:
 
 def _normalized_failure_type(raw_failure_type: str, perturbation: JsonDict, task: JsonDict) -> str:
     raw = raw_failure_type.lower()
+    if "wrong_object" in raw or "distractor" in raw:
+        return "distractor_object_confusion"
+    if any(token in raw for token in ["collision", "contact", "force", "overshoot"]):
+        return "contact_force_overshoot"
+    if any(token in raw for token in ["grasp_miss", "grasp_mismatch"]):
+        return "grasp_miss"
+    if "calibration" in raw:
+        return "calibration_sensitivity"
     perturbation_text = " ".join(
         str(value).lower()
         for value in [
@@ -76,7 +84,7 @@ def _normalized_failure_type(raw_failure_type: str, perturbation: JsonDict, task
     signal = f"{raw} {perturbation_text}"
     if any(token in signal for token in ["occlusion", "_occ", " occ", "masked", "blocked"]):
         return "occlusion_induced_wrong_grasp"
-    if any(token in signal for token in ["language", "instruction", "grammar", "prompt"]):
+    if any(token in signal for token in ["language", "instruction", "prompt"]):
         return "language_override_instruction_conflict"
     if any(token in signal for token in ["distractor", "semantic", "confusion", "wrong_object"]):
         return "distractor_object_confusion"
@@ -257,6 +265,8 @@ def adapt_dreamaudit_certificate(path_or_payload: Path | str | JsonDict | Any, s
 def adapt_dreamaudit_certificates(root: Path | str, limit: int | None = None) -> list[FailureCertificate]:
     """Adapt all certificate JSON files under a DreamAudit artifact directory."""
 
+    if limit is not None and limit <= 0:
+        return []
     root_path = Path(root)
     paths = sorted(path for path in root_path.rglob("*.json") if path.is_file())
     certs: list[FailureCertificate] = []

@@ -88,3 +88,44 @@ def test_adapts_rich_dreamaudit_certificate_and_directory(tmp_path):
     assert [item.certificate_id for item in certs] == ["dreamaudit-synthetic-123-000001"]
     assert summary["certificates"] == 1
     assert summary["failure_families"] == ["contact_force_overshoot"]
+
+
+def test_rich_search_grammar_rationale_does_not_force_language_failure(tmp_path):
+    payload = {
+        "certificate_id": "dreamaudit-synthetic-123-000002",
+        "policy": {"name": "synthetic-policy-v1"},
+        "task": {
+            "benchmark": "SyntheticBench",
+            "suite": "pick",
+            "task_id": "wrong_mug_001",
+            "instruction_original": "pick the target mug",
+        },
+        "perturbation": {
+            "type": "synthetic_multi_axis",
+            "perturbation_cost": 0.41,
+            "semantic_rationale": "CEM proposal over synthetic perturbation grammar",
+        },
+        "simulator_validation": {"simulator_success": False, "failure_mode": "wrong_object_grasp", "failure_frame": 77},
+        "minimality": {"smallest_failing_cost_found": 0.33, "failure_rate_at_0_75_cost": 0.55},
+        "patch_recipe": {"generator": "synthetic_patch_v0", "edits_to_sample": ["visual_similarity"], "num_scenes_recommended": 25},
+        "world_model_discovery": {"predicted_failure": "wrong_object_grasp"},
+    }
+
+    cert = adapt_dreamaudit_certificate(payload)
+
+    assert cert.failure_type == "distractor_object_confusion"
+    assert cert.patch_recipe["taco_required_control"] == "target identity confirmation before irreversible grasp"
+
+
+def test_adapt_dreamaudit_certificates_honors_zero_limit(tmp_path):
+    payload = {
+        "certificate_id": "dreamaudit-synthetic-123-000003",
+        "policy": {"name": "synthetic-policy-v1"},
+        "task": {"task_id": "one"},
+        "perturbation": {"type": "scene", "perturbation_cost": 0.2},
+        "simulator_validation": {"simulator_success": False, "failure_mode": "grasp_miss", "failure_frame": 12},
+        "minimality": {"smallest_failing_cost_found": 0.2, "failure_rate_at_0_75_cost": 0.4},
+    }
+    (tmp_path / "cert.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    assert adapt_dreamaudit_certificates(tmp_path, limit=0) == []

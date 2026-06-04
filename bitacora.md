@@ -123,3 +123,16 @@
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 26 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed first implementation commit `97c4be1` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found two adapter issues:
+  - rich DreamAudit certificates with `semantic_rationale="CEM proposal over synthetic perturbation grammar"` could be misclassified as language failures,
+  - `adapt_dreamaudit_certificates(..., limit=0)` returned one certificate.
+- Fixed both:
+  - raw DreamAudit failure modes now take precedence over generic rationale text,
+  - `limit <= 0` returns an empty certificate list before scanning.
+- Added regression tests for the search-grammar misclassification and zero-limit behavior.
+- Verification after review fixes:
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_activation_recorder.py` -> 6 passed.
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 28 passed.
+  - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
