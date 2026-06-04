@@ -1224,3 +1224,5 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 114 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Independent `codex review --base _review-loop-baseline` reran the focused and full pytest suites and found no actionable correctness issues in the external proof registry, app wiring, memo wiring, v21 packet, verifier compatibility, or tests.
+- Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `23976`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
