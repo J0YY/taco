@@ -736,6 +736,31 @@
 - Pushed oversized-upload precheck commit `034103b` to GitHub `main`.
 - Sixth independent `codex review --base _review-loop-baseline` found no actionable correctness or security issue in the packet hashing, upload verification, or bounded ZIP validation paths.
 
+## 2026-06-04 - Improvement loop: design-partner diligence plan
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `33f5812`.
+- Captured `_review-loop-baseline` at `33f58121922b18eae1739bad178c1be5506dfcec` for the independent review loop.
+- Identified a commercial diligence gap: the data-room checklist correctly marked signed design-partner evidence as external pending, but did not include a structured broker/carrier/OEM pilot plan for investors to diligence.
+- Added `taco_demo/design_partner_plan.py` with:
+  - three pilot tracks for robotics OEM, broker/MGA, and carrier/reinsurer reviewers,
+  - pilot artifacts, acceptance criteria, buyer questions, and commercial signals,
+  - a 30/60/90 day external-validation plan,
+  - explicit boundary language that this is not evidence of signed design partners.
+- Added the design-partner plan to the VC data-room manifest, required ZIP packet files, packet README, and Investor Case UI.
+- Added a Design-Partner Diligence Plan section to the investor memo.
+- Updated the README product surface and boundary language.
+- Added regression coverage for:
+  - structured plan rows and no-signed-partner boundary,
+  - data-room checklist evidence text,
+  - manifest inclusion,
+  - ZIP packet inclusion,
+  - memo inclusion.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 27 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 73 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
+
 ## 2026-06-04 - Improvement loop: data-room packet export
 
 - Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `6706ca9`.

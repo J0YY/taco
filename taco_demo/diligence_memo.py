@@ -6,6 +6,7 @@ from collections import Counter
 from typing import Any
 
 from .data_room import build_data_room_checklist, build_data_room_manifest, data_room_rows
+from .design_partner_plan import build_design_partner_plan
 from .fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS
 from .insurance_scenarios import INSURANCE_SCENARIOS
@@ -41,6 +42,7 @@ def build_diligence_memo(
     )
     data_room = build_data_room_checklist(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
     data_room_manifest = build_data_room_manifest(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
+    design_partner_plan = build_design_partner_plan(application, quote)
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -79,6 +81,27 @@ def build_diligence_memo(
     )
     for row in data_room_rows(data_room):
         lines.append(f"| {row['Artifact']} | {row['Status']} | {row['Evidence']} | {row['Next Action']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Design-Partner Diligence Plan",
+            "",
+            f"* Plan status: {design_partner_plan['status']}",
+            f"* Boundary: {design_partner_plan['boundary']}",
+            f"* Pilot tracks: {len(design_partner_plan['tracks'])}",
+            "",
+            "| Track | Partner profile | Buyer question | Commercial signal |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for track in design_partner_plan["tracks"]:
+        lines.append(
+            f"| {track['track_id']} | {track['partner_profile']} | {track['buyer_question']} | {track['commercial_signal']} |"
+        )
+    lines.extend(["", "| Window | Goal | Evidence to collect |", "| --- | --- | --- |"])
+    for milestone in design_partner_plan["thirty_sixty_ninety_day_plan"]:
+        lines.append(f"| {milestone['window']} | {milestone['goal']} | {milestone['evidence_to_collect']} |")
 
     lines.extend(
         [

@@ -19,6 +19,7 @@ from taco_demo.data_room import (
     data_room_rows,
     verify_data_room_bundle,
 )
+from taco_demo.design_partner_plan import build_design_partner_plan, design_partner_plan_rows
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
@@ -552,6 +553,13 @@ with tabs[9]:
         c2.metric("Internal ready items", f"{data_room['internal_ready_items']}/{data_room['internal_total_items']}")
         c3.metric("External pending", data_room["external_pending_items"])
         st.dataframe(pd.DataFrame(data_room_rows(data_room)), width="stretch")
+        design_partner_plan = build_design_partner_plan(application, audit["quote"])
+        st.markdown("#### Design-Partner Diligence Plan")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Validation status", str(design_partner_plan["status"]).replace("_", " ").title())
+        c2.metric("Pilot tracks", len(design_partner_plan["tracks"]))
+        c3.metric("Plan horizon", "90 days")
+        st.dataframe(pd.DataFrame(design_partner_plan_rows(design_partner_plan)), width="stretch")
         manifest = build_data_room_manifest(
             application,
             audit["certificates"],

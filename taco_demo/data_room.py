@@ -10,6 +10,7 @@ from typing import Any
 import zipfile
 import zlib
 
+from .design_partner_plan import build_design_partner_plan
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
@@ -32,6 +33,7 @@ REQUIRED_BUNDLE_FILES = {
     "research/sources.json",
     "suite/video_index.json",
     "dreamaudit/summary.json",
+    "commercial/design_partner_plan.json",
 }
 
 
@@ -99,8 +101,8 @@ def build_data_room_checklist(
         _item(
             "Design-Partner References",
             "external_pending",
-            "Signed broker/carrier/OEM design-partner reviews are not represented in local demo artifacts.",
-            "Secure 2-3 design-partner reviews and add written feedback or LOIs to the data room.",
+            "Structured broker/carrier/OEM pilot plan is attached; signed external reviews are not represented in local demo artifacts.",
+            "Run the design-partner plan and add written feedback, signed pilot scopes, or LOIs to the data room.",
         ),
     ]
     ready_items = sum(1 for item in items if item["status"] == "ready")
@@ -144,6 +146,7 @@ def build_data_room_manifest(
     checklist = build_data_room_checklist(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
     suite_cases = list(suite_manifest.get("cases", []))
     dreamaudit_summary = _dreamaudit_manifest_summary(dreamaudit_intake)
+    design_partner_plan = build_design_partner_plan(application, quote)
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -159,6 +162,7 @@ def build_data_room_manifest(
             "video_paths": [str(case.get("video_path", "")) for case in suite_cases if case.get("video_path")],
         },
         "dreamaudit": dreamaudit_summary,
+        "design_partner_plan": design_partner_plan,
     }
 
 
@@ -185,6 +189,7 @@ def build_data_room_bundle(
         ("research/sources.json", _json_bytes(RESEARCH_FOUNDATIONS)),
         ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
         ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
+        ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
     ]
     certificate_names: set[str] = set()
     for cert in certificates:
@@ -492,6 +497,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `metrics/` - internal-risk metric contracts",
             "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",
             "* `dreamaudit/summary.json` - attached DreamAudit intake summary",
+            "* `commercial/design_partner_plan.json` - external-validation plan for broker/carrier/OEM pilots",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer or filed actuarial product.",
             "",

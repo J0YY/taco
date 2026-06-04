@@ -15,6 +15,8 @@ from taco_demo.data_room import (
     data_room_rows,
     verify_data_room_bundle,
 )
+from taco_demo.design_partner_plan import build_design_partner_plan, design_partner_plan_rows
+from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.maniskill_suite import build_maniskill_suite_cases
@@ -236,6 +238,8 @@ def test_data_room_checklist_tracks_internal_packet_and_external_gap():
     assert checklist["internal_ready_items"] == checklist["internal_total_items"]
     assert checklist["external_pending_items"] == 1
     assert data_room_rows(checklist)[-1]["Status"] == "External Pending"
+    design_partner_item = next(item for item in checklist["items"] if item["artifact"] == "Design-Partner References")
+    assert "Structured broker/carrier/OEM pilot plan is attached" in design_partner_item["evidence"]
 
 
 def test_data_room_checklist_marks_live_dreamaudit_missing_without_scan():
@@ -275,7 +279,28 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert len(manifest["primary_certificates"]) == len(DEMO_CERTIFICATES)
     assert len(manifest["internal_metrics"]) == len(metrics)
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
+    assert manifest["design_partner_plan"]["status"] == "external_validation_pending"
+    assert len(manifest["design_partner_plan"]["tracks"]) >= 3
     assert len(manifest["suite_summary"]["video_paths"]) == 40
+
+
+def test_design_partner_plan_is_structured_without_claiming_signed_partners():
+    app = default_application()
+    quote = generate_quote(app, DEMO_CERTIFICATES, {}, {})
+    plan = build_design_partner_plan(app, quote)
+    rows = design_partner_plan_rows(plan)
+
+    assert plan["plan_id"] == "DP-APP-APEX-001"
+    assert plan["status"] == "external_validation_pending"
+    assert "not evidence of signed design partners" in plan["boundary"]
+    assert len(plan["tracks"]) == 3
+    assert {track["track_id"] for track in plan["tracks"]} == {
+        "robotics_oem_predeployment",
+        "broker_mga_underwriting_desk",
+        "carrier_reinsurer_model_risk",
+    }
+    assert len(plan["thirty_sixty_ninety_day_plan"]) == 3
+    assert all(row["Commercial Signal"] for row in rows)
 
 
 def test_data_room_bundle_exports_auditable_zip_packet():
@@ -308,6 +333,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert summary["contains_packet_index"] is True
     assert summary["packet_sha256"] == hashlib.sha256(bundle).hexdigest()
     assert "packet/index.json" in summary["files"]
+    assert "commercial/design_partner_plan.json" in summary["files"]
     assert "insurance/workflow_examples.json" in summary["files"]
     assert "research/sources.json" in summary["files"]
     assert f"certificates/{DEMO_CERTIFICATES[0].certificate_id}.json" in summary["files"]
@@ -318,16 +344,41 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         index = json.loads(archive.read("packet/index.json"))
         readme = archive.read("README.md").decode("utf-8")
         metric = json.loads(archive.read(f"metrics/{metrics[0].certificate_id}.json"))
+        design_partner_plan = json.loads(archive.read("commercial/design_partner_plan.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
+    assert design_partner_plan["plan_id"] == "DP-APP-APEX-001"
+    assert design_partner_plan["status"] == "external_validation_pending"
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
     assert "not an insurance offer" in readme
     verification = verify_data_room_bundle(bundle)
     assert verification["valid"] is True
     assert verification["packet_sha256"] == hashlib.sha256(bundle).hexdigest()
+
+
+def test_diligence_memo_includes_design_partner_plan_boundary():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "test", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    memo = build_diligence_memo(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        _carrier_ready_dreamaudit_intake(),
+    )
+
+    assert "## Design-Partner Diligence Plan" in memo
+    assert "external_validation_pending" in memo
+    assert "not evidence of signed design partners" in memo
+    assert "robotics_oem_predeployment" in memo
 
 
 def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
