@@ -551,6 +551,8 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 60 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed ZIP path fix commit `35ffd13` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found no discrete, actionable bugs in the cumulative ZIP data-room export changes.
 - Pushed activation trace bridge commit `912edd8` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found one issue:
   - independent min-max normalization per saved trace could erase cross-rollout differences when raw activation ranges differ, making mitigability and feature-stability metrics misleading.
