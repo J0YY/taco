@@ -254,3 +254,21 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 37 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed first readiness commit `7fcb94f` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one production-path issue:
+  - placeholder minimality metadata such as `{"method": "not_run"}` was counted as completed evidence.
+- Fixed readiness scoring to count only completed/evidence-bearing minimality reports.
+- Added a regression test that keeps `not_run` minimality placeholders from inflating carrier-readiness status.
+- Re-ran the real DreamAudit artifact scan after the fix:
+  - 250 adapted certificates at scan limit 250,
+  - readiness score `65/100`,
+  - status `needs_more_evidence`,
+  - 21 completed minimality reports counted,
+  - 250 replay commands counted,
+  - mapped language-override and occlusion controls,
+  - flagged unmapped action-noise and vision-perturbation families plus low minimality coverage.
+- Verification after review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py` -> 10 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 38 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

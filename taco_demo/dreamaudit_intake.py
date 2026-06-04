@@ -34,6 +34,24 @@ def certificate_rows(certificates: list[FailureCertificate], max_rows: int = 25)
     return rows
 
 
+def _has_completed_minimality_report(cert: FailureCertificate) -> bool:
+    minimality = cert.metadata.get("minimality")
+    if not isinstance(minimality, dict) or not minimality:
+        return False
+    method = str(minimality.get("method", "")).lower()
+    status = str(minimality.get("status", "")).lower()
+    if method in {"not_run", "none", "todo"} or status in {"not_run", "not_started"}:
+        return False
+    evidence_keys = {
+        "smallest_failing_cost_found",
+        "failure_rate_at_0_75_cost",
+        "smallest_failing_sigma",
+        "evaluated_grid",
+        "local_shrink_trials",
+    }
+    return bool(method or status or any(key in minimality for key in evidence_keys))
+
+
 def underwriting_readiness(certificates: list[FailureCertificate]) -> dict[str, Any]:
     """Summarize whether imported DreamAudit evidence is ready for underwriting review."""
 
@@ -51,7 +69,7 @@ def underwriting_readiness(certificates: list[FailureCertificate]) -> dict[str, 
     failure_families = sorted({cert.failure_type for cert in certificates})
     controls = sorted({control for cert in certificates if (control := required_control_for_failure(cert.failure_type))})
     unmapped = sorted({cert.failure_type for cert in certificates if required_control_for_failure(cert.failure_type) is None})
-    minimality_reports = sum(1 for cert in certificates if cert.metadata.get("minimality"))
+    minimality_reports = sum(1 for cert in certificates if _has_completed_minimality_report(cert))
     replay_commands = sum(1 for cert in certificates if cert.replay_command)
     source_dirs = {
         str(Path(str(cert.metadata.get("original_path") or "")).parent)
