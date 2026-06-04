@@ -527,7 +527,7 @@ with tabs[3]:
         if crossings:
             fig.add_vline(x=float(trace["time_s"][crossings[0]]), line_dash="dot", line_color="#166534", annotation_text="risk crossing")
         fig.update_layout(height=500, yaxis_range=[0, 1], title="Internal Risk Signature")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="workbench_internal_signals")
         metric = audit["metrics"][cert.certificate_id]
         cols = st.columns(6)
         cols[0].metric("Concept Coverage", f"{metric.concept_coverage_score:.2f}")
@@ -1452,7 +1452,7 @@ with tabs[11]:
     st.markdown("#### Mechanistic interpretation — real SAE feature analysis")
     st.caption("Proof we can read a robot policy's internals: an SAE trained on a real VLA, "
                "decomposed into interpretable features.")
-    render_sae_panel(st)
+    render_sae_panel(st, key_prefix="xpolicy")
     st.divider()
 
     ss = saescope_summary()

@@ -365,11 +365,11 @@ def render_guided_flow() -> None:
             st.caption(mechanism_caption())
             st.caption("Method: " + MECH_SOURCES[0]["source"] + " — " + MECH_SOURCES[0]["url"])
             st.divider()
-            render_sae_panel(st)
+            render_sae_panel(st, key_prefix="guided", compact=True)
         trace = _exhibit_trace(cert_id)
         failure_ts = _CERTS[cert_id].failure_timestep if cert_id in _CERTS else 80
         chart, _, lead = _crossing_chart(trace, failure_ts)
-        st.plotly_chart(chart, width="stretch")
+        st.plotly_chart(chart, width="stretch", key=f"gf_crossing_{cert_id}")
         if lead:
             unit = "steps" if EXHIBITS_is_steps(trace) else "s"
             st.success(f"Internal risk signature appears **{lead:.0f} {unit} before** the physical failure.")
@@ -378,7 +378,7 @@ def render_guided_flow() -> None:
                          "sae-scope SAE monitor (Swann et al. 2026)" if is_schematic
                          else "synthetic NPZ trace — illustrative internal signals"))
         with st.expander("▶ Play the internal features evolving", expanded=False):
-            st.plotly_chart(_activation_animation(trace, ex["risk_key"], failure_ts), width="stretch")
+            st.plotly_chart(_activation_animation(trace, ex["risk_key"], failure_ts), width="stretch", key=f"gf_anim_{cert_id}")
             st.caption("Green = task features, red/orange = risk features.")
         if is_schematic:
             ss = saescope_summary()

@@ -92,24 +92,32 @@ def temporal_heatmap_topk(k: int = 25, root: Path = SAE_ROOT):
 
 # --- Streamlit rendering (static, safe to call from multiple places) ---------
 
-def render_sae_panel(st) -> None:
-    """Render the real SAE feature-analysis panel into the given streamlit module."""
+def render_sae_panel(st, key_prefix: str = "sae", compact: bool = False) -> None:
+    """Render the real SAE feature-analysis panel into the given streamlit module.
+
+    key_prefix keeps element IDs unique when the panel appears in more than one
+    place. compact=True shows only the headline metric chips (no charts).
+    """
     if not available():
         st.info("SAE feature artifacts not found under data/sae_features/octo/.")
         return
-    import plotly.graph_objects as go
 
     ov = sae_overview()
-    st.markdown("##### Real SAE features of a real VLA policy")
     st.caption(
-        f"TopK Sparse Autoencoder trained on **{ov['vla_model']}** ({ov['site']}). "
-        "This is genuine mechanistic decomposition of a robot policy — every number below is measured."
+        f"TopK Sparse Autoencoder trained on **{ov['vla_model']}** ({ov['site']}) — "
+        "genuine mechanistic decomposition of a real robot policy; every number is measured."
     )
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("SAE features", f"{ov['d_sae']:,}", f"{ov['expansion']}× expansion")
     c2.metric("Alive features", f"{ov['alive_features']:,}")
     c3.metric("Reconstruction EV", f"{ov['explained_variance'] * 100:.1f}%")
     c4.metric("Sparsity (L0)", f"{ov['l0']:.0f}")
+    if compact:
+        st.caption("Full feature × time heatmap and frequency distribution are in the "
+                   "**Real Cross-Policy Evidence** tab. Source: Swann et al. 2026, arXiv:2603.19183.")
+        return
+
+    import plotly.graph_objects as go
 
     mat, fids, bins = temporal_heatmap_topk(25)
     fig = go.Figure(go.Heatmap(
@@ -119,7 +127,7 @@ def render_sae_panel(st) -> None:
     fig.update_layout(height=460, title="Top-25 SAE features · activation rate across an episode",
                       xaxis_title="rollout time (env steps)", yaxis_title="SAE feature",
                       margin=dict(l=10, r=10, t=40, b=10))
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, width="stretch", key=f"{key_prefix}_heatmap")
     st.caption("Each row is one extracted feature; some fire only at episode onset (event-locked / general), "
                "others stay on throughout (sustained / memorized) — the distinction Swann et al. use to explain "
                "brittleness. Source: arXiv:2603.19183.")
@@ -129,6 +137,6 @@ def render_sae_panel(st) -> None:
     hist.update_layout(height=240, title="Activation frequency across all SAE features",
                        xaxis_title="fraction of samples a feature is active",
                        yaxis_title="# features", margin=dict(l=10, r=10, t=40, b=10))
-    st.plotly_chart(hist, width="stretch")
+    st.plotly_chart(hist, width="stretch", key=f"{key_prefix}_hist")
     st.caption("Most features are rare/episode-specific (memorization tail); a few are near-ubiquitous — "
                "consistent with the paper's finding that SFT amplifies memorized features.")
