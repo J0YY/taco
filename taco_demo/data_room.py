@@ -10,6 +10,7 @@ from typing import Any
 import zipfile
 import zlib
 
+from .actuarial_readiness import build_actuarial_readiness_plan
 from .design_partner_plan import build_design_partner_plan
 from .external_validation import build_external_validation_capture_kit
 from .commercial_model import build_commercial_scale_model
@@ -41,6 +42,7 @@ PACKET_FORMAT_V9 = "taco_data_room_zip_v9"
 PACKET_FORMAT_V10 = "taco_data_room_zip_v10"
 PACKET_FORMAT_V11 = "taco_data_room_zip_v11"
 PACKET_FORMAT_V12 = "taco_data_room_zip_v12"
+PACKET_FORMAT_V13 = "taco_data_room_zip_v13"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -87,8 +89,11 @@ REQUIRED_BUNDLE_FILES_V10 = REQUIRED_BUNDLE_FILES_V9 | {
 REQUIRED_BUNDLE_FILES_V11 = REQUIRED_BUNDLE_FILES_V10 | {
     "technical/technical_diligence_runbook.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V11 | {
+REQUIRED_BUNDLE_FILES_V12 = REQUIRED_BUNDLE_FILES_V11 | {
     "commercial/external_validation_capture_kit.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V12 | {
+    "commercial/actuarial_readiness_plan.json",
 }
 
 
@@ -182,6 +187,12 @@ def build_data_room_checklist(
             "ready" if application.application_id and suite_size >= 40 else "needs_work",
             "Scorecard, reviewer feedback form, LOI/pilot-scope template, evidence-status ladder, and permission-to-quote controls are attached.",
             "Run the capture kit with real broker, carrier, OEM, or reinsurer reviewers and attach only written artifacts with permission metadata.",
+        ),
+        _item(
+            "Actuarial Readiness Plan",
+            "ready" if quote.final_monthly_premium_usd > 0 and bool(certificates) and bool(metrics) else "needs_work",
+            "Future-cost elements, data-quality gates, modeling controls, credibility ramp, filing handoff, and claims-loop requirements are attached.",
+            "Have an actuary, carrier, or reinsurer review the plan before using any output as pricing, rate adequacy, reserve, or filing support.",
         ),
         _item(
             "Design-Partner References",
@@ -303,6 +314,14 @@ def build_data_room_manifest(
             "packet_files": sorted(REQUIRED_BUNDLE_FILES | {PACKET_INDEX_PATH}),
         },
     )
+    actuarial_readiness_plan = build_actuarial_readiness_plan(
+        application,
+        certificates,
+        metrics,
+        quote,
+        pricing_diligence,
+        capacity_roadmap,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -329,6 +348,7 @@ def build_data_room_manifest(
         "enterprise_security_plan": enterprise_security_plan,
         "technical_diligence_runbook": technical_diligence_runbook,
         "external_validation_capture_kit": external_validation_capture_kit,
+        "actuarial_readiness_plan": actuarial_readiness_plan,
     }
 
 
@@ -365,6 +385,7 @@ def build_data_room_bundle(
         ("commercial/capacity_roadmap.json", _json_bytes(manifest["capacity_roadmap"])),
         ("commercial/enterprise_security_plan.json", _json_bytes(manifest["enterprise_security_plan"])),
         ("commercial/external_validation_capture_kit.json", _json_bytes(manifest["external_validation_capture_kit"])),
+        ("commercial/actuarial_readiness_plan.json", _json_bytes(manifest["actuarial_readiness_plan"])),
         ("technical/technical_diligence_runbook.json", _json_bytes(manifest["technical_diligence_runbook"])),
     ]
     certificate_names: set[str] = set()
@@ -470,7 +491,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, "
                         "taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, "
                         "taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, "
-                        "taco_data_room_zip_v11, or taco_data_room_zip_v12"
+                        "taco_data_room_zip_v11, taco_data_room_zip_v12, or taco_data_room_zip_v13"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -619,7 +640,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V12,
+        "packet_format": PACKET_FORMAT_V13,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -659,6 +680,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V11:
         return REQUIRED_BUNDLE_FILES_V11
     if packet_format == PACKET_FORMAT_V12:
+        return REQUIRED_BUNDLE_FILES_V12
+    if packet_format == PACKET_FORMAT_V13:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -719,6 +742,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/capacity_roadmap.json` - insurance capacity, licensing, filing, actuarial, and claims-readiness roadmap",
             "* `commercial/enterprise_security_plan.json` - security, data governance, retention, incident response, and SOC2/NIST readiness plan",
             "* `commercial/external_validation_capture_kit.json` - reviewer feedback, scorecard, LOI/pilot-scope, and permission-to-quote capture kit",
+            "* `commercial/actuarial_readiness_plan.json` - future-cost, data-quality, modeling, credibility, filing, and claims-loop readiness plan",
             "* `technical/technical_diligence_runbook.json` - local reproduction, live-evidence, packet-verification, and cluster-regeneration runbook",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",

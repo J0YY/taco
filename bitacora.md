@@ -1024,3 +1024,19 @@
 - Pushed external validation capture kit commit `0cb25b9` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the external validation kit, Investor Case UI, memo wiring, v12 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `88780`.
+
+## 2026-06-04 - Improvement loop: actuarial readiness plan
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `1a32ada`.
+- Captured `_review-loop-baseline` at `1a32adaa5b31e24d1bb240a47d416d6c7d2e7a4a` for the independent review loop.
+- Identified the next VC/carrier diligence gap: TACO had transparent pricing sensitivity and an insurance-capacity roadmap, but no actuarial-readiness artifact mapping simulator/DreamAudit evidence into future-cost, data-quality, modeling, credibility, filing, and claims-development gates without implying filed actuarial pricing.
+- Checked current Actuarial Standards Board source anchors for ASOP 53 (prospective P/C future cost estimates), ASOP 23 (data quality), ASOP 56 (modeling), and ASOP 41 (actuarial communications).
+- Added `taco_demo/actuarial_readiness.py` with future-cost elements, ASOP-linked data-readiness gates, credibility ramp, model-validation workstreams, filing/claims handoff tasks, source material, open actuarial risks, and explicit boundaries against actuarial opinions, filed rates, reserve estimates, insurance offers, or carrier-approved pricing indications.
+- Added the actuarial readiness plan to the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v13` while preserving verifier compatibility for legacy v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, and v12 packets.
+- Added tests for the actuarial readiness contract, ASOP source anchors, row helpers, manifest/ZIP export, memo section, current v13 packet indexing, invalid packet-format messaging, and legacy v12 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 53 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 99 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

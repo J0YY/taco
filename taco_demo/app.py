@@ -10,6 +10,13 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from taco_demo.binder import issue_binder
+from taco_demo.actuarial_readiness import (
+    actuarial_cost_rows,
+    actuarial_credibility_rows,
+    actuarial_gate_rows,
+    actuarial_validation_rows,
+    build_actuarial_readiness_plan,
+)
 from taco_demo.activation_recorder import torch_available
 from taco_demo.capacity_roadmap import (
     build_capacity_roadmap,
@@ -647,6 +654,14 @@ with tabs[9]:
             commercial_model,
             pilot_walkthrough,
         )
+        actuarial_plan = build_actuarial_readiness_plan(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            pricing_diligence,
+            capacity_roadmap,
+        )
         enterprise_security_plan = build_enterprise_security_plan(
             application,
             audit["quote"],
@@ -687,6 +702,16 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(external_validation_track_rows(external_validation_kit)), width="stretch")
         st.dataframe(pd.DataFrame(external_validation_scorecard_rows(external_validation_kit)), width="stretch")
         st.dataframe(pd.DataFrame(external_validation_ladder_rows(external_validation_kit)), width="stretch")
+        st.markdown("#### Actuarial Readiness Plan")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Actuarial status", str(actuarial_plan["status"]).replace("_", " ").title())
+        c2.metric("Future-cost elements", len(actuarial_plan["future_cost_elements"]))
+        c3.metric("Data/model gates", len(actuarial_plan["data_readiness_gates"]))
+        st.caption(actuarial_plan["boundary"])
+        st.dataframe(pd.DataFrame(actuarial_cost_rows(actuarial_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(actuarial_gate_rows(actuarial_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(actuarial_credibility_rows(actuarial_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(actuarial_validation_rows(actuarial_plan)), width="stretch")
         st.markdown("#### Commercial Scale Model")
         c1, c2, c3 = st.columns(3)
         c1.metric("Model status", str(commercial_model["status"]).replace("_", " ").title())

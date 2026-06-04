@@ -106,6 +106,7 @@ def build_diligence_memo(
         enterprise_security_plan,
     )
     external_validation_kit = data_room_manifest["external_validation_capture_kit"]
+    actuarial_plan = data_room_manifest["actuarial_readiness_plan"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -169,6 +170,29 @@ def build_diligence_memo(
             f"| {control['control']} | ${control['premium_with_control_disabled_usd']:,.0f} | "
             f"${control['monthly_delta_usd']:,.0f} | {control['status_with_control_disabled']} |"
         )
+
+    lines.extend(
+        [
+            "",
+            "## Actuarial Readiness Plan",
+            "",
+            f"* Status: {actuarial_plan['status']}",
+            f"* Boundary: {actuarial_plan['boundary']}",
+            f"* Future-cost elements: {len(actuarial_plan['future_cost_elements'])}",
+            f"* Data/model gates: {len(actuarial_plan['data_readiness_gates'])}",
+            "",
+            "| Future cost element | Evidence needed | Current gap |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for item in actuarial_plan["future_cost_elements"]:
+        lines.append(f"| {item['element']} | {item['evidence_needed']} | {item['current_gap']} |")
+    lines.extend(["", "| Gate | Pass condition | Source anchor |", "| --- | --- | --- |"])
+    for gate in actuarial_plan["data_readiness_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['pass_condition']} | {gate['source_anchor']} |")
+    lines.extend(["", "| Credibility phase | Actuarial use | Blocked claims |", "| --- | --- | --- |"])
+    for phase in actuarial_plan["credibility_ramp"]:
+        lines.append(f"| {phase['phase']} | {phase['actuarial_use']} | {'; '.join(phase['blocked_claims'])} |")
 
     lines.extend(
         [
