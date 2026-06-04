@@ -40,7 +40,7 @@ def _has_completed_minimality_report(cert: FailureCertificate) -> bool:
         return False
     method = str(minimality.get("method", "")).lower()
     status = str(minimality.get("status", "")).lower()
-    if method in {"not_run", "none", "todo"} or status in {"not_run", "not_started"}:
+    if method in {"not_run", "none", "todo"} or status in {"not_run", "not_started", "pending", "in_progress"}:
         return False
     evidence_keys = {
         "smallest_failing_cost_found",
@@ -49,7 +49,7 @@ def _has_completed_minimality_report(cert: FailureCertificate) -> bool:
         "evaluated_grid",
         "local_shrink_trials",
     }
-    return bool(method or status or any(key in minimality for key in evidence_keys))
+    return any(key in minimality and minimality[key] not in (None, "", [], {}) for key in evidence_keys)
 
 
 def underwriting_readiness(certificates: list[FailureCertificate]) -> dict[str, Any]:

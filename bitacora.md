@@ -272,3 +272,20 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 38 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed first review-fix commit `5e9f30b` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found one stricter evidence issue:
+  - method-only or status-only minimality objects such as `{"method": "sigma_sweep"}` or `{"status": "pending"}` could still be counted.
+- Tightened readiness scoring again so minimality coverage requires actual result fields, not just declared method/status placeholders.
+- Added regression coverage for method-only, pending, and in-progress minimality placeholders.
+- Re-ran the real DreamAudit artifact scan:
+  - 250 adapted certificates at scan limit 250,
+  - readiness score remained `65/100`,
+  - status remained `needs_more_evidence`,
+  - 21 completed minimality reports counted,
+  - 250 replay commands counted,
+  - unmapped action-noise and vision-perturbation controls plus low minimality coverage remained the carrier-review gaps.
+- Verification after second review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py` -> 11 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 39 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

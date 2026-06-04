@@ -138,3 +138,32 @@ def test_underwriting_readiness_does_not_count_not_run_minimality():
     assert readiness["minimality_reports"] == 0
     assert readiness["status"] == "needs_more_evidence"
     assert "Less than half of certificates include minimality reports." in readiness["gaps"]
+
+
+def test_underwriting_readiness_requires_minimality_result_fields():
+    minimality_placeholders = [
+        {"method": "sigma_sweep"},
+        {"status": "pending"},
+        {"method": "grid_search", "status": "in_progress"},
+    ]
+    certs = [
+        adapt_dreamaudit_certificate(
+            {
+                "certificate_id": f"placeholder-{idx}",
+                "policy": {"name": "OpenVLA"},
+                "task": {"task_id": f"task-{idx}"},
+                "perturbation": {"type": "openvla_observation_occlusion", "mean_image_l1": 0.08},
+                "perturbed_validation": {"failure_mode": "observation_counterfactual_failure", "steps": 100, "success": False},
+                "native_validation": {"success": True},
+                "minimality": minimality_placeholders[idx % len(minimality_placeholders)],
+            },
+            source_path=Path(f"/tmp/taco/source-a/placeholder-{idx}.json"),
+        )
+        for idx in range(30)
+    ]
+
+    readiness = underwriting_readiness(certs)
+
+    assert readiness["minimality_reports"] == 0
+    assert readiness["readiness_score"] < 80
+    assert "Less than half of certificates include minimality reports." in readiness["gaps"]
