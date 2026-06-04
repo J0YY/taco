@@ -11,6 +11,13 @@ import streamlit as st
 
 from taco_demo.binder import issue_binder
 from taco_demo.activation_recorder import torch_available
+from taco_demo.commercial_model import (
+    build_commercial_scale_model,
+    commercial_gate_rows,
+    commercial_market_rows,
+    commercial_scenario_rows,
+    commercial_segment_rows,
+)
 from taco_demo.data_room import (
     MAX_PACKET_BYTES,
     build_data_room_bundle,
@@ -592,6 +599,13 @@ with tabs[9]:
             methodology_map,
             pricing_diligence,
         )
+        commercial_model = build_commercial_scale_model(
+            application,
+            audit["quote"],
+            readiness,
+            seed_financing_plan,
+            pilot_walkthrough,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -605,6 +619,16 @@ with tabs[9]:
         c3.metric("Conversion gates", len(pilot_walkthrough["conversion_gates"]))
         st.caption(pilot_walkthrough["boundary"])
         st.dataframe(pd.DataFrame(pilot_walkthrough_rows(pilot_walkthrough)), width="stretch")
+        st.markdown("#### Commercial Scale Model")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Model status", str(commercial_model["status"]).replace("_", " ").title())
+        c2.metric("Base modeled ARR", _money(commercial_model["base_case"]["modeled_arr_usd"]))
+        c3.metric("Buyer segments", len(commercial_model["buyer_segments"]))
+        st.caption(commercial_model["boundary"])
+        st.dataframe(pd.DataFrame(commercial_market_rows(commercial_model)), width="stretch")
+        st.dataframe(pd.DataFrame(commercial_segment_rows(commercial_model)), width="stretch")
+        st.dataframe(pd.DataFrame(commercial_scenario_rows(commercial_model)), width="stretch")
+        st.dataframe(pd.DataFrame(commercial_gate_rows(commercial_model)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

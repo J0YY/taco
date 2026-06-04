@@ -921,3 +921,21 @@
 - Pushed pilot walkthrough playbook commit `797e01e` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the pilot walkthrough artifact, Investor Case UI, memo wiring, v7 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `77774`.
+
+## 2026-06-04 - Improvement loop: commercial scale model
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `7ca87fe`.
+- Captured `_review-loop-baseline` at `7ca87feaefa20918fff3713305efa7544796f396` for the independent review loop.
+- Identified the next VC diligence gap: TACO had evidence quality, pricing, objections, and walkthrough workflows, but no structured commercial scale model tying robotics deployment scale, insurance premium context, buyer segments, ACV hypotheses, and $5M-round milestones together without claiming revenue or customers.
+- Reviewed current market-context sources:
+  - IFR World Robotics 2025 industrial robot statistics for deployment scale,
+  - NAIC 2024 U.S. P&C full-year results for commercial insurance premium context.
+- Added `taco_demo/commercial_model.py` with market context, buyer segments, modeled revenue scenarios, seed-round proof gates, source material, assumptions to validate, and explicit boundaries against claiming audited TAM, committed revenue, signed pipeline, insurance capacity, or actuarial filing.
+- Added the commercial scale model to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and root README architecture/product language.
+- Bumped generated data-room packets to `taco_data_room_zip_v8` while preserving verifier compatibility for legacy v1, v2, v3, v4, v5, v6, and v7 packets.
+- Added tests for the commercial model contract, manifest/ZIP export, memo section, current v8 packet indexing, and legacy v7 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 43 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 89 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from .commercial_model import build_commercial_scale_model
 from .data_room import build_data_room_checklist, build_data_room_manifest, data_room_rows
 from .design_partner_plan import build_design_partner_plan
 from .fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
@@ -72,6 +73,13 @@ def build_diligence_memo(
         objection_register,
         methodology_map,
         pricing_diligence,
+    )
+    commercial_model = build_commercial_scale_model(
+        application,
+        quote,
+        fundraise_readiness,
+        seed_financing_plan,
+        pilot_walkthrough,
     )
 
     lines = [
@@ -177,6 +185,38 @@ def build_diligence_memo(
     lines.extend(["", "| Gate | Success condition |", "| --- | --- |"])
     for gate in pilot_walkthrough["conversion_gates"]:
         lines.append(f"| {gate['gate']} | {gate['success_condition']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Commercial Scale Model",
+            "",
+            f"* Status: {commercial_model['status']}",
+            f"* Boundary: {commercial_model['boundary']}",
+            f"* Base modeled ARR: ${commercial_model['base_case']['modeled_arr_usd']:,.0f}",
+            f"* Buyer segments: {len(commercial_model['buyer_segments'])}",
+            "",
+            "| Context | Evidence | TACO implication |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for item in commercial_model["market_context"]:
+        lines.append(f"| {item['context']} | {item['evidence']} | {item['taco_implication']} |")
+    lines.extend(["", "| Segment | First product | Commercial motion | Proof gate |", "| --- | --- | --- | --- |"])
+    for segment in commercial_model["buyer_segments"]:
+        lines.append(
+            f"| {segment['segment_id']} | {segment['first_product']} | {segment['commercial_motion']} | "
+            f"{segment['proof_gate']} |"
+        )
+    lines.extend(["", "| Scenario | Accounts | Modeled ARR | Boundary |", "| --- | ---: | ---: | --- |"])
+    for scenario in commercial_model["revenue_scenarios"]:
+        lines.append(
+            f"| {scenario['scenario_id']} | {scenario['accounts']} | ${scenario['modeled_arr_usd']:,.0f} | "
+            f"{scenario['boundary']} |"
+        )
+    lines.extend(["", "| Gate | Proof required |", "| --- | --- |"])
+    for gate in commercial_model["seed_round_commercial_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['proof_required']} |")
 
     lines.extend(
         [

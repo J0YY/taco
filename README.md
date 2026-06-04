@@ -97,6 +97,7 @@ InsuranceApplication
          methodology, pricing, and objection artifacts
          role-specific external-review agenda
          evidence capture form for pilots, LOIs, or reviewer memos
+         commercial scale model with market sources, buyer segments, and proof gates
 ```
 
 ## Real Integration Path
@@ -242,7 +243,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, methodology evidence map, pricing diligence sensitivity, investor objection register, pilot walkthrough playbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, methodology evidence map, pricing diligence sensitivity, investor objection register, pilot walkthrough playbook, commercial scale model, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
@@ -265,6 +266,8 @@ It also includes an investor objection register that maps likely VC and carrier 
 
 The pilot walkthrough playbook converts the data-room artifacts into a reviewer meeting workflow. It gives broker, MGA, OEM, carrier, and reinsurer reviewers a checksum-verification step, role-specific questions, pass/fail criteria, evidence capture fields, conversion gates, and red flags. It is a capture workflow for external evidence, not a claim that those pilots, LOIs, or capacity discussions have already happened.
 
+The commercial scale model adds the missing VC lens: market-context sources, buyer segments, first-product motions, modeled revenue scenarios, and proof gates that would make a $5M seed round rational. It is explicitly a scenario model, not audited TAM, committed revenue, signed pipeline, insurance capacity, or an actuarial filing.
+
 ## Venture Thesis
 
 TACO is not just robot QA. The larger opportunity is a system of record for autonomy-risk evidence:
@@ -283,4 +286,4 @@ The financing plan in the Investor Case tab connects a proposed $5M seed round t
 
 ## Boundaries
 
-This repository is a local proof of concept and not an offer of insurance. The shipped evidence set is there so the workflow can be tested offline. The design-partner plan and pilot walkthrough playbook are external-validation workflows, not evidence of signed partners, completed pilots, or customer demand. The seed financing plan is a proposed use-of-funds and milestone plan, not committed financing. Real deployment would require carrier partnerships, compliance review, filed pricing or MGA structure, design-partner evidence, and live simulator/model integrations.
+This repository is a local proof of concept and not an offer of insurance. The shipped evidence set is there so the workflow can be tested offline. The design-partner plan and pilot walkthrough playbook are external-validation workflows, not evidence of signed partners, completed pilots, or customer demand. The commercial scale model is a bounded scenario model, not committed revenue or audited market sizing. The seed financing plan is a proposed use-of-funds and milestone plan, not committed financing. Real deployment would require carrier partnerships, compliance review, filed pricing or MGA structure, design-partner evidence, and live simulator/model integrations.
