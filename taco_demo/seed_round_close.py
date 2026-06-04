@@ -27,7 +27,7 @@ def build_seed_round_close_plan(
     safe_claims = [
         claim
         for claim in claim_validation_ledger.get("claims", [])
-        if str(claim.get("evidence_level", "")).startswith(("artifact", "research", "demo"))
+        if str(claim.get("evidence_level", "")).startswith(("artifact", "research", "local_demo"))
     ]
     status = (
         "seed_close_plan_ready_external_proof_pending"

@@ -1580,6 +1580,7 @@ def test_seed_round_close_plan_translates_packet_into_lead_process_without_overc
     assert plan["current_signal_stack"]["readiness_score"] >= 85
     assert plan["current_signal_stack"]["base_gross_margin_pct"] >= 60
     assert plan["current_signal_stack"]["target_pipeline_prospects"] > 0
+    assert plan["current_signal_stack"]["safe_claim_count"] == 9
     assert any(item["package_item"] == "lead_partner_packet" for item in plan["minimum_close_package"])
     assert any(item["segment"] == "insurtech_fintech_seed_leads" for item in plan["investor_segments"])
     assert any(item["week"] == "week_4_term_sheet_path" for item in plan["weekly_close_motion"])

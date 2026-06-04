@@ -1199,3 +1199,10 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 112 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Independent `codex review --base _review-loop-baseline` found one P3 issue: `safe_claim_count` undercounted `local_demo_backed` claim-ledger entries because the predicate matched `demo` rather than `local_demo`.
+- Fixed the safe-claim predicate to include `local_demo_backed` evidence levels and added a regression assertion that the generated close plan counts all 9 caveated safe claims.
+- Verification after review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 66 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 112 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
