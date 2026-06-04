@@ -113,6 +113,40 @@ EXHIBITS: dict[str, dict[str, Any]] = {
         "monitorable": False, "verified_patch": False, "severity": "high", "neighborhood_rate": 0.90,
         "real_video": True,
     },
+    "GO2": {
+        "title": "Unitree Go2 — quadruped (Modal-rendered)",
+        "task": "locomote on flat terrain (scripted PD baseline)",
+        "perturbation": "random joint torques — the quadruped destabilizes and collapses",
+        "perturbation_detail": "MuJoCo/EGL render on Modal · scripted baseline, no learned policy yet",
+        "success": _v("videos", "incoming", "modal_dog", "go2_gait_success.mp4"),
+        "failure": _v("videos", "incoming", "modal_dog", "go2_random_fall.mp4"),
+        "mitigated": None, "success_steps": None, "failure_steps": None,
+        "trace": None, "failure_ts": 60, "risk_key": "internal_risk_score",
+        "mech_method": "Render pipeline validated on Modal (MuJoCo/EGL); learned-policy training + "
+                       "actor-MLP probe are the next step.",
+        "internal_finding": "No learned policy analyzed yet — this is a scripted baseline embodiment render.",
+        "internals_real": False, "internals_pending": True,
+        "recommended_patch": "train a balance/locomotion policy, then add a fall-arrest monitor before certification",
+        "monitorable": False, "verified_patch": False, "severity": "high", "neighborhood_rate": 0.90,
+        "real_video": True,
+    },
+    "HUM-G1": {
+        "title": "Unitree G1 — humanoid (Modal-rendered)",
+        "task": "stand / locomote (scripted PD baseline)",
+        "perturbation": "random joint torques — the humanoid loses balance and falls",
+        "perturbation_detail": "MuJoCo/EGL render on Modal · scripted baseline, no learned policy yet",
+        "success": _v("videos", "incoming", "modal_humanoid", "g1_gait.mp4"),
+        "failure": _v("videos", "incoming", "modal_humanoid", "g1_random_fall.mp4"),
+        "mitigated": None, "success_steps": None, "failure_steps": None,
+        "trace": None, "failure_ts": 60, "risk_key": "internal_risk_score",
+        "mech_method": "Render pipeline validated on Modal (MuJoCo/EGL); learned-policy training + "
+                       "actor-MLP probe are the next step.",
+        "internal_finding": "No learned policy analyzed yet — this is a scripted baseline embodiment render.",
+        "internals_real": False, "internals_pending": True,
+        "recommended_patch": "train a whole-body controller, then add a balance monitor before certification",
+        "monitorable": False, "verified_patch": False, "severity": "high", "neighborhood_rate": 0.90,
+        "real_video": True,
+    },
 }
 
 POLICIES = [
@@ -122,6 +156,10 @@ POLICIES = [
      "env": "SimplerEnv · real SAE monitor", "certs": ["FR-004"]},
     {"id": "anymal_c_quadruped", "name": "ANYmal-C · quadruped (robot dog)",
      "env": "ManiSkill3 · PPO (trained on athena)", "certs": ["DOG-001"]},
+    {"id": "unitree_go2", "name": "Unitree Go2 · quadruped (robot dog)",
+     "env": "MuJoCo · rendered on Modal", "certs": ["GO2"]},
+    {"id": "unitree_g1", "name": "Unitree G1 · humanoid",
+     "env": "MuJoCo · rendered on Modal", "certs": ["HUM-G1"]},
 ]
 
 
@@ -219,14 +257,18 @@ def render_guided_flow() -> None:
     with t3:
         st.markdown(f"**What we ran:** {ex['mech_method']}")
         st.markdown(f"**What we found:** {ex['internal_finding']}")
-        trace = _exhibit_trace(ex)
-        fig, lead, unit = _crossing_chart(trace, ex["failure_ts"])
-        st.plotly_chart(fig, width="stretch", key=f"gf_cross_{cid}")
-        if lead:
-            st.success(f"Internal signature appears **{lead:.0f} {unit} before** the physical failure → monitorable.")
-        st.caption(_prov(ex["internals_real"],
-                         "sae-scope SAE monitor (Swann et al. 2026)" if ex["internals_real"]
-                         else "internal trace illustrative; method shown below is real"))
+        if ex.get("internals_pending"):
+            st.info("Internals analysis pending — this embodiment is wired in as a real render; "
+                    "the learned policy + probe/SAE are the next step before it can be certified.")
+        else:
+            trace = _exhibit_trace(ex)
+            fig, lead, unit = _crossing_chart(trace, ex["failure_ts"])
+            st.plotly_chart(fig, width="stretch", key=f"gf_cross_{cid}")
+            if lead:
+                st.success(f"Internal signature appears **{lead:.0f} {unit} before** the physical failure → monitorable.")
+            st.caption(_prov(ex["internals_real"],
+                             "sae-scope SAE monitor (Swann et al. 2026)" if ex["internals_real"]
+                             else "internal trace illustrative; method shown below is real"))
         st.markdown(f"**Recommended patch:** {ex['recommended_patch']}")
         with st.expander("Method + real SAE proof (how we read a robot policy's internals)"):
             st.graphviz_chart(mechanism_flowchart_dot())
