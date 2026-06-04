@@ -1281,3 +1281,19 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 120 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.
+- First independent `codex review --base _review-loop-baseline` found one correctness issue: activation evidence readiness counted real activation metric rows instead of unique primary certificate IDs, so duplicate or stale rows could overstate coverage.
+- Fixed the coverage logic to count unique primary certificate IDs with real activation metric sources and added a regression test for duplicate/stale activation metrics.
+- Verification after first review fix:
+  - `.venv/bin/python -m py_compile taco_demo/activation_evidence_contract.py taco_demo/tests/test_investor_case.py` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 73 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 121 passed.
+- Second independent `codex review --base _review-loop-baseline` found one correctness issue: `torch_available()` only caught `ImportError`, so a broken optional torch native-library install could raise another import exception and break normal app or manifest generation.
+- Hardened `torch_available()` to treat any torch import exception as unavailable and added a regression test that monkeypatches torch import to raise `OSError`.
+- Verification after second review fix:
+  - `.venv/bin/python -m py_compile taco_demo/activation_recorder.py taco_demo/activation_evidence_contract.py taco_demo/tests/test_activation_recorder.py` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_activation_recorder.py taco_demo/tests/test_investor_case.py -q` -> 84 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 122 passed.
+- Third independent `codex review --base _review-loop-baseline` reran the full test suite and found no actionable correctness issues in the activation evidence contract, manifest, bundle, memo, UI, v24 packet format, verifier compatibility, or tests.
+- Final testrun checks:
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `35474`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
