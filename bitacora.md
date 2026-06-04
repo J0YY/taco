@@ -289,3 +289,5 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 39 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed second review-fix commit `d3535c8` to GitHub `main`.
+- Third independent `codex review --base _review-loop-baseline` reported no discrete correctness issues in the readiness summary or UI wiring.
