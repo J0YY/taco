@@ -463,3 +463,7 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 51 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed posture-targeting review-fix commit `bca2f31` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found one Streamlit workflow issue:
+  - immediately after clicking `Scan DreamAudit Certificates`, the Investor tab could still render the prior intake until another interaction triggered a rerun.
+- Added `st.rerun()` after storing the DreamAudit intake result so Investor gates and downloaded memos see the fresh scan on the next render.

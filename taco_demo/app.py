@@ -601,6 +601,7 @@ with tabs[10]:
     limit = int(st.number_input("Certificate scan limit", min_value=1, max_value=5000, value=250, step=50))
     if st.button("Scan DreamAudit Certificates", type="primary"):
         st.session_state.dreamaudit_intake = _scan_dreamaudit_artifacts(root, limit)
+        st.rerun()
     intake = st.session_state.get("dreamaudit_intake")
     if not intake:
         st.info("Enter a DreamAudit artifact directory and scan to verify live certificate intake.")
