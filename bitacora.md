@@ -1381,3 +1381,41 @@
   - `.venv/bin/python -m pytest taco_demo/tests -q` -> 130 passed.
   - `.venv/bin/python -m taco_demo.scripts.export_data_room_packet --output /tmp/TACO-DATAROOM-cli-check.zip --manifest-output /tmp/TACO-DATAROOM-cli-check-manifest.json --memo-output /tmp/TACO-DATAROOM-cli-check-memo.md` -> valid v27 packet, 43 files, 42 indexed files, SHA-256 `822df9052b72e7a2c835fa4675dee32608fda219f148afff0ab4f974efdb8390`.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+
+## 2026-06-04 - Real-evidence pivot, certifier reframe, Modal split (Claude session)
+
+Worked with the user (loop paused then killed) to make the demo real and clean.
+
+- Wired REAL simulator videos into the demo (replacing synthetic GIFs):
+  - FR-001 occlusion, FR-002 language-override (+ real sanitizer-repaired success)
+    from LIBERO/OpenVLA replays (dreamaudit supplemental_videos).
+  - FR-004 real internal-monitor evidence from sae-scope (Dr. VLA): SAE monitor
+    first-alert step 32, 48-step lead, recall 1.0, precision 0.857.
+  - Real SAE feature analysis incorporated (taco_demo/sae_features.py): TopK SAE
+    on Octo-Base diffusion head, 4096 features / 1172 alive / 99.8% EV / L0 64,
+    temporal heatmap + frequency histogram. Proof of mechanistic interpretation.
+  - Cluster-rendered ManiSkill rope rollout (athena): 16/16 fall.
+  - Robot dog: trained AnymalC-Reach PPO on athena (3M steps); trained.mp4 vs
+    early_failure.mp4 wired in. Fixed the (y|n) asset-download EOF under srun.
+- Restructured the UI (taco_demo/guided_flow.py) into a single 4-stage flow:
+  nominal success -> forced failure -> mechanistic finding (what we ran / what we
+  found) -> certificate. Removed the sidebar, the 13 workbench tabs, and pricing.
+  Reframed TACO as a pre-deployment CERTIFIER: certification tiers (1-4) via
+  taco_demo/certification.py instead of insurance pricing.
+- Added annotated mechanistic flow chart (taco_demo/mechanism.py), grounded in
+  Swann et al. 2026 "SAEs Reveal Interpretable and Steerable Features in VLA
+  Models" (arXiv:2603.19183) = the sae-scope/Dr. VLA paper. Provenance badges
+  mark every number REAL vs ILLUSTRATIVE. Verified renders via Streamlit AppTest.
+- Research deep-dive (fanned-out agents) on diverse embodiments -> docs/
+  POLICY_EXPANSION_PLAN.md (humanoids, home/kitchen, ManiSkill/SimplerEnv).
+- Compute: configured Modal (profile vinsta-team). Findings:
+  - Modal GPU/CUDA works.
+  - ManiSkill/SAPIEN Vulkan rendering is BLOCKED on Modal (known maintainer-
+    unresolved cloud issue; SAPIEN createDevice fails). -> keep SAPIEN on athena.
+  - MuJoCo/EGL rendering WORKS on Modal. -> Split: ManiSkill/SAPIEN on athena,
+    MuJoCo-based (RoboCasa kitchen, MuJoCo Playground locomotion) on Modal.
+  - taco_demo/modal/ harness: smoke, maniskill_render, mujoco_render, playground_dog.
+  - Cancelled the user's bgr-* athena jobs to free the GPU queue (per request).
+- In flight: Modal Playground Unitree Go1 render; athena agents for RoboCasa
+  kitchen, SimplerEnv-OpenVLA, and MS-HAB (downloading/installing).
+- Tests: 153 passing. Commits 777857f..8d9851c pushed to origin/main.
