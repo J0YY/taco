@@ -4,6 +4,7 @@ import Wordmark from './Wordmark.jsx'
 const LINKS = [
   ['Product', '#product'],
   ['Explainer', '#explainer'],
+  ['DreamAudit', '#dreamaudit'],
   ['Policies', '#policies'],
   ['Pipeline', '#pipeline'],
   ['Certification', '#certification'],

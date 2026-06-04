@@ -538,6 +538,84 @@ function Explainer() {
   )
 }
 
+/* ================= SECTION — DREAMAUDIT METHODOLOGY ================= */
+function Bar({ label, value, vlabel, color }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr 54px', gap: 10, alignItems: 'center', marginBottom: 9 }}>
+      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 12, color: '#c9c0ad' }}>{label}</span>
+      <div style={{ background: '#221e1b', borderRadius: 4, height: 14 }}>
+        <div style={{ width: `${Math.max(2, Math.round(value * 100))}%`, height: '100%', background: color, borderRadius: 4 }} />
+      </div>
+      <span style={{ fontFamily: 'DM Mono, monospace', fontSize: 12, color: '#aea69c', textAlign: 'right' }}>{vlabel}</span>
+    </div>
+  )
+}
+function DreamAuditMethod() {
+  const cost = [
+    { label: 'Language override', value: 0.22, vlabel: '0.22', color: '#d8b46a' },
+    { label: 'Occlusion', value: 0.31, vlabel: '0.31', color: '#d8b46a' },
+    { label: 'Distractor', value: 0.44, vlabel: '0.44', color: '#d8b46a' },
+  ]
+  const nbhd = [
+    { label: 'Language override', value: 0.74, vlabel: '74%', color: '#cf8f7a' },
+    { label: 'Occlusion', value: 0.67, vlabel: '67%', color: '#cf8f7a' },
+    { label: 'Move-near (SAE)', value: 0.60, vlabel: '60%', color: '#cf8f7a' },
+    { label: 'Distractor', value: 0.52, vlabel: '52%', color: '#cf8f7a' },
+  ]
+  const W = 620, H = 86, xs = (s) => 30 + (s / 100) * (W - 60)
+  const tm = { fontFamily: 'DM Mono, monospace', fontSize: '9px' }
+  return (
+    <section id="dreamaudit" className="band">
+      <div className="container">
+        <div className="section-head">
+          <div className="eyebrow" style={{ marginBottom: 16 }}>DreamAudit · forcing failures</div>
+          <h2 className="display-lg">How we force and time each failure.</h2>
+          <p className="body-lg" style={{ marginTop: 16 }}>
+            DreamAudit searches a perturbation grammar (visual occlusion, image shift, injected language
+            suffixes, action noise, distractors) for the smallest edit that flips a benchmark success into
+            a failure. It then checks that edit across the surrounding neighborhood and records a replayable
+            certificate: the minimal perturbation cost, the neighborhood failure rate, the step where the
+            failure commits, and the recommended control.
+          </p>
+        </div>
+        <div className="grid grid-2" style={{ alignItems: 'start' }}>
+          <div className="card">
+            <div className="label-mono" style={{ marginBottom: 12 }}>Minimal perturbation cost (lower means easier to break)</div>
+            {cost.map((b) => <Bar key={b.label} {...b} />)}
+            <p className="label-mono" style={{ marginTop: 10, color: '#aea69c' }}>normalized 0 to 1, from each replayable failure certificate</p>
+          </div>
+          <div className="card">
+            <div className="label-mono" style={{ marginBottom: 12 }}>Neighborhood failure rate (fraction of the perturbed neighborhood that fails)</div>
+            {nbhd.map((b) => <Bar key={b.label} {...b} />)}
+            <p className="label-mono" style={{ marginTop: 10, color: '#aea69c' }}>move-near is real sae-scope data, others from the demo certificates</p>
+          </div>
+        </div>
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="label-mono" style={{ marginBottom: 8 }}>FR-004 warning lead (real sae-scope monitor)</div>
+          <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="warning lead timeline">
+            <line x1={xs(0)} y1={H - 26} x2={xs(100)} y2={H - 26} stroke="#4d4641" strokeWidth="1" />
+            {[0, 25, 50, 75, 100].map((s) => (
+              <g key={s}><line x1={xs(s)} y1={H - 30} x2={xs(s)} y2={H - 22} stroke="#4d4641" strokeWidth="1" />
+                <text x={xs(s)} y={H - 10} style={tm} fill="#aea69c" textAnchor="middle">{s}</text></g>
+            ))}
+            <rect x={xs(32)} y="14" width={xs(80) - xs(32)} height={H - 40} fill="#9db58f" opacity="0.14" />
+            <line x1={xs(32)} y1="10" x2={xs(32)} y2={H - 22} stroke="#9db58f" strokeWidth="1.5" strokeDasharray="3 3" />
+            <text x={xs(32)} y="8" style={tm} fill="#9db58f" textAnchor="middle">SAE alert · step 32</text>
+            <line x1={xs(80)} y1="10" x2={xs(80)} y2={H - 22} stroke="#cf8f7a" strokeWidth="1.5" />
+            <text x={xs(80)} y="8" style={tm} fill="#cf8f7a" textAnchor="middle">failure · step 80</text>
+            <text x={(xs(32) + xs(80)) / 2} y={H / 2 + 4} style={{ ...tm, fontSize: '11px' }} fill="#9db58f" textAnchor="middle">48-step lead</text>
+          </svg>
+          <p style={{ marginTop: 8 }}>
+            The internal SAE monitor crosses threshold at step 32; the physical failure commits near step 80.
+            That 48-step lead, with recall 1.0 and precision 0.86 on the curated set, is what makes the failure
+            monitorable and therefore conditionally certifiable.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ================= SECTION 4b — AUDITED POLICIES (real rollouts, by type) ================= */
 const POLICY_CATS = [
   { key: 'arm', label: 'Manipulation arms · VLA', policies: [
@@ -699,6 +777,7 @@ export default function Landing() {
         <Explainer />
         <Pipeline />
         <FailureStory />
+        <DreamAuditMethod />
         <PolicyExplorer />
         <CertModel />
         <CustomersGet />
