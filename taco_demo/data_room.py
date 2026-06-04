@@ -23,9 +23,10 @@ from .external_validation import build_external_validation_capture_kit
 from .external_proof_registry import build_external_proof_registry
 from .commercial_model import build_commercial_scale_model
 from .capacity_roadmap import build_capacity_roadmap
+from .fundraise_narrative import build_fundraise_narrative_memo
 from .fundraise_readiness import build_fundraise_readiness
 from .insurance_scenarios import INSURANCE_SCENARIOS
-from .investor_case import RESEARCH_FOUNDATIONS
+from .investor_case import RESEARCH_FOUNDATIONS, investor_summary
 from .investor_objections import build_investor_objection_register
 from .investor_proof_pipeline import build_investor_proof_pipeline
 from .methodology_evidence import build_methodology_evidence_map
@@ -68,6 +69,7 @@ PACKET_FORMAT_V22 = "taco_data_room_zip_v22"
 PACKET_FORMAT_V23 = "taco_data_room_zip_v23"
 PACKET_FORMAT_V24 = "taco_data_room_zip_v24"
 PACKET_FORMAT_V25 = "taco_data_room_zip_v25"
+PACKET_FORMAT_V26 = "taco_data_room_zip_v26"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -153,8 +155,11 @@ REQUIRED_BUNDLE_FILES_V23 = REQUIRED_BUNDLE_FILES_V22 | {
 REQUIRED_BUNDLE_FILES_V24 = REQUIRED_BUNDLE_FILES_V23 | {
     "research/activation_evidence_contract.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V24 | {
+REQUIRED_BUNDLE_FILES_V25 = REQUIRED_BUNDLE_FILES_V24 | {
     "dreamaudit/corpus_reconciliation.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V25 | {
+    "commercial/fundraise_narrative_memo.json",
 }
 
 
@@ -327,6 +332,12 @@ def build_data_room_checklist(
             "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
             "Investor segmenting, weekly close motion, lead-partner gates, minimum close package, meeting prompts, and no-count rules are attached.",
             "Use the close plan to convert reviewer proof and commercial artifacts into a lead-process path without overstating investor interest or customer demand.",
+        ),
+        _item(
+            "Fundraise Narrative Memo",
+            "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
+            "One-line thesis, seven-minute demo path, proof stack, investor questions, 30-day close workflow, and do-not-claim rules are attached.",
+            "Use this memo to run seed conversations from packet evidence instead of slides or unsupported traction claims.",
         ),
         _item(
             "External Proof Registry",
@@ -568,6 +579,18 @@ def build_data_room_manifest(
         methodology_validation_protocol,
         technical_diligence_runbook,
     )
+    fundraise_narrative_memo = build_fundraise_narrative_memo(
+        application,
+        quote,
+        investor_summary(application, certificates, metrics, quote),
+        fundraise_readiness,
+        seed_financing_plan,
+        seed_round_close_plan,
+        commercial_traction_plan,
+        dreamaudit_corpus_reconciliation,
+        activation_evidence_contract,
+        claim_validation_ledger,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -606,6 +629,7 @@ def build_data_room_manifest(
         "commercial_traction_plan": commercial_traction_plan,
         "commercial_unit_economics": commercial_unit_economics,
         "seed_round_close_plan": seed_round_close_plan,
+        "fundraise_narrative_memo": fundraise_narrative_memo,
         "external_proof_registry": external_proof_registry,
     }
 
@@ -655,6 +679,7 @@ def build_data_room_bundle(
         ("commercial/commercial_traction_plan.json", _json_bytes(manifest["commercial_traction_plan"])),
         ("commercial/commercial_unit_economics.json", _json_bytes(manifest["commercial_unit_economics"])),
         ("commercial/seed_round_close_plan.json", _json_bytes(manifest["seed_round_close_plan"])),
+        ("commercial/fundraise_narrative_memo.json", _json_bytes(manifest["fundraise_narrative_memo"])),
         ("commercial/external_proof_registry.json", _json_bytes(manifest["external_proof_registry"])),
         ("technical/technical_diligence_runbook.json", _json_bytes(manifest["technical_diligence_runbook"])),
     ]
@@ -765,7 +790,8 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, "
                         "taco_data_room_zip_v17, taco_data_room_zip_v18, taco_data_room_zip_v19, "
                         "taco_data_room_zip_v20, taco_data_room_zip_v21, taco_data_room_zip_v22, "
-                        "taco_data_room_zip_v23, taco_data_room_zip_v24, or taco_data_room_zip_v25"
+                        "taco_data_room_zip_v23, taco_data_room_zip_v24, taco_data_room_zip_v25, "
+                        "or taco_data_room_zip_v26"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -914,7 +940,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V25,
+        "packet_format": PACKET_FORMAT_V26,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -980,6 +1006,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V24:
         return REQUIRED_BUNDLE_FILES_V24
     if packet_format == PACKET_FORMAT_V25:
+        return REQUIRED_BUNDLE_FILES_V25
+    if packet_format == PACKET_FORMAT_V26:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -1052,6 +1080,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/commercial_traction_plan.json` - ICP targets, paid package ladder, weekly traction metrics, investor reporting rules, and count/do-not-count controls",
             "* `commercial/commercial_unit_economics.json` - modeled revenue mix, delivery cost, gross margin, CAC/payback assumptions, and seed milestone gates",
             "* `commercial/seed_round_close_plan.json` - investor segmentation, weekly close motion, lead-partner gates, minimum close package, and no-count rules",
+            "* `commercial/fundraise_narrative_memo.json` - one-line thesis, seven-minute demo, proof stack, investor questions, and close workflow",
             "* `commercial/external_proof_registry.json` - proof slots, packet fingerprint requirements, permission-to-quote states, redaction gates, and claim-upgrade rules",
             "* `technical/technical_diligence_runbook.json` - local reproduction, live-evidence, packet-verification, and cluster-regeneration runbook",
             "",

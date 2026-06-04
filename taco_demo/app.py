@@ -102,6 +102,13 @@ from taco_demo.external_proof_registry import (
     external_proof_slot_rows,
 )
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
+from taco_demo.fundraise_narrative import (
+    build_fundraise_narrative_memo,
+    fundraise_demo_rows,
+    fundraise_proof_rows,
+    fundraise_question_rows,
+    fundraise_workflow_rows,
+)
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.investor_objections import build_investor_objection_register, investor_objection_rows
 from taco_demo.investor_proof_pipeline import (
@@ -872,6 +879,18 @@ with tabs[9]:
             methodology_validation_protocol,
             technical_runbook,
         )
+        fundraise_narrative_memo = build_fundraise_narrative_memo(
+            application,
+            audit["quote"],
+            summary,
+            readiness,
+            seed_financing_plan,
+            seed_round_close_plan,
+            commercial_traction_plan,
+            dreamaudit_reconciliation,
+            activation_evidence_contract,
+            claim_validation_ledger,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -1054,6 +1073,17 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(seed_round_week_rows(seed_round_close_plan)), width="stretch")
         st.dataframe(pd.DataFrame(seed_round_gate_rows(seed_round_close_plan)), width="stretch")
         st.dataframe(pd.DataFrame(seed_round_rule_rows(seed_round_close_plan)), width="stretch")
+        st.markdown("#### Fundraise Narrative Memo")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Narrative status", str(fundraise_narrative_memo["status"]).replace("_", " ").title())
+        c2.metric("Target raise", _money(fundraise_narrative_memo["fundraise_ask"]["target_raise_usd"]))
+        c3.metric("Demo steps", len(fundraise_narrative_memo["seven_minute_demo"]))
+        st.caption(fundraise_narrative_memo["boundary"])
+        st.markdown(f"**One-liner:** {fundraise_narrative_memo['one_liner']}")
+        st.dataframe(pd.DataFrame(fundraise_demo_rows(fundraise_narrative_memo)), width="stretch")
+        st.dataframe(pd.DataFrame(fundraise_proof_rows(fundraise_narrative_memo)), width="stretch")
+        st.dataframe(pd.DataFrame(fundraise_question_rows(fundraise_narrative_memo)), width="stretch")
+        st.dataframe(pd.DataFrame(fundraise_workflow_rows(fundraise_narrative_memo)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

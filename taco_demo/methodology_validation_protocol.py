@@ -33,7 +33,7 @@ def build_methodology_validation_protocol(
             "actuarially credible pricing."
         ),
         "packet_context": {
-            "target_packet_format": "taco_data_room_zip_v25",
+            "target_packet_format": "taco_data_room_zip_v26",
             "source_research_plan": research_validation_plan["plan_id"],
             "external_registry": external_proof_registry["registry_id"],
             "packet_sha256_required_before_execution": True,

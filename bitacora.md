@@ -1319,3 +1319,17 @@
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
 - Independent `codex review --base _review-loop-baseline` inspected the cumulative DreamAudit corpus reconciliation diff, observed the test suite passing, and found no discrete correctness issues in the manifest, bundle, memo, UI, verifier compatibility, or tests.
 - Restarted Streamlit at `http://127.0.0.1:8501` with detached active PID `37988`, `--server.fileWatcherType none`, and `--browser.gatherUsageStats false`.
+
+## 2026-06-04 - Improvement loop: fundraise narrative memo
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `ea20b0d`.
+- Identified the next VC-quality gap: the diligence stack had strong artifacts, but the seed-pitch narrative was spread across many tabs and JSON contracts instead of one concise, evidence-bounded investor workflow.
+- Added `taco_demo/fundraise_narrative.py` with a one-line thesis, target customer context, $5M ask, capital thesis, seven-minute demo script, proof stack, investor questions, 30-day close workflow, killer risks, safe claims, and do-not-claim rules.
+- Wired the fundraise narrative memo into the Investor Case UI, diligence memo, VC data-room checklist, manifest, ZIP packet, packet README, and root README product-surface language.
+- Bumped generated data-room packets to `taco_data_room_zip_v26` while preserving verifier compatibility for legacy v1 through v25 packets.
+- Verification before commit:
+  - `.venv/bin/python -m py_compile taco_demo/fundraise_narrative.py taco_demo/data_room.py taco_demo/app.py taco_demo/diligence_memo.py taco_demo/external_proof_registry.py taco_demo/methodology_validation_protocol.py taco_demo/tests/test_investor_case.py` -> passed.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 77 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 126 passed.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.

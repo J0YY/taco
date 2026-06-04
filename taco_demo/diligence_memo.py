@@ -119,6 +119,7 @@ def build_diligence_memo(
     commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
     commercial_unit_economics = data_room_manifest["commercial_unit_economics"]
     seed_round_close_plan = data_room_manifest["seed_round_close_plan"]
+    fundraise_narrative_memo = data_room_manifest["fundraise_narrative_memo"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -391,6 +392,29 @@ def build_diligence_memo(
     lines.extend(["", "| Rule | Do not count | Upgrade evidence |", "| --- | --- | --- |"])
     for rule in seed_round_close_plan["no_count_rules"]:
         lines.append(f"| {rule['rule']} | {rule['do_not_count']} | {rule['upgrade_evidence']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Fundraise Narrative Memo",
+            "",
+            f"* Status: {fundraise_narrative_memo['status']}",
+            f"* Boundary: {fundraise_narrative_memo['boundary']}",
+            f"* One-liner: {fundraise_narrative_memo['one_liner']}",
+            f"* Target raise: ${fundraise_narrative_memo['fundraise_ask']['target_raise_usd']:,.0f}",
+            "",
+            "| Demo minute | Screen | Proof artifact | Avoid |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for step in fundraise_narrative_memo["seven_minute_demo"]:
+        lines.append(f"| {step['minute']} | {step['screen']} | {step['proof_artifact']} | {step['avoid']} |")
+    lines.extend(["", "| Proof | Current evidence | Upgrade gate |", "| --- | --- | --- |"])
+    for proof in fundraise_narrative_memo["proof_stack"]:
+        lines.append(f"| {proof['proof']} | {proof['current_evidence']} | {proof['upgrade_gate']} |")
+    lines.extend(["", "| Week | Goal | Output | Do not count |", "| --- | --- | --- | --- |"])
+    for week in fundraise_narrative_memo["thirty_day_close_workflow"]:
+        lines.append(f"| {week['week']} | {week['goal']} | {week['output']} | {week['do_not_count']} |")
 
     lines.extend(
         [
