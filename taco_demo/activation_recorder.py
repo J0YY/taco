@@ -7,6 +7,7 @@ small fake modules while production users can attach it to torch.nn.Module trees
 
 from __future__ import annotations
 
+import hashlib
 import re
 from pathlib import Path
 from typing import Any, Iterable
@@ -77,6 +78,10 @@ def _to_numpy(value: Any, *, detach: bool, device: str) -> np.ndarray | None:
 def _sanitize_key(key: str) -> str:
     sanitized = re.sub(r"[^0-9A-Za-z_]+", "_", key).strip("_")
     return sanitized or "activation"
+
+
+def _stable_suffix(key: str) -> str:
+    return hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
 
 
 class ActivationRecorder:
@@ -162,9 +167,15 @@ class ActivationRecorder:
         output_path = Path(path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         payload: dict[str, np.ndarray] = {}
+        sanitized_counts: dict[str, int] = {}
+        for name in self.captures:
+            base = _sanitize_key(name)
+            sanitized_counts[base] = sanitized_counts.get(base, 0) + 1
         for name, arrays in self.captures.items():
+            base = _sanitize_key(name)
+            key_prefix = base if sanitized_counts[base] == 1 else f"{base}__{_stable_suffix(name)}"
             for idx, array in enumerate(arrays):
-                payload[f"{_sanitize_key(name)}__{idx:04d}"] = np.asarray(array)
+                payload[f"{key_prefix}__{idx:04d}"] = np.asarray(array)
         np.savez(output_path, **payload)
         return output_path
 

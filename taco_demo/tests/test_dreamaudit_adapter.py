@@ -48,6 +48,7 @@ def test_adapts_compact_openvla_observation_certificate(tmp_path):
     assert cert.failure_rate_neighborhood == 1.0
     assert cert.failure_timestep == 171
     assert cert.source.startswith("dreamaudit:")
+    assert cert.replay_command == f"python -m json.tool {path}"
     assert "taco_required_control" in cert.patch_recipe
 
 

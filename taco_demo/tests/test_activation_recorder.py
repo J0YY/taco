@@ -89,6 +89,21 @@ def test_record_forward_pass_removes_hooks_after_run(tmp_path):
     assert (tmp_path / "single_pass.npz").exists()
 
 
+def test_save_npz_disambiguates_sanitized_layer_name_collisions(tmp_path):
+    layer_one = FakeLayer(2.0)
+    layer_two = FakeLayer(3.0)
+    recorder = ActivationRecorder().attach(None, named_modules=[("vision.encoder", layer_one), ("vision_encoder", layer_two)])
+
+    layer_one.forward(np.array([1.0]))
+    layer_two.forward(np.array([1.0]))
+    path = recorder.save_npz(tmp_path / "colliding_layers.npz")
+
+    with np.load(path) as data:
+        assert len(data.files) == 2
+        assert len(set(data.files)) == 2
+        assert sorted(float(data[key][0]) for key in data.files) == [2.0, 3.0]
+
+
 def test_activation_recorder_snapshots_before_in_place_mutation():
     layer = MutatingFakeLayer(2.0)
     recorder = ActivationRecorder().attach(None, named_modules=[("policy.mutable", layer)])

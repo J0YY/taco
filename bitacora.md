@@ -149,3 +149,16 @@
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 29 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed second review-fix commit `c8e9fcf` to GitHub `main`.
+- Third independent `codex review --base _review-loop-baseline` found two functional issues:
+  - fallback DreamAudit `replay_command` used an invalid `validate_candidates.py --certificate` flag,
+  - activation NPZ keys could collide when layer names sanitized to the same string.
+- Fixed both:
+  - fallback replay command now uses a valid `python -m json.tool <certificate>` certificate-inspection command unless DreamAudit provides a real replay video URI,
+  - NPZ save keeps readable layer keys when unique and adds a stable hash suffix only when sanitized layer names collide.
+- Added regression coverage for valid certificate replay command fallback and sanitized NPZ key collisions.
+- Verification after third review fixes:
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_activation_recorder.py` -> 8 passed.
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 30 passed.
+  - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

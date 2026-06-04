@@ -190,7 +190,7 @@ def _replay_command(payload: JsonDict, source_path: Path | None) -> str:
     if replay_uri:
         return f"open {replay_uri}"
     if source_path is not None:
-        return f"python /Users/joyyang/Projects/dreamaudit/scripts/validate_candidates.py --certificate {source_path}"
+        return f"python -m json.tool {source_path}"
     certificate_id = payload.get("certificate_id", "<certificate_id>")
     return f"dreamaudit replay --certificate {certificate_id}"
 
