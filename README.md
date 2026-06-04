@@ -141,7 +141,7 @@ trace_path = recorder.save_taco_trace_npz(
 recorder.remove()
 ```
 
-The recorder does not make torch a required dependency for the local demo. In a torch runtime, it uses module forward hooks, snapshots captured outputs before later mutation, handles bf16-style tensors, and writes NPZ files that can feed the internal-risk scoring layer. The layer-to-signal map is explicit: TACO records real activations, then the operator names which layer corresponds to each underwriting signal instead of pretending the mapping is automatically discovered.
+The recorder does not make torch a required dependency for the local demo. In a torch runtime, it uses module forward hooks, snapshots captured outputs before later mutation, handles bf16-style tensors, and writes NPZ files that can feed the internal-risk scoring layer. The layer-to-signal map is explicit: TACO records real activations, then the operator names which layer corresponds to each underwriting signal instead of pretending the mapping is automatically discovered. One-off exports require calibrated `[0, 1]` signal values or an explicit `signal_calibration`; rollout bundles can apply shared calibration across success, failure, and mitigated traces so downstream metrics compare the same scale.
 
 For a full success/failure/mitigated rollout bundle:
 

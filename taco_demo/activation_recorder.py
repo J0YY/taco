@@ -107,16 +107,33 @@ def _activation_scalar(array: np.ndarray) -> float:
     return float(np.nanmean(numeric))
 
 
-def _normalize_series(series: np.ndarray) -> np.ndarray:
+SignalCalibration = dict[str, tuple[float, float]]
+
+
+def _finite_bounds(values: np.ndarray) -> tuple[float, float]:
+    finite = values[np.isfinite(values)]
+    if finite.size == 0:
+        raise ValueError("Activation signal contains no finite values")
+    return float(np.min(finite)), float(np.max(finite))
+
+
+def _calibrate_series(series: np.ndarray, signal_name: str, signal_calibration: SignalCalibration | None) -> np.ndarray:
     values = np.asarray(series, dtype=float).reshape(-1)
     if values.size == 0:
         return values
-    if np.nanmin(values) >= 0.0 and np.nanmax(values) <= 1.0:
+    if signal_calibration and signal_name in signal_calibration:
+        lower, upper = signal_calibration[signal_name]
+        spread = float(upper - lower)
+        if spread < 1e-9:
+            return np.full(len(values), 0.5, dtype=float)
+        return np.clip((values - lower) / spread, 0.0, 1.0)
+    lower, upper = _finite_bounds(values)
+    if lower >= 0.0 and upper <= 1.0:
         return np.clip(values, 0.0, 1.0)
-    spread = float(np.nanmax(values) - np.nanmin(values))
-    if spread < 1e-9:
-        return np.clip(1.0 / (1.0 + np.exp(-values)), 0.0, 1.0)
-    return np.clip((values - np.nanmin(values)) / spread, 0.0, 1.0)
+    raise ValueError(
+        f"Activation signal {signal_name!r} is outside [0, 1]; provide shared signal_calibration "
+        "or use record_taco_trace_bundle(auto_calibrate=True)."
+    )
 
 
 def _pad_series(series: np.ndarray, length: int) -> np.ndarray:
@@ -137,6 +154,7 @@ def build_taco_trace_from_activations(
     *,
     timestep_hz: float = 20.0,
     trace_source: str = "recorded_activation_forward_hooks",
+    signal_calibration: SignalCalibration | None = None,
 ) -> dict[str, np.ndarray]:
     """Convert captured layer outputs into TACO's internal-risk trace schema.
 
@@ -155,7 +173,8 @@ def build_taco_trace_from_activations(
         arrays = captures.get(layer_name, [])
         if not arrays:
             continue
-        series = _normalize_series(np.asarray([_activation_scalar(array) for array in arrays], dtype=float))
+        raw_series = np.asarray([_activation_scalar(array) for array in arrays], dtype=float)
+        series = _calibrate_series(raw_series, signal_name, signal_calibration)
         trace[signal_name] = series
         max_length = max(max_length, len(series))
 
@@ -189,12 +208,19 @@ def save_taco_trace_npz(
     *,
     timestep_hz: float = 20.0,
     trace_source: str = "recorded_activation_forward_hooks",
+    signal_calibration: SignalCalibration | None = None,
 ) -> Path:
     """Persist captured activations as a scoreable TACO trace NPZ."""
 
     output_path = Path(path)
     save_path = output_path if output_path.suffix == ".npz" else Path(f"{output_path}.npz")
-    trace = build_taco_trace_from_activations(captures, signal_map, timestep_hz=timestep_hz, trace_source=trace_source)
+    trace = build_taco_trace_from_activations(
+        captures,
+        signal_map,
+        timestep_hz=timestep_hz,
+        trace_source=trace_source,
+        signal_calibration=signal_calibration,
+    )
     save_path.parent.mkdir(parents=True, exist_ok=True)
     np.savez(save_path, **trace)
     return save_path
@@ -303,6 +329,7 @@ class ActivationRecorder:
         *,
         timestep_hz: float = 20.0,
         trace_source: str = "recorded_activation_forward_hooks",
+        signal_calibration: SignalCalibration | None = None,
     ) -> Path:
         """Persist captured activations as a scoreable TACO trace NPZ."""
 
@@ -312,6 +339,7 @@ class ActivationRecorder:
             signal_map,
             timestep_hz=timestep_hz,
             trace_source=trace_source,
+            signal_calibration=signal_calibration,
         )
 
 
@@ -349,6 +377,7 @@ def record_taco_trace_bundle(
     output_dir: Path | str,
     certificate_id: str,
     timestep_hz: float = 20.0,
+    auto_calibrate: bool = True,
 ) -> dict[str, Path]:
     """Record success/failure/mitigated rollouts into scoreable trace files.
 
@@ -359,6 +388,7 @@ def record_taco_trace_bundle(
 
     output_root = Path(output_dir)
     output_root.mkdir(parents=True, exist_ok=True)
+    captures_by_mode: dict[str, dict[str, list[np.ndarray]]] = {}
     paths: dict[str, Path] = {}
     for mode, rollout_inputs in inputs_by_mode.items():
         recorder = ActivationRecorder(layer_names=layer_names).attach(model)
@@ -370,11 +400,39 @@ def record_taco_trace_bundle(
                     model(*inputs)
                 else:
                     model(inputs)
-            paths[mode] = recorder.save_taco_trace_npz(
-                output_root / f"{certificate_id}_{mode}.npz",
-                signal_map,
-                timestep_hz=timestep_hz,
-            )
+            captures_by_mode[mode] = {
+                name: [array.copy() for array in arrays]
+                for name, arrays in recorder.captures.items()
+            }
         finally:
             recorder.remove()
+    signal_calibration = _shared_signal_calibration(captures_by_mode, signal_map) if auto_calibrate else None
+    for mode, captures in captures_by_mode.items():
+        paths[mode] = save_taco_trace_npz(
+            captures,
+            output_root / f"{certificate_id}_{mode}.npz",
+            signal_map,
+            timestep_hz=timestep_hz,
+            signal_calibration=signal_calibration,
+        )
     return paths
+
+
+def _shared_signal_calibration(
+    captures_by_mode: dict[str, dict[str, list[np.ndarray]]],
+    signal_map: dict[str, str],
+) -> SignalCalibration:
+    calibration: SignalCalibration = {}
+    values_by_signal: dict[str, list[float]] = {}
+    for captures in captures_by_mode.values():
+        for layer_name, signal_name in signal_map.items():
+            values_by_signal.setdefault(signal_name, [])
+            values_by_signal[signal_name].extend(_activation_scalar(array) for array in captures.get(layer_name, []))
+    for signal_name, values in values_by_signal.items():
+        series = np.asarray(values, dtype=float)
+        if series.size == 0:
+            continue
+        lower, upper = _finite_bounds(series)
+        if lower < 0.0 or upper > 1.0:
+            calibration[signal_name] = (lower, upper)
+    return calibration

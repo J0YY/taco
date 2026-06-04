@@ -539,3 +539,15 @@
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `.venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force` -> regenerated local demo evidence under `taco_demo/data`.
   - `git diff --check` -> clean.
+- Pushed activation trace bridge commit `912edd8` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one issue:
+  - independent min-max normalization per saved trace could erase cross-rollout differences when raw activation ranges differ, making mitigability and feature-stability metrics misleading.
+- Fixed activation calibration:
+  - one-off trace exports now require calibrated `[0, 1]` values or an explicit `signal_calibration`,
+  - `record_taco_trace_bundle` records all modes first and applies shared calibration across success/failure/mitigated traces when raw activations fall outside `[0, 1]`,
+  - added regression coverage for uncalibrated one-off exports and raw activation bundles with preserved cross-rollout risk differences.
+- Verification after calibration fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_activation_recorder.py taco_demo/tests/test_trace_scoring.py` -> 14 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 58 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

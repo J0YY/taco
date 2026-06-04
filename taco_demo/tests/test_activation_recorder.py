@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 import numpy as np
+import pytest
 
 from taco_demo.activation_recorder import ActivationRecorder, record_forward_pass, record_taco_trace_bundle
 from taco_demo.sample_data import DEMO_CERTIFICATES
@@ -278,3 +279,94 @@ def test_record_taco_trace_bundle_scores_recorded_activation_source(tmp_path):
     assert metrics.concept_coverage_score == 1.0
     assert metrics.details["recorded_required_signal_count"] == 6
     assert metrics.causal_mitigability_score > 0.4
+
+
+def test_single_trace_export_requires_calibrated_activation_values(tmp_path):
+    recorder = ActivationRecorder()
+    recorder.captures = {"policy.action": [np.array([10.0]), np.array([11.0])]}
+    signal_map = {"policy.action": "action_risk"}
+
+    with pytest.raises(ValueError, match=r"outside \[0, 1\]"):
+        recorder.save_taco_trace_npz(tmp_path / "uncalibrated.npz", signal_map)
+
+    calibrated_path = recorder.save_taco_trace_npz(
+        tmp_path / "calibrated.npz",
+        signal_map,
+        signal_calibration={"action_risk": (0.0, 20.0)},
+    )
+
+    trace = load_trace(calibrated_path)
+    assert np.allclose(trace["action_risk"], np.array([0.5, 0.55]))
+
+
+def test_record_taco_trace_bundle_uses_shared_calibration_for_raw_activation_ranges(tmp_path):
+    layer_names = [
+        "policy.target",
+        "policy.grasp",
+        "policy.transport",
+        "policy.memory",
+        "policy.unsafe",
+        "policy.action",
+    ]
+    signal_map = {
+        "policy.target": "target_feature",
+        "policy.grasp": "general_grasp_feature",
+        "policy.transport": "transport_feature",
+        "policy.memory": "memorized_trajectory_feature",
+        "policy.unsafe": "unsafe_trajectory_dominance",
+        "policy.action": "action_risk",
+    }
+    model = FakeTraceModel(layer_names)
+    paths = record_taco_trace_bundle(
+        model,
+        {
+            "success": [
+                ({
+                    "policy.target": 10.0 + step * 0.2,
+                    "policy.grasp": 2.0 + step * 0.1,
+                    "policy.transport": 3.0 + step * 0.1,
+                    "policy.memory": 0.10 + step * 0.03,
+                    "policy.unsafe": 0.12 + step * 0.03,
+                    "policy.action": 0.14 + step * 0.03,
+                },)
+                for step in range(8)
+            ],
+            "failure": [
+                ({
+                    "policy.target": 1.0 + step * 0.05,
+                    "policy.grasp": 2.0 + step * 0.15,
+                    "policy.transport": 3.0 + step * 0.15,
+                    "policy.memory": 0.20 + step * 0.08,
+                    "policy.unsafe": 8.0 + step * 0.40,
+                    "policy.action": 10.0 + step * 0.50,
+                },)
+                for step in range(8)
+            ],
+            "mitigated": [
+                ({
+                    "policy.target": 8.0 + step * 0.1,
+                    "policy.grasp": 2.0 + step * 0.1,
+                    "policy.transport": 3.0 + step * 0.1,
+                    "policy.memory": 0.10 + step * 0.03,
+                    "policy.unsafe": 1.0 + step * 0.10,
+                    "policy.action": 0.10 + step * 0.10,
+                },)
+                for step in range(8)
+            ],
+        },
+        layer_names=layer_names,
+        signal_map=signal_map,
+        output_dir=tmp_path,
+        certificate_id="FR-RAW-ACTIVATIONS",
+    )
+
+    certificate = replace(DEMO_CERTIFICATES[0], certificate_id="FR-RAW-ACTIVATIONS", failure_timestep=6)
+    success = load_trace(paths["success"])
+    failure = load_trace(paths["failure"])
+    mitigated = load_trace(paths["mitigated"])
+    metrics = compute_internal_metrics(certificate, success, failure, mitigated)
+
+    assert np.mean(failure["action_risk"]) > np.mean(mitigated["action_risk"])
+    assert np.mean(success["target_feature"]) > np.mean(failure["target_feature"])
+    assert metrics.causal_mitigability_score > 0.7
+    assert metrics.feature_stability_score < 0.5
