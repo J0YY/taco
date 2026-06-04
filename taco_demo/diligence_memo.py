@@ -11,6 +11,7 @@ from .fundraise_readiness import build_fundraise_readiness, fundraise_readiness_
 from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .methodology_evidence import build_methodology_evidence_map
+from .pricing_diligence import build_pricing_diligence
 from .renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown
 from .seed_financing_plan import build_seed_financing_plan
@@ -54,6 +55,7 @@ def build_diligence_memo(
         suite_manifest,
         dreamaudit_intake,
     )
+    pricing_diligence = build_pricing_diligence(application, certificates, metrics, quote)
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -92,6 +94,30 @@ def build_diligence_memo(
     for claim in methodology_map["claims"]:
         lines.append(
             f"| {claim['claim_id']} | {claim['status']} | {claim['current_evidence']} | {claim['boundary']} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Pricing Diligence Sensitivity",
+            "",
+            f"* Status: {pricing_diligence['status']}",
+            f"* Boundary: {pricing_diligence['boundary']}",
+            f"* All-controls monthly premium: ${pricing_diligence['all_controls_monthly_premium_usd']:,.0f}",
+            f"* No-controls monthly premium: ${pricing_diligence['no_controls_monthly_premium_usd']:,.0f}",
+            f"* Aggregate control delta: ${pricing_diligence['aggregate_control_delta_usd']:,.0f}",
+            "",
+            "| Factor | Value | Diligence meaning |",
+            "| --- | ---: | --- |",
+        ]
+    )
+    for factor in pricing_diligence["factor_stack"]:
+        lines.append(f"| {factor['factor']} | {factor['value']} | {factor['diligence_meaning']} |")
+    lines.extend(["", "| Control | Disabled premium | Delta | Disabled status |", "| --- | ---: | ---: | --- |"])
+    for control in pricing_diligence["control_sensitivities"]:
+        lines.append(
+            f"| {control['control']} | ${control['premium_with_control_disabled_usd']:,.0f} | "
+            f"${control['monthly_delta_usd']:,.0f} | {control['status_with_control_disabled']} |"
         )
 
     lines.extend(

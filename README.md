@@ -221,6 +221,8 @@ TACO blends behavioral fragility, internal risk, and mitigability. Required cont
 
 For the Apex Robotics scenario, controls enabled lands around `$29,800/month`; disabling the occlusion-risk monitor moves the quote to about `$51,500/month` with a known-family exclusion. The commercial point is that controls and evidence change insurance terms, not just safety scores.
 
+The Investor Case tab includes pricing diligence sensitivity so reviewers can inspect the factor stack, toggle-derived control deltas, disabled-control exclusions, and the explicit boundary between demo quote logic and actuarially filed pricing.
+
 ## Product Surface
 
 The Streamlit app includes:
@@ -234,7 +236,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, methodology evidence map, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, methodology evidence map, pricing diligence sensitivity, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 

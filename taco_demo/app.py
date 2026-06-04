@@ -27,6 +27,7 @@ from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEA
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
 from taco_demo.methodology_evidence import build_methodology_evidence_map, methodology_evidence_rows
+from taco_demo.pricing_diligence import build_pricing_diligence, pricing_control_rows, pricing_factor_rows
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
 from taco_demo.renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from taco_demo.schemas import FailureCertificate, InsuranceApplication, ReplayArtifacts, dataclass_to_dict, default_application, read_json
@@ -559,6 +560,19 @@ with tabs[9]:
         c2.metric("Research sources", methodology_map["research_source_count"])
         c3.metric("Claims mapped", len(methodology_map["claims"]))
         st.dataframe(pd.DataFrame(methodology_evidence_rows(methodology_map)), width="stretch")
+        pricing_diligence = build_pricing_diligence(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+        )
+        st.markdown("#### Pricing Diligence Sensitivity")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("All-controls premium", _money(pricing_diligence["all_controls_monthly_premium_usd"]))
+        c2.metric("No-controls premium", _money(pricing_diligence["no_controls_monthly_premium_usd"]))
+        c3.metric("Control delta", _money(pricing_diligence["aggregate_control_delta_usd"]))
+        st.dataframe(pd.DataFrame(pricing_factor_rows(pricing_diligence)), width="stretch")
+        st.dataframe(pd.DataFrame(pricing_control_rows(pricing_diligence)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

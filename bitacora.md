@@ -859,3 +859,22 @@
 - Pushed second methodology review-fix commit `b232ff3` to GitHub `main`.
 - Third independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the methodology evidence map, v4 packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `71981`.
+
+## 2026-06-04 - Improvement loop: pricing diligence sensitivity
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `0fed260`.
+- Captured `_review-loop-baseline` at `0fed26052ae7fe9653012b444ae08628db6be493` for the independent review loop.
+- Identified the next VC diligence gap: TACO had a transparent quote engine, but no structured pricing-sensitivity artifact explaining which assumptions drive the premium, which controls create deltas/exclusions, and which pricing claims remain demo-only rather than actuarially filed.
+- Added `taco_demo/pricing_diligence.py` with:
+  - quote-factor stack explanation,
+  - all-controls and no-controls premium comparison,
+  - per-control disabled-premium deltas and exclusions,
+  - diligence questions and open pricing risks,
+  - explicit boundary language that the artifact is not filed actuarial pricing, an insurance offer, or a rate adequacy opinion.
+- Added pricing diligence sensitivity to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and README product/quote language.
+- Bumped generated data-room packets to `taco_data_room_zip_v5` while preserving verifier compatibility for legacy v1, v2, v3, and v4 packets.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 37 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 83 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
