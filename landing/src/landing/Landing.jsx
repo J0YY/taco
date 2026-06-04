@@ -627,7 +627,7 @@ const POLICY_CATS = [
   ] },
   { key: 'quad', label: 'Quadrupeds · robot dogs', policies: [
     { name: 'ANYmal-C (ManiSkill PPO)', task: 'walk to goal · AnymalC-Reach · trained (reaches goal) vs early (falls)', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/anymal_success.mp4', f: '/videos/anymal_fall.mp4' },
-    { name: 'Unitree Go2 (ManiSkill PPO)', task: 'walk to goal · UnitreeGo2-Reach · trained vs early checkpoint', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/go2_success.mp4', f: '/videos/go2_fall.mp4' },
+    { name: 'Unitree Go2 (ManiSkill PPO)', task: 'walk to goal · UnitreeGo2-Reach · trained (reaches goal) vs early (sprawls)', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/go2_success.mp4', f: '/videos/go2_fall.mp4' },
   ] },
   { key: 'mskill', label: 'Manipulation arms · RL (ManiSkill)', policies: [
     { name: 'PPO · PickCube', task: 'pick the cube to a goal pose · ManiSkill3 (trained vs early)', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/pickcube_success.mp4', f: '/videos/pickcube_failure.mp4' },
@@ -675,9 +675,11 @@ const MECH = {
     finding: 'Result: a probe separates failing from succeeding rollouts, so the failure regime is readable, but the policy still has a high residual failure rate and we have no in-time monitor or verified recovery for it yet.',
     tierWhy: 'Tier 3, remediate and re-audit. Readable internals and a real failure rate, but no in-time monitor or verified fix yet.' },
 }
+MECH['Unitree Go2 (ManiSkill PPO)'] = { kind: 'rl-leg', monitorable: true,
+  finding: 'Result: with gamma 0.99 the Go2 policy converges fast and reaches the goal on 32 of 32 eval episodes; an early checkpoint sprawls and drifts toward the goal without arriving. The about-to-fall probe separates the two from the actor hidden state, and on the early checkpoint the instability rises before the body sprawls. No verified recovery controller yet.',
+  tierWhy: 'Tier 2, conditional. The policy reaches the goal every episode and the instability is detectable in the hidden state, but the recovery control is not verified, so deploy with the fall-arrest monitor enabled and re-audit after any terrain change.' }
 function mechFor(name) {
   if (MECH[name]) return MECH[name]
-  if (name === 'Unitree Go2 (ManiSkill PPO)') return MECH['ANYmal-C (ManiSkill PPO)']
   if (name.startsWith('OpenVLA')) return MECH._vlaMon
   return MECH._rlRemediate
 }
