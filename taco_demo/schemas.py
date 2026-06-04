@@ -1,4 +1,4 @@
-"""Dataclasses and JSON helpers for TACO contracts."""
+"""Stable JSON dataclasses for the TACO MVP."""
 
 from __future__ import annotations
 
@@ -19,11 +19,11 @@ def clamp01(x: float) -> float:
 
 def dataclass_to_dict(obj: Any) -> Any:
     if is_dataclass(obj):
-        return {k: dataclass_to_dict(v) for k, v in asdict(obj).items()}
+        return {key: dataclass_to_dict(value) for key, value in asdict(obj).items()}
     if isinstance(obj, dict):
-        return {str(k): dataclass_to_dict(v) for k, v in obj.items()}
+        return {str(key): dataclass_to_dict(value) for key, value in obj.items()}
     if isinstance(obj, (list, tuple)):
-        return [dataclass_to_dict(v) for v in obj]
+        return [dataclass_to_dict(value) for value in obj]
     if hasattr(obj, "item"):
         return obj.item()
     return obj
@@ -54,7 +54,7 @@ class InsuranceApplication:
 
 
 @dataclass
-class NormalizedDreamAuditCertificate:
+class FailureCertificate:
     certificate_id: str
     policy_id: str
     task_id: str
@@ -66,7 +66,6 @@ class NormalizedDreamAuditCertificate:
     failure_timestep: int
     replay_command: str
     patch_recipe: dict[str, Any]
-    source_path: str | None
     source: str
     metadata: dict[str, Any]
 
@@ -119,15 +118,12 @@ class QuoteBreakdown:
 
 
 @dataclass
-class InternalUnderwritingCertificate:
-    certificate_id: str
-    source_dreamaudit_certificate_id: str
+class PolicyBinder:
+    binder_id: str
     application: InsuranceApplication
-    robot_policy: dict[str, Any]
-    behavioral_evidence: dict[str, Any]
-    internal_evidence: InternalRiskMetrics
-    mitigation_evidence: dict[str, Any]
-    insurance_decision: QuoteBreakdown
+    quote: QuoteBreakdown
+    certificates: list[FailureCertificate]
+    internal_metrics: list[InternalRiskMetrics]
     created_at: str
     disclaimer: str
 
@@ -136,13 +132,12 @@ def default_application() -> InsuranceApplication:
     return InsuranceApplication(
         application_id="APP-APEX-001",
         company_name="Apex Robotics",
-        robot_type="warehouse_manipulation_arm",
+        robot_type="warehouse manipulation arm",
         policy_id="openvla_warehouse_v3",
         deployment_units=200,
         coverage_requested_usd=10_000_000,
-        deployment_stage="pre_deployment",
+        deployment_stage="pre-deployment",
         telemetry_available=False,
         created_at=now_iso(),
         metadata={"source": "demo_generated_placeholder_data"},
     )
-

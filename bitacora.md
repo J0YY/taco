@@ -11,3 +11,17 @@
   - `/tmp/taco-demo-venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force`
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 14 passed.
   - `/tmp/taco-demo-venv/bin/python -m taco_demo.scripts.precompute_demo` -> wrote JSON and markdown binders under `taco_demo/data/quotes/`.
+
+## 2026-06-04 - TACO MVP refactor from updated instructions.spec
+
+- Updated `instructions.spec` narrowed the MVP: `trace_scoring.py`, `binder.py`, `data/certificates`, `data/binders`, one bootstrap script, no torch path, no extra adapter/precompute scripts, and a stronger "Perfetto for robot failures + underwriting evidence" narrative.
+- Refactored the scaffold to match the new required surface:
+  - Replaced `NormalizedDreamAuditCertificate`/issuer flow with `FailureCertificate` and `PolicyBinder`.
+  - Replaced `feature_scoring.py` with `trace_scoring.py` using the revised concept signals and metric weights.
+  - Replaced `policy_issuer.py` with `binder.py`.
+  - Removed first-version optional modules/scripts: DreamAudit adapter, activation recorder, precompute, normalizer, replay wrapper, and ManiSkill gallery module/media.
+  - Regenerated demo data under `taco_demo/data/certificates`, `traces`, `videos`, and `binders`.
+- Validation used `/tmp/taco-demo-venv`:
+  - `/tmp/taco-demo-venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force`
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 11 passed.
+  - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed, with expected Streamlit bare-mode warnings.

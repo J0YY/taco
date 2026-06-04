@@ -19,9 +19,8 @@
     "target_pose_shift_cm": 2.4
   },
   "policy_id": "openvla_warehouse_v3",
-  "replay_command": "python scripts/replay_dreamaudit_certificate.py --certificate FR-003",
-  "severity": "material",
+  "replay_command": "python -m taco_demo.scripts.bootstrap_demo_data --force",
+  "severity": "medium",
   "source": "demo_generated_placeholder_data",
-  "source_path": null,
   "task_id": "libero_pick_can"
 }

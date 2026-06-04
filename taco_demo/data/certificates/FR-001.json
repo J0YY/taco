@@ -15,13 +15,13 @@
   "perturbation": {
     "camera_yaw_deg": 4.7,
     "center_occlusion_fraction": 0.31,
+    "distractor_similarity": 0.82,
     "grammar_family": "visual_occlusion",
     "normalized_cost": 0.31
   },
   "policy_id": "openvla_warehouse_v3",
-  "replay_command": "python scripts/replay_dreamaudit_certificate.py --certificate FR-001",
-  "severity": "material",
+  "replay_command": "python -m taco_demo.scripts.bootstrap_demo_data --force",
+  "severity": "medium",
   "source": "demo_generated_placeholder_data",
-  "source_path": null,
   "task_id": "libero_pick_mug"
 }
