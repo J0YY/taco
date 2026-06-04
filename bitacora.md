@@ -965,3 +965,22 @@
 - Pushed insurance capacity roadmap commit `183f3ff` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the insurance capacity roadmap, Investor Case UI, memo wiring, v9 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `81840`.
+
+## 2026-06-04 - Improvement loop: enterprise security plan
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `614622b`.
+- Captured `_review-loop-baseline` at `614622be212195c2ce7fb88e64912c525355c6e2` for the independent review loop.
+- Identified the next VC diligence gap: TACO had a secure data-room concept in the financing plan, but no enterprise security/data-governance artifact mapping packet verification, source evidence, DreamAudit artifacts, activation traces, retention, access control, incident response, and SOC2/NIST-style control readiness.
+- Reviewed current security/governance anchors:
+  - NIST Cybersecurity Framework 2.0 for Govern, Identify, Protect, Detect, Respond, and Recover functions,
+  - NIST AI Risk Management Framework for AI governance and risk-management framing,
+  - AICPA Trust Services Criteria for SOC 2-style Security, Availability, Processing Integrity, Confidentiality, and Privacy categories.
+- Added `taco_demo/security_plan.py` with sensitive data classes, packet chain-of-custody, role-based data-room access, source-artifact redaction, activation-trace retention, processing-integrity, incident-response, availability, enterprise questionnaire, seed-round security gates, and explicit boundaries against SOC 2 certification, penetration-test evidence, customer security approval, or production attestation.
+- Added the enterprise security plan to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and root README architecture/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v10` while preserving verifier compatibility for legacy v1, v2, v3, v4, v5, v6, v7, v8, and v9 packets.
+- Added tests for the security plan contract, manifest/ZIP export, memo section, current v10 packet indexing, and legacy v9 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 47 passed after aligning the security-gate assertion to the role-scoped access wording.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 93 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

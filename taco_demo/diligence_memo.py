@@ -19,6 +19,7 @@ from .pricing_diligence import build_pricing_diligence
 from .renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown
 from .seed_financing_plan import build_seed_financing_plan
+from .security_plan import build_enterprise_security_plan
 
 
 def build_diligence_memo(
@@ -88,6 +89,13 @@ def build_diligence_memo(
         pricing_diligence,
         commercial_model,
         pilot_walkthrough,
+    )
+    enterprise_security_plan = build_enterprise_security_plan(
+        application,
+        quote,
+        {"manifest_id": data_room_manifest["manifest_id"], "primary_certificates": certificates, "internal_metrics": metrics},
+        data_room_manifest["dreamaudit"],
+        capacity_roadmap,
     )
 
     lines = [
@@ -253,6 +261,32 @@ def build_diligence_memo(
         )
     lines.extend(["", "| Gate | Proof required |", "| --- | --- |"])
     for gate in capacity_roadmap["readiness_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['proof_required']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Enterprise Security Plan",
+            "",
+            f"* Status: {enterprise_security_plan['status']}",
+            f"* Boundary: {enterprise_security_plan['boundary']}",
+            f"* Control backlog items: {len(enterprise_security_plan['control_backlog'])}",
+            f"* Sensitive data classes: {len(enterprise_security_plan['sensitive_data_classes'])}",
+            "",
+            "| Data class | Classification | Required controls |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for data_class in enterprise_security_plan["sensitive_data_classes"]:
+        lines.append(
+            f"| {data_class['data_class']} | {data_class['classification']} | "
+            f"{'; '.join(data_class['required_controls'])} |"
+        )
+    lines.extend(["", "| Control | Status | Next proof |", "| --- | --- | --- |"])
+    for control in enterprise_security_plan["control_backlog"]:
+        lines.append(f"| {control['control_id']} | {control['status']} | {control['next_proof']} |")
+    lines.extend(["", "| Gate | Proof required |", "| --- | --- |"])
+    for gate in enterprise_security_plan["seed_round_security_gates"]:
         lines.append(f"| {gate['gate']} | {gate['proof_required']} |")
 
     lines.extend(

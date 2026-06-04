@@ -53,6 +53,14 @@ from taco_demo.seed_financing_plan import (
     seed_financing_milestone_rows,
     seed_financing_use_of_funds_rows,
 )
+from taco_demo.security_plan import (
+    build_enterprise_security_plan,
+    security_control_rows,
+    security_data_class_rows,
+    security_gate_rows,
+    security_question_rows,
+    security_workflow_rows,
+)
 from taco_demo.trace_scoring import compute_internal_metrics, load_trace
 
 
@@ -620,6 +628,17 @@ with tabs[9]:
             commercial_model,
             pilot_walkthrough,
         )
+        enterprise_security_plan = build_enterprise_security_plan(
+            application,
+            audit["quote"],
+            {
+                "manifest_id": f"DR-{application.application_id}",
+                "primary_certificates": audit["certificates"],
+                "internal_metrics": list(audit["metrics"].values()),
+            },
+            {"attached": bool(dreamaudit_intake), "status": dreamaudit_intake.get("readiness", {}).get("status", "not_scanned") if dreamaudit_intake else "not_scanned"},
+            capacity_roadmap,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -653,6 +672,17 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(capacity_path_rows(capacity_roadmap)), width="stretch")
         st.dataframe(pd.DataFrame(regulatory_workstream_rows(capacity_roadmap)), width="stretch")
         st.dataframe(pd.DataFrame(capacity_gate_rows(capacity_roadmap)), width="stretch")
+        st.markdown("#### Enterprise Security Plan")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Security status", str(enterprise_security_plan["status"]).replace("_", " ").title())
+        c2.metric("Control backlog", len(enterprise_security_plan["control_backlog"]))
+        c3.metric("Data classes", len(enterprise_security_plan["sensitive_data_classes"]))
+        st.caption(enterprise_security_plan["boundary"])
+        st.dataframe(pd.DataFrame(security_data_class_rows(enterprise_security_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(security_control_rows(enterprise_security_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(security_workflow_rows(enterprise_security_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(security_question_rows(enterprise_security_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(security_gate_rows(enterprise_security_plan)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

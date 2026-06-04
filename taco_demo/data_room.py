@@ -20,6 +20,7 @@ from .investor_objections import build_investor_objection_register
 from .methodology_evidence import build_methodology_evidence_map
 from .pilot_walkthrough import build_pilot_walkthrough_playbook
 from .pricing_diligence import build_pricing_diligence
+from .security_plan import build_enterprise_security_plan
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
 from .seed_financing_plan import build_seed_financing_plan
 
@@ -35,6 +36,7 @@ PACKET_FORMAT_V6 = "taco_data_room_zip_v6"
 PACKET_FORMAT_V7 = "taco_data_room_zip_v7"
 PACKET_FORMAT_V8 = "taco_data_room_zip_v8"
 PACKET_FORMAT_V9 = "taco_data_room_zip_v9"
+PACKET_FORMAT_V10 = "taco_data_room_zip_v10"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -72,8 +74,11 @@ REQUIRED_BUNDLE_FILES_V7 = REQUIRED_BUNDLE_FILES_V6 | {
 REQUIRED_BUNDLE_FILES_V8 = REQUIRED_BUNDLE_FILES_V7 | {
     "commercial/commercial_scale_model.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V8 | {
+REQUIRED_BUNDLE_FILES_V9 = REQUIRED_BUNDLE_FILES_V8 | {
     "commercial/capacity_roadmap.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V9 | {
+    "commercial/enterprise_security_plan.json",
 }
 
 
@@ -149,6 +154,12 @@ def build_data_room_checklist(
             "ready" if quote.final_monthly_premium_usd > 0 and bool(quote.required_controls) else "needs_work",
             "Capacity, licensing, MGA/fronting, rate/form, actuarial, and claims workstreams are attached with non-offer boundaries.",
             "Collect counsel memo, licensed-partner path, capacity term sheet, and actuarial/filing plan before launch.",
+        ),
+        _item(
+            "Enterprise Security Plan",
+            "ready" if application.application_id and certificates and metrics else "needs_work",
+            "Security, data-governance, access-control, retention, incident-response, and SOC2/NIST readiness plan is attached.",
+            "Implement workspace RBAC, audit logs, retention policy, incident tabletop, and SOC2 readiness assessment before production pilots.",
         ),
         _item(
             "Design-Partner References",
@@ -246,6 +257,13 @@ def build_data_room_manifest(
         commercial_scale_model,
         pilot_walkthrough_playbook,
     )
+    enterprise_security_plan = build_enterprise_security_plan(
+        application,
+        quote,
+        {"manifest_id": f"DR-{application.application_id}", "primary_certificates": certificates, "internal_metrics": metrics},
+        dreamaudit_summary,
+        capacity_roadmap,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -269,6 +287,7 @@ def build_data_room_manifest(
         "pilot_walkthrough_playbook": pilot_walkthrough_playbook,
         "commercial_scale_model": commercial_scale_model,
         "capacity_roadmap": capacity_roadmap,
+        "enterprise_security_plan": enterprise_security_plan,
     }
 
 
@@ -303,6 +322,7 @@ def build_data_room_bundle(
         ("commercial/pilot_walkthrough_playbook.json", _json_bytes(manifest["pilot_walkthrough_playbook"])),
         ("commercial/commercial_scale_model.json", _json_bytes(manifest["commercial_scale_model"])),
         ("commercial/capacity_roadmap.json", _json_bytes(manifest["capacity_roadmap"])),
+        ("commercial/enterprise_security_plan.json", _json_bytes(manifest["enterprise_security_plan"])),
     ]
     certificate_names: set[str] = set()
     for cert in certificates:
@@ -406,7 +426,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "Invalid packet index: packet_format must be taco_data_room_zip_v1, "
                         "taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, "
                         "taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, "
-                        "taco_data_room_zip_v8, or taco_data_room_zip_v9"
+                        "taco_data_room_zip_v8, taco_data_room_zip_v9, or taco_data_room_zip_v10"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -555,7 +575,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V9,
+        "packet_format": PACKET_FORMAT_V10,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -589,6 +609,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V8:
         return REQUIRED_BUNDLE_FILES_V8
     if packet_format == PACKET_FORMAT_V9:
+        return REQUIRED_BUNDLE_FILES_V9
+    if packet_format == PACKET_FORMAT_V10:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -647,6 +669,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/pilot_walkthrough_playbook.json` - reviewer walkthrough agenda, role tracks, and evidence capture form",
             "* `commercial/commercial_scale_model.json` - market-context, buyer-segment, revenue-scenario, and proof-gate model",
             "* `commercial/capacity_roadmap.json` - insurance capacity, licensing, filing, actuarial, and claims-readiness roadmap",
+            "* `commercial/enterprise_security_plan.json` - security, data governance, retention, incident response, and SOC2/NIST readiness plan",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",
             "",
