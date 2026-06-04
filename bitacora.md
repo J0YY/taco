@@ -856,3 +856,6 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 81 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed second methodology review-fix commit `b232ff3` to GitHub `main`.
+- Third independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the methodology evidence map, v4 packet versioning, or legacy packet verification.
+- Restarted Streamlit at `http://127.0.0.1:8501` with PID `71981`.
