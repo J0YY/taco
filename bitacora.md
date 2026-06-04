@@ -987,3 +987,19 @@
 - Pushed enterprise security plan commit `cb9a8b4` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the enterprise security plan, Investor Case UI, memo wiring, v10 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `84064`.
+
+## 2026-06-04 - Improvement loop: technical diligence runbook
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `0cb2588`.
+- Captured `_review-loop-baseline` at `0cb2588c0613fd7ada649037a7874bd0c7fa31a2` for the independent review loop.
+- Identified the next VC diligence gap: TACO had many investor artifacts, but no single machine-readable technical runbook that tells a VC, carrier, or technical reviewer exactly how to reproduce the local demo, tests, packet verification, DreamAudit intake, activation recorder path, and ManiSkill/cluster video suite.
+- Added `taco_demo/technical_runbook.py` with reviewer prerequisites, local reproduction steps, live-evidence steps, pass/fail gates, expected current counts, source material, and explicit boundaries against treating local reproducibility as live deployment, customer validation, production security, or actuarial approval.
+- Added the technical diligence runbook to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and root README architecture/product language.
+- Bumped generated data-room packets to `taco_data_room_zip_v11` while preserving verifier compatibility for legacy v1, v2, v3, v4, v5, v6, v7, v8, v9, and v10 packets.
+- Added tests for the runbook contract, manifest/ZIP export, memo section, current v11 packet indexing, invalid packet-format messaging, and legacy v10 packet verification.
+- Verified there is only one README in the repo and tightened the runbook wording so local fixture reproducibility is not presented as hardcoded product behavior.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 49 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 95 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

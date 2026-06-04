@@ -23,6 +23,7 @@ from .pricing_diligence import build_pricing_diligence
 from .security_plan import build_enterprise_security_plan
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
 from .seed_financing_plan import build_seed_financing_plan
+from .technical_runbook import build_technical_diligence_runbook
 
 
 ZIP_TIMESTAMP = (2026, 6, 4, 0, 0, 0)
@@ -37,6 +38,7 @@ PACKET_FORMAT_V7 = "taco_data_room_zip_v7"
 PACKET_FORMAT_V8 = "taco_data_room_zip_v8"
 PACKET_FORMAT_V9 = "taco_data_room_zip_v9"
 PACKET_FORMAT_V10 = "taco_data_room_zip_v10"
+PACKET_FORMAT_V11 = "taco_data_room_zip_v11"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -77,8 +79,11 @@ REQUIRED_BUNDLE_FILES_V8 = REQUIRED_BUNDLE_FILES_V7 | {
 REQUIRED_BUNDLE_FILES_V9 = REQUIRED_BUNDLE_FILES_V8 | {
     "commercial/capacity_roadmap.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V9 | {
+REQUIRED_BUNDLE_FILES_V10 = REQUIRED_BUNDLE_FILES_V9 | {
     "commercial/enterprise_security_plan.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V10 | {
+    "technical/technical_diligence_runbook.json",
 }
 
 
@@ -160,6 +165,12 @@ def build_data_room_checklist(
             "ready" if application.application_id and certificates and metrics else "needs_work",
             "Security, data-governance, access-control, retention, incident-response, and SOC2/NIST readiness plan is attached.",
             "Implement workspace RBAC, audit logs, retention policy, incident tabletop, and SOC2 readiness assessment before production pilots.",
+        ),
+        _item(
+            "Technical Diligence Runbook",
+            "ready" if application.application_id and suite_size >= 40 else "needs_work",
+            "Reviewer runbook for local reproduction, tests, app import, packet verification, DreamAudit intake, activation recording, and cluster video regeneration is attached.",
+            "Have an external reviewer execute the runbook and attach command outputs or missing-evidence notes.",
         ),
         _item(
             "Design-Partner References",
@@ -264,6 +275,13 @@ def build_data_room_manifest(
         dreamaudit_summary,
         capacity_roadmap,
     )
+    technical_diligence_runbook = build_technical_diligence_runbook(
+        application,
+        quote,
+        suite_manifest,
+        dreamaudit_summary,
+        enterprise_security_plan,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -288,6 +306,7 @@ def build_data_room_manifest(
         "commercial_scale_model": commercial_scale_model,
         "capacity_roadmap": capacity_roadmap,
         "enterprise_security_plan": enterprise_security_plan,
+        "technical_diligence_runbook": technical_diligence_runbook,
     }
 
 
@@ -323,6 +342,7 @@ def build_data_room_bundle(
         ("commercial/commercial_scale_model.json", _json_bytes(manifest["commercial_scale_model"])),
         ("commercial/capacity_roadmap.json", _json_bytes(manifest["capacity_roadmap"])),
         ("commercial/enterprise_security_plan.json", _json_bytes(manifest["enterprise_security_plan"])),
+        ("technical/technical_diligence_runbook.json", _json_bytes(manifest["technical_diligence_runbook"])),
     ]
     certificate_names: set[str] = set()
     for cert in certificates:
@@ -426,7 +446,8 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "Invalid packet index: packet_format must be taco_data_room_zip_v1, "
                         "taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, "
                         "taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, "
-                        "taco_data_room_zip_v8, taco_data_room_zip_v9, or taco_data_room_zip_v10"
+                        "taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, "
+                        "or taco_data_room_zip_v11"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -575,7 +596,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V10,
+        "packet_format": PACKET_FORMAT_V11,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -611,6 +632,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V9:
         return REQUIRED_BUNDLE_FILES_V9
     if packet_format == PACKET_FORMAT_V10:
+        return REQUIRED_BUNDLE_FILES_V10
+    if packet_format == PACKET_FORMAT_V11:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -670,6 +693,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/commercial_scale_model.json` - market-context, buyer-segment, revenue-scenario, and proof-gate model",
             "* `commercial/capacity_roadmap.json` - insurance capacity, licensing, filing, actuarial, and claims-readiness roadmap",
             "* `commercial/enterprise_security_plan.json` - security, data governance, retention, incident response, and SOC2/NIST readiness plan",
+            "* `technical/technical_diligence_runbook.json` - local reproduction, live-evidence, packet-verification, and cluster-regeneration runbook",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",
             "",

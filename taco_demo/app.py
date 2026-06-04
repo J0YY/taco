@@ -61,6 +61,7 @@ from taco_demo.security_plan import (
     security_question_rows,
     security_workflow_rows,
 )
+from taco_demo.technical_runbook import build_technical_diligence_runbook, technical_gate_rows, technical_step_rows
 from taco_demo.trace_scoring import compute_internal_metrics, load_trace
 
 
@@ -639,6 +640,13 @@ with tabs[9]:
             {"attached": bool(dreamaudit_intake), "status": dreamaudit_intake.get("readiness", {}).get("status", "not_scanned") if dreamaudit_intake else "not_scanned"},
             capacity_roadmap,
         )
+        technical_runbook = build_technical_diligence_runbook(
+            application,
+            audit["quote"],
+            suite_manifest,
+            {"attached": bool(dreamaudit_intake), "status": dreamaudit_intake.get("readiness", {}).get("status", "not_scanned") if dreamaudit_intake else "not_scanned"},
+            enterprise_security_plan,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -683,6 +691,14 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(security_workflow_rows(enterprise_security_plan)), width="stretch")
         st.dataframe(pd.DataFrame(security_question_rows(enterprise_security_plan)), width="stretch")
         st.dataframe(pd.DataFrame(security_gate_rows(enterprise_security_plan)), width="stretch")
+        st.markdown("#### Technical Diligence Runbook")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Runbook status", str(technical_runbook["status"]).replace("_", " ").title())
+        c2.metric("Local steps", len(technical_runbook["local_repro_steps"]))
+        c3.metric("Pass/fail gates", len(technical_runbook["pass_fail_gates"]))
+        st.caption(technical_runbook["boundary"])
+        st.dataframe(pd.DataFrame(technical_step_rows(technical_runbook)), width="stretch")
+        st.dataframe(pd.DataFrame(technical_gate_rows(technical_runbook)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

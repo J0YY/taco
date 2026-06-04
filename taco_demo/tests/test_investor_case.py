@@ -32,7 +32,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V8,
     PACKET_FORMAT_V9,
     PACKET_FORMAT_V10,
+    PACKET_FORMAT_V11,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V10,
     REQUIRED_BUNDLE_FILES_V9,
     REQUIRED_BUNDLE_FILES_V8,
     REQUIRED_BUNDLE_FILES_V7,
@@ -75,6 +77,7 @@ from taco_demo.security_plan import (
     security_question_rows,
     security_workflow_rows,
 )
+from taco_demo.technical_runbook import build_technical_diligence_runbook, technical_gate_rows, technical_step_rows
 
 
 def _carrier_ready_dreamaudit_intake() -> dict[str, object]:
@@ -529,6 +532,43 @@ def test_enterprise_security_plan_maps_sensitive_evidence_to_control_backlog_wit
     assert security_gate_rows(plan)
 
 
+def test_technical_diligence_runbook_defines_local_and_live_reproduction_gates():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "demo_trace_fixture", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    suite_manifest = {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()}
+    security_plan = {
+        "plan_id": "SEC-APP-APEX-001",
+        "control_backlog": [{"control_id": "packet_chain_of_custody"} for _ in range(7)],
+    }
+    runbook = build_technical_diligence_runbook(
+        app,
+        quote,
+        suite_manifest,
+        {"attached": True, "status": "carrier_review_ready"},
+        security_plan,
+    )
+    rows = technical_step_rows(runbook)
+    gates = technical_gate_rows(runbook)
+
+    assert runbook["runbook_id"] == "TECH-APP-APEX-001"
+    assert runbook["status"] == "local_reproducibility_defined_live_evidence_optional"
+    assert "not proof of live customer deployment" in runbook["boundary"]
+    assert len(runbook["local_repro_steps"]) >= 7
+    assert len(runbook["live_evidence_steps"]) >= 3
+    assert any(step["step_id"] == "run_full_test_suite" for step in runbook["local_repro_steps"])
+    assert any(step["step_id"] == "activation_recorder_trace_export" for step in runbook["live_evidence_steps"])
+    assert runbook["expected_current_counts"]["maniskill_suite_size"] == 40
+    assert runbook["expected_current_counts"]["dreamaudit_attached"] is True
+    assert runbook["expected_current_counts"]["security_control_backlog"] == 7
+    assert any(gate["gate"] == "packet_verifier_valid" for gate in runbook["pass_fail_gates"])
+    assert all(row["Expected Result"] for row in rows)
+    assert all(gate["Pass Condition"] and gate["Fail Condition"] for gate in gates)
+
+
 def test_underwriting_workflow_spans_application_to_binder():
     artifacts = [item["artifact"] for item in UNDERWRITING_WORKFLOW]
     assert artifacts[0] == "InsuranceApplication JSON"
@@ -733,6 +773,8 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert "not legal advice" in manifest["capacity_roadmap"]["boundary"]
     assert manifest["enterprise_security_plan"]["plan_id"] == "SEC-APP-APEX-001"
     assert "not SOC 2 certification" in manifest["enterprise_security_plan"]["boundary"]
+    assert manifest["technical_diligence_runbook"]["runbook_id"] == "TECH-APP-APEX-001"
+    assert "not proof of live customer deployment" in manifest["technical_diligence_runbook"]["boundary"]
     assert len(manifest["suite_summary"]["video_paths"]) == 40
 
 
@@ -812,6 +854,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/commercial_scale_model.json" in summary["files"]
     assert "commercial/capacity_roadmap.json" in summary["files"]
     assert "commercial/enterprise_security_plan.json" in summary["files"]
+    assert "technical/technical_diligence_runbook.json" in summary["files"]
     assert "research/methodology_evidence_map.json" in summary["files"]
     assert "insurance/workflow_examples.json" in summary["files"]
     assert "research/sources.json" in summary["files"]
@@ -831,10 +874,11 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         commercial_model = json.loads(archive.read("commercial/commercial_scale_model.json"))
         capacity_roadmap = json.loads(archive.read("commercial/capacity_roadmap.json"))
         enterprise_security_plan = json.loads(archive.read("commercial/enterprise_security_plan.json"))
+        technical_runbook = json.loads(archive.read("technical/technical_diligence_runbook.json"))
         methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V10
+    assert index["packet_format"] == PACKET_FORMAT_V11
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -858,6 +902,9 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert enterprise_security_plan["plan_id"] == "SEC-APP-APEX-001"
     assert enterprise_security_plan["status"] == "security_plan_defined_not_audited"
     assert "not SOC 2 certification" in enterprise_security_plan["boundary"]
+    assert technical_runbook["runbook_id"] == "TECH-APP-APEX-001"
+    assert technical_runbook["status"] == "local_reproducibility_defined_live_evidence_optional"
+    assert any(step["step_id"] == "verify_data_room_packet" for step in technical_runbook["local_repro_steps"])
     assert methodology_map["map_id"] == "METHOD-APP-APEX-001"
     assert methodology_map["score"] >= 85
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
@@ -910,6 +957,9 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "## Enterprise Security Plan" in memo
     assert "security_plan_defined_not_audited" in memo
     assert "packet_chain_of_custody" in memo
+    assert "## Technical Diligence Runbook" in memo
+    assert "local_reproducibility_defined_live_evidence_optional" in memo
+    assert "run_full_test_suite" in memo
 
 
 def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
@@ -937,7 +987,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, or taco_data_room_zip_v10",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, or taco_data_room_zip_v11",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -1212,6 +1262,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v9_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V9 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v10_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V10}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V10"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V10,
+        "manifest_id": "DR-LEGACY-V10",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V10 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

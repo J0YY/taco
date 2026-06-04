@@ -20,6 +20,7 @@ from .renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown
 from .seed_financing_plan import build_seed_financing_plan
 from .security_plan import build_enterprise_security_plan
+from .technical_runbook import build_technical_diligence_runbook
 
 
 def build_diligence_memo(
@@ -96,6 +97,13 @@ def build_diligence_memo(
         {"manifest_id": data_room_manifest["manifest_id"], "primary_certificates": certificates, "internal_metrics": metrics},
         data_room_manifest["dreamaudit"],
         capacity_roadmap,
+    )
+    technical_runbook = build_technical_diligence_runbook(
+        application,
+        quote,
+        suite_manifest,
+        data_room_manifest["dreamaudit"],
+        enterprise_security_plan,
     )
 
     lines = [
@@ -288,6 +296,26 @@ def build_diligence_memo(
     lines.extend(["", "| Gate | Proof required |", "| --- | --- |"])
     for gate in enterprise_security_plan["seed_round_security_gates"]:
         lines.append(f"| {gate['gate']} | {gate['proof_required']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Technical Diligence Runbook",
+            "",
+            f"* Status: {technical_runbook['status']}",
+            f"* Boundary: {technical_runbook['boundary']}",
+            f"* Local reproduction steps: {len(technical_runbook['local_repro_steps'])}",
+            f"* Live evidence steps: {len(technical_runbook['live_evidence_steps'])}",
+            "",
+            "| Step | Purpose | Expected result |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for step in [*technical_runbook["local_repro_steps"], *technical_runbook["live_evidence_steps"]]:
+        lines.append(f"| {step['step_id']} | {step['purpose']} | {step['expected_result']} |")
+    lines.extend(["", "| Gate | Pass condition | Fail condition |", "| --- | --- | --- |"])
+    for gate in technical_runbook["pass_fail_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['pass_condition']} | {gate['fail_condition']} |")
 
     lines.extend(
         [
