@@ -239,19 +239,19 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
     try:
         with zipfile.ZipFile(io.BytesIO(bundle_bytes), mode="r") as archive:
             infos = archive.infolist()
-            names = sorted(archive.namelist())
-            infos_by_name = {info.filename: info for info in infos}
-            total_uncompressed = sum(info.file_size for info in infos)
-            size_limit_failed = False
             if len(infos) > MAX_ZIP_MEMBERS:
                 issues.append(f"ZIP member count exceeds limit: {len(infos)} > {MAX_ZIP_MEMBERS}")
                 return {
                     "valid": False,
                     "issues": issues,
-                    "file_count": len(names),
+                    "file_count": len(infos),
                     "indexed_file_count": 0,
                     "packet_sha256": hashlib.sha256(bundle_bytes).hexdigest(),
                 }
+            names = sorted(archive.namelist())
+            infos_by_name = {info.filename: info for info in infos}
+            total_uncompressed = sum(info.file_size for info in infos)
+            size_limit_failed = False
             if total_uncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES:
                 issues.append(
                     f"ZIP uncompressed size exceeds limit: {total_uncompressed} > {MAX_TOTAL_UNCOMPRESSED_BYTES}"

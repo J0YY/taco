@@ -11,7 +11,14 @@ import streamlit as st
 
 from taco_demo.binder import issue_binder
 from taco_demo.activation_recorder import torch_available
-from taco_demo.data_room import build_data_room_bundle, build_data_room_checklist, build_data_room_manifest, data_room_rows, verify_data_room_bundle
+from taco_demo.data_room import (
+    MAX_PACKET_BYTES,
+    build_data_room_bundle,
+    build_data_room_checklist,
+    build_data_room_manifest,
+    data_room_rows,
+    verify_data_room_bundle,
+)
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
@@ -600,14 +607,26 @@ with tabs[9]:
     st.markdown("#### Verify Transferred Data Room Packet")
     uploaded_packet = st.file_uploader("Verify Data Room Packet", type=["zip"], key="data_room_packet_upload")
     if uploaded_packet is not None:
-        uploaded_verification = verify_data_room_bundle(uploaded_packet.getvalue())
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Uploaded packet", "valid" if uploaded_verification["valid"] else "needs review")
-        c2.metric("Indexed files", uploaded_verification["indexed_file_count"])
-        c3.metric("File count", uploaded_verification["file_count"])
-        st.code(uploaded_verification["packet_sha256"], language="text")
-        if uploaded_verification["issues"]:
-            st.dataframe(pd.DataFrame({"Issue": uploaded_verification["issues"]}), width="stretch")
+        if uploaded_packet.size > MAX_PACKET_BYTES:
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Uploaded packet", "needs review")
+            c2.metric("Indexed files", 0)
+            c3.metric("File count", "not read")
+            st.dataframe(
+                pd.DataFrame(
+                    {"Issue": [f"Packet exceeds maximum byte size: {uploaded_packet.size} > {MAX_PACKET_BYTES}"]}
+                ),
+                width="stretch",
+            )
+        else:
+            uploaded_verification = verify_data_room_bundle(uploaded_packet.getvalue())
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Uploaded packet", "valid" if uploaded_verification["valid"] else "needs review")
+            c2.metric("Indexed files", uploaded_verification["indexed_file_count"])
+            c3.metric("File count", uploaded_verification["file_count"])
+            st.code(uploaded_verification["packet_sha256"], language="text")
+            if uploaded_verification["issues"]:
+                st.dataframe(pd.DataFrame({"Issue": uploaded_verification["issues"]}), width="stretch")
 
     st.markdown("#### Why This Can Be A Venture-Scale Evidence Layer")
     st.write(

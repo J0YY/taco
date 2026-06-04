@@ -723,6 +723,16 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 71 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed member-count short-circuit fix commit `3251c62` to GitHub `main`.
+- Fifth independent `codex review --base _review-loop-baseline` found two issues:
+  - the Streamlit upload path still called `uploaded_packet.getvalue()` before rejecting packets over `MAX_PACKET_BYTES`,
+  - the verifier checked member count after deriving sorted names and a name map.
+- Added an app-level `uploaded_packet.size` check before materializing uploaded bytes and moved the verifier member-count short-circuit immediately after `archive.infolist()`.
+- Verification after oversized-upload precheck and early member-count guard:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 25 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 71 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
