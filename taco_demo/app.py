@@ -10,6 +10,7 @@ import streamlit as st
 
 from taco_demo.binder import issue_binder
 from taco_demo.activation_recorder import torch_available
+from taco_demo.data_room import build_data_room_checklist, data_room_rows
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
@@ -529,6 +530,20 @@ with tabs[9]:
             st.markdown("**Still required before institutional diligence**")
             for caveat in readiness["caveats"]:
                 st.markdown(f"* {caveat}")
+        data_room = build_data_room_checklist(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            suite_manifest,
+            dreamaudit_intake,
+        )
+        st.markdown("#### VC Data Room Checklist")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Internal packet score", f"{data_room['internal_packet_score']}/100")
+        c2.metric("Internal ready items", f"{data_room['internal_ready_items']}/{data_room['internal_total_items']}")
+        c3.metric("External pending", data_room["external_pending_items"])
+        st.dataframe(pd.DataFrame(data_room_rows(data_room)), width="stretch")
         memo = build_diligence_memo(
             application,
             audit["certificates"],

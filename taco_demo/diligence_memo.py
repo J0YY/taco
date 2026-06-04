@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from .data_room import build_data_room_checklist, data_room_rows
 from .fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS
 from .insurance_scenarios import INSURANCE_SCENARIOS
@@ -38,6 +39,7 @@ def build_diligence_memo(
         suite_manifest,
         dreamaudit_intake,
     )
+    data_room = build_data_room_checklist(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -59,6 +61,22 @@ def build_diligence_memo(
         lines.append(
             f"| {row['Gate']} | {row['Weight']} | {row['Status']} | {row['Evidence']} | {row['Next Action']} |"
         )
+
+    lines.extend(
+        [
+            "",
+            "## VC Data Room Checklist",
+            "",
+            f"* Internal packet score: {data_room['internal_packet_score']}/100",
+            f"* Internal ready items: {data_room['internal_ready_items']}/{data_room['internal_total_items']}",
+            f"* External pending items: {data_room['external_pending_items']}",
+            "",
+            "| Artifact | Status | Evidence | Next action |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for row in data_room_rows(data_room):
+        lines.append(f"| {row['Artifact']} | {row['Status']} | {row['Evidence']} | {row['Next Action']} |")
 
     lines.extend(
         [

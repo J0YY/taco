@@ -204,7 +204,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, and diligence memo download,
+* investor case, VC readiness gates, VC data-room checklist, and diligence memo download,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 

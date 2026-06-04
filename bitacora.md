@@ -469,3 +469,28 @@
 - Added `st.rerun()` after storing the DreamAudit intake result so Investor gates and downloaded memos see the fresh scan on the next render.
 - Pushed DreamAudit scan refresh fix commit `45a65e8` to GitHub `main`.
 - Third independent `codex review --base _review-loop-baseline` reported that the changes are internally consistent, preserve call compatibility, and pass the full test suite.
+
+## 2026-06-04 - Improvement loop: VC data-room checklist
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `4079672`.
+- Captured `_review-loop-baseline` at `4079672d0f4d2c923b180b9723247e2a27dc1003` for the independent review loop.
+- Added `taco_demo/data_room.py` to compute a VC/carrier data-room checklist from the current evidence package:
+  - application and coverage file,
+  - replay failure certificates,
+  - internal risk trace coverage,
+  - ManiSkill/RMA video suite,
+  - insurance workflow and pricing examples,
+  - live DreamAudit corpus,
+  - research and methodology sources,
+  - external design-partner references.
+- Added internal packet scoring so demo-owned artifacts are separated from external design-partner validation.
+- Updated the Streamlit Investor tab to show data-room score, internal ready items, external pending items, and checklist rows.
+- Updated the diligence memo to include the VC data-room checklist.
+- Updated the README product surface to mention the VC data-room checklist.
+- Added tests for complete internal packet scoring, missing live DreamAudit data-room status, and memo inclusion.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py taco_demo/tests/test_renewal_loop.py` -> 14 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 53 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - real DreamAudit-backed data-room smoke check returned internal packet score `100/100`, `7/7` internal items ready, and `1` external item pending.
+  - `git diff --check` -> clean.

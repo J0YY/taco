@@ -1,3 +1,4 @@
+from taco_demo.data_room import build_data_room_checklist, data_room_rows
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.maniskill_suite import build_maniskill_suite_cases
@@ -144,3 +145,41 @@ def test_fundraise_readiness_surfaces_gaps_for_empty_package():
     assert readiness["score"] < 50
     assert readiness["posture"] == "early_seed_story_needs_more_evidence"
     assert readiness["gaps"]
+
+
+def test_data_room_checklist_tracks_internal_packet_and_external_gap():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "test", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    controls = {
+        "reaudit_required_after_model_update": True,
+        "occlusion_risk_monitor_enabled": True,
+        "language_override_sanitizer_enabled": True,
+        "target_identity_confirmation_enabled": True,
+    }
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, controls)
+    checklist = build_data_room_checklist(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_size": 40, "cases": build_maniskill_suite_cases()},
+        _carrier_ready_dreamaudit_intake(),
+    )
+
+    assert checklist["internal_packet_score"] == 100
+    assert checklist["internal_ready_items"] == checklist["internal_total_items"]
+    assert checklist["external_pending_items"] == 1
+    assert data_room_rows(checklist)[-1]["Status"] == "External Pending"
+
+
+def test_data_room_checklist_marks_live_dreamaudit_missing_without_scan():
+    app = default_application()
+    quote = generate_quote(app, [], {}, {})
+    checklist = build_data_room_checklist(app, [], [], quote, {"suite_size": 0, "cases": []})
+
+    dreamaudit_item = next(item for item in checklist["items"] if item["artifact"] == "Live DreamAudit Corpus")
+    assert dreamaudit_item["status"] == "needs_live_scan"
+    assert checklist["internal_packet_score"] < 100
