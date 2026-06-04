@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 import numpy as np
 
-from taco_demo.activation_recorder import ActivationRecorder, record_forward_pass
+from taco_demo.activation_recorder import ActivationRecorder, record_forward_pass, record_taco_trace_bundle
+from taco_demo.sample_data import DEMO_CERTIFICATES
+from taco_demo.trace_scoring import compute_internal_metrics, load_trace
 
 
 class FakeHandle:
@@ -50,6 +54,19 @@ class FakeModel:
 
     def __call__(self, value):
         return self.head.forward(self.encoder.forward(value))
+
+
+class FakeTraceModel:
+    def __init__(self, layer_names):
+        self.layers = {name: FakeLayer(1.0) for name in layer_names}
+
+    def named_modules(self):
+        return [("", self)] + list(self.layers.items())
+
+    def __call__(self, frame):
+        for layer_name, value in frame.items():
+            self.layers[layer_name].forward(np.array([value], dtype=float))
+        return True
 
 
 class FakeBFloat16Tensor:
@@ -157,3 +174,107 @@ def test_activation_recorder_snapshots_before_in_place_mutation():
 
     assert np.allclose(output, np.array([-2.0, -4.0]))
     assert np.allclose(recorder.captures["policy.mutable"][0], np.array([2.0, 4.0]))
+
+
+def test_save_taco_trace_npz_feeds_internal_metric_scoring(tmp_path):
+    signal_map = {
+        "policy.target": "target_feature",
+        "policy.grasp": "general_grasp_feature",
+        "policy.transport": "transport_feature",
+        "policy.memory": "memorized_trajectory_feature",
+        "policy.unsafe": "unsafe_trajectory_dominance",
+        "policy.action": "action_risk",
+    }
+    recorder = ActivationRecorder()
+    recorder.captures = {
+        "policy.target": [np.array([0.25]), np.array([0.22]), np.array([0.2]), np.array([0.18]), np.array([0.16])],
+        "policy.grasp": [np.array([0.55]), np.array([0.58]), np.array([0.6]), np.array([0.62]), np.array([0.64])],
+        "policy.transport": [np.array([0.45]), np.array([0.48]), np.array([0.51]), np.array([0.54]), np.array([0.57])],
+        "policy.memory": [np.array([0.12]), np.array([0.25]), np.array([0.35]), np.array([0.45]), np.array([0.55])],
+        "policy.unsafe": [np.array([0.2]), np.array([0.7]), np.array([0.76]), np.array([0.8]), np.array([0.82])],
+        "policy.action": [np.array([0.18]), np.array([0.72]), np.array([0.78]), np.array([0.84]), np.array([0.86])],
+    }
+
+    path = recorder.save_taco_trace_npz(tmp_path / "failure_trace", signal_map)
+    trace = load_trace(path)
+
+    assert path == tmp_path / "failure_trace.npz"
+    assert trace["trace_source"][0] == "recorded_activation_forward_hooks"
+    assert int(trace["recorded_required_signal_count"][0]) == 6
+    assert set(signal_map.values()).issubset(trace)
+
+
+def test_record_taco_trace_bundle_scores_recorded_activation_source(tmp_path):
+    layer_names = [
+        "policy.target",
+        "policy.grasp",
+        "policy.transport",
+        "policy.memory",
+        "policy.unsafe",
+        "policy.action",
+    ]
+    signal_map = {
+        "policy.target": "target_feature",
+        "policy.grasp": "general_grasp_feature",
+        "policy.transport": "transport_feature",
+        "policy.memory": "memorized_trajectory_feature",
+        "policy.unsafe": "unsafe_trajectory_dominance",
+        "policy.action": "action_risk",
+    }
+    model = FakeTraceModel(layer_names)
+    paths = record_taco_trace_bundle(
+        model,
+        {
+            "success": [
+                ({
+                    "policy.target": 0.88,
+                    "policy.grasp": 0.72 + step * 0.02,
+                    "policy.transport": 0.65 + step * 0.02,
+                    "policy.memory": 0.10 + step * 0.02,
+                    "policy.unsafe": 0.12 + step * 0.02,
+                    "policy.action": 0.14 + step * 0.02,
+                },)
+                for step in range(8)
+            ],
+            "failure": [
+                ({
+                    "policy.target": 0.88 - step * 0.09,
+                    "policy.grasp": 0.68 + step * 0.02,
+                    "policy.transport": 0.62 + step * 0.02,
+                    "policy.memory": 0.10 + step * 0.07,
+                    "policy.unsafe": 0.14 + step * 0.11,
+                    "policy.action": 0.15 + step * 0.12,
+                },)
+                for step in range(8)
+            ],
+            "mitigated": [
+                ({
+                    "policy.target": 0.82 - step * 0.04,
+                    "policy.grasp": 0.70 + step * 0.015,
+                    "policy.transport": 0.65 + step * 0.015,
+                    "policy.memory": 0.11 + step * 0.04,
+                    "policy.unsafe": 0.16 + step * 0.04,
+                    "policy.action": 0.14 + step * 0.025,
+                },)
+                for step in range(8)
+            ],
+        },
+        layer_names=layer_names,
+        signal_map=signal_map,
+        output_dir=tmp_path,
+        certificate_id="FR-001-live",
+    )
+
+    certificate = replace(DEMO_CERTIFICATES[0], failure_timestep=6)
+    metrics = compute_internal_metrics(
+        certificate,
+        load_trace(paths["success"]),
+        load_trace(paths["failure"]),
+        load_trace(paths["mitigated"]),
+    )
+
+    assert set(paths) == {"success", "failure", "mitigated"}
+    assert metrics.metrics_source == "recorded_activation_forward_hooks"
+    assert metrics.concept_coverage_score == 1.0
+    assert metrics.details["recorded_required_signal_count"] == 6
+    assert metrics.causal_mitigability_score > 0.4

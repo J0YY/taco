@@ -70,7 +70,8 @@ InsuranceApplication
   |      optional torch-style forward hooks
   |      selected layer capture
   |      bf16-safe conversion
-  |      collision-safe NPZ export
+  |      collision-safe raw NPZ export
+  |      explicit layer-to-signal export into the TACO trace schema
   |
   +--> Internal trace scoring
   |      concept coverage
@@ -120,15 +121,44 @@ The adapter preserves source paths, simulator/perturbed validation, world-model 
 ```python
 from taco_demo.activation_recorder import ActivationRecorder
 
-recorder = ActivationRecorder(layer_names=["vision_encoder", "action_head"], max_batches=16)
+signal_map = {
+    "vision_encoder": "target_feature",
+    "grasp_head": "general_grasp_feature",
+    "planner": "transport_feature",
+    "memory_probe": "memorized_trajectory_feature",
+    "safety_head": "unsafe_trajectory_dominance",
+    "action_head": "action_risk",
+}
+
+recorder = ActivationRecorder(layer_names=list(signal_map), max_batches=16)
 recorder.attach(model)
 for observation in rollout_observations:
     model(observation)
-trace_path = recorder.save_npz("taco_demo/data/traces/openvla_activations.npz")
+trace_path = recorder.save_taco_trace_npz(
+    "taco_demo/data/traces/openvla_failure_trace.npz",
+    signal_map,
+)
 recorder.remove()
 ```
 
-The recorder does not make torch a required dependency for the local demo. In a torch runtime, it uses module forward hooks, snapshots captured outputs before later mutation, handles bf16-style tensors, and writes NPZ files that can feed the internal-risk scoring layer.
+The recorder does not make torch a required dependency for the local demo. In a torch runtime, it uses module forward hooks, snapshots captured outputs before later mutation, handles bf16-style tensors, and writes NPZ files that can feed the internal-risk scoring layer. The layer-to-signal map is explicit: TACO records real activations, then the operator names which layer corresponds to each underwriting signal instead of pretending the mapping is automatically discovered.
+
+For a full success/failure/mitigated rollout bundle:
+
+```python
+from taco_demo.activation_recorder import record_taco_trace_bundle
+from taco_demo.trace_scoring import compute_internal_metrics, load_trace
+
+paths = record_taco_trace_bundle(
+    model,
+    {"success": success_frames, "failure": failure_frames, "mitigated": mitigated_frames},
+    layer_names=list(signal_map),
+    signal_map=signal_map,
+    output_dir="taco_demo/data/traces",
+    certificate_id="FR-LIVE-001",
+)
+metrics = compute_internal_metrics(cert, load_trace(paths["success"]), load_trace(paths["failure"]), load_trace(paths["mitigated"]))
+```
 
 ## Evidence Objects
 

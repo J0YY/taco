@@ -616,10 +616,18 @@ with tabs[9]:
         st.metric("Torch installed in this environment", "yes" if torch_available() else "optional")
         st.code(
             "from taco_demo.activation_recorder import ActivationRecorder\n"
-            'recorder = ActivationRecorder(layer_names=["vision_encoder", "action_head"])\n'
+            "signal_map = {\n"
+            '    "vision_encoder": "target_feature",\n'
+            '    "grasp_head": "general_grasp_feature",\n'
+            '    "planner": "transport_feature",\n'
+            '    "memory_probe": "memorized_trajectory_feature",\n'
+            '    "safety_head": "unsafe_trajectory_dominance",\n'
+            '    "action_head": "action_risk",\n'
+            "}\n"
+            "recorder = ActivationRecorder(layer_names=list(signal_map))\n"
             "recorder.attach(model)\n"
             "model(observation)\n"
-            'recorder.save_npz("taco_demo/data/traces/openvla_activations.npz")',
+            'recorder.save_taco_trace_npz("taco_demo/data/traces/openvla_failure_trace.npz", signal_map)',
             language="python",
         )
 

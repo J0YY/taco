@@ -3,6 +3,11 @@
 The module is torch-compatible but does not require torch at import time. It
 uses the standard ``register_forward_hook`` API, so tests can exercise it with
 small fake modules while production users can attach it to torch.nn.Module trees.
+
+Recorded layer outputs can also be exported into TACO's scoreable trace schema
+when the caller supplies an explicit layer-to-signal map. That keeps the local
+demo offline while giving live policy runs a real path into the underwriting
+metrics.
 """
 
 from __future__ import annotations
@@ -13,6 +18,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 import numpy as np
+
+from .trace_scoring import REQUIRED_SIGNALS
 
 
 def torch_available() -> bool:
@@ -91,6 +98,106 @@ def _sanitize_key(key: str) -> str:
 
 def _stable_suffix(key: str) -> str:
     return hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
+
+
+def _activation_scalar(array: np.ndarray) -> float:
+    numeric = np.asarray(array, dtype=float)
+    if numeric.size == 0:
+        return 0.0
+    return float(np.nanmean(numeric))
+
+
+def _normalize_series(series: np.ndarray) -> np.ndarray:
+    values = np.asarray(series, dtype=float).reshape(-1)
+    if values.size == 0:
+        return values
+    if np.nanmin(values) >= 0.0 and np.nanmax(values) <= 1.0:
+        return np.clip(values, 0.0, 1.0)
+    spread = float(np.nanmax(values) - np.nanmin(values))
+    if spread < 1e-9:
+        return np.clip(1.0 / (1.0 + np.exp(-values)), 0.0, 1.0)
+    return np.clip((values - np.nanmin(values)) / spread, 0.0, 1.0)
+
+
+def _pad_series(series: np.ndarray, length: int) -> np.ndarray:
+    values = np.asarray(series, dtype=float).reshape(-1)
+    if len(values) == length:
+        return values
+    if len(values) == 0:
+        return np.zeros(length, dtype=float)
+    if len(values) > length:
+        return values[:length]
+    pad = np.full(length - len(values), values[-1], dtype=float)
+    return np.concatenate([values, pad])
+
+
+def build_taco_trace_from_activations(
+    captures: dict[str, list[np.ndarray]],
+    signal_map: dict[str, str],
+    *,
+    timestep_hz: float = 20.0,
+    trace_source: str = "recorded_activation_forward_hooks",
+) -> dict[str, np.ndarray]:
+    """Convert captured layer outputs into TACO's internal-risk trace schema.
+
+    ``signal_map`` maps recorded layer names to underwriting signal names, for
+    example ``{"vision.encoder": "target_feature"}``. Missing required
+    signals are intentionally left absent so concept coverage reflects actual
+    instrumentation rather than fabricated completeness.
+    """
+
+    if not signal_map:
+        raise ValueError("signal_map must map recorded layer names to TACO trace signal names")
+
+    trace: dict[str, np.ndarray] = {}
+    max_length = 0
+    for layer_name, signal_name in signal_map.items():
+        arrays = captures.get(layer_name, [])
+        if not arrays:
+            continue
+        series = _normalize_series(np.asarray([_activation_scalar(array) for array in arrays], dtype=float))
+        trace[signal_name] = series
+        max_length = max(max_length, len(series))
+
+    if max_length == 0:
+        raise ValueError("No captured activations matched signal_map")
+
+    for signal_name, series in list(trace.items()):
+        trace[signal_name] = _pad_series(series, max_length)
+
+    if "time_s" not in trace:
+        hz = timestep_hz if timestep_hz > 0 else 20.0
+        trace["time_s"] = np.arange(max_length, dtype=float) / hz
+
+    if "internal_risk_score" not in trace:
+        risk_signals = [
+            trace[key]
+            for key in ("unsafe_trajectory_dominance", "action_risk", "memorized_trajectory_feature")
+            if key in trace
+        ]
+        trace["internal_risk_score"] = np.maximum.reduce(risk_signals) if risk_signals else np.zeros(max_length, dtype=float)
+
+    trace["trace_source"] = np.asarray([trace_source])
+    trace["recorded_required_signal_count"] = np.asarray([sum(1 for signal in REQUIRED_SIGNALS if signal in trace)], dtype=int)
+    return trace
+
+
+def save_taco_trace_npz(
+    captures: dict[str, list[np.ndarray]],
+    path: Path | str,
+    signal_map: dict[str, str],
+    *,
+    timestep_hz: float = 20.0,
+    trace_source: str = "recorded_activation_forward_hooks",
+) -> Path:
+    """Persist captured activations as a scoreable TACO trace NPZ."""
+
+    output_path = Path(path)
+    save_path = output_path if output_path.suffix == ".npz" else Path(f"{output_path}.npz")
+    trace = build_taco_trace_from_activations(captures, signal_map, timestep_hz=timestep_hz, trace_source=trace_source)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(save_path, **trace)
+    return save_path
 
 
 class ActivationRecorder:
@@ -189,6 +296,24 @@ class ActivationRecorder:
         np.savez(save_path, **payload)
         return save_path
 
+    def save_taco_trace_npz(
+        self,
+        path: Path | str,
+        signal_map: dict[str, str],
+        *,
+        timestep_hz: float = 20.0,
+        trace_source: str = "recorded_activation_forward_hooks",
+    ) -> Path:
+        """Persist captured activations as a scoreable TACO trace NPZ."""
+
+        return save_taco_trace_npz(
+            self.captures,
+            path,
+            signal_map,
+            timestep_hz=timestep_hz,
+            trace_source=trace_source,
+        )
+
 
 def record_forward_pass(
     model: Any,
@@ -213,3 +338,43 @@ def record_forward_pass(
         return output, recorder
     finally:
         recorder.remove()
+
+
+def record_taco_trace_bundle(
+    model: Any,
+    inputs_by_mode: dict[str, Iterable[Any]],
+    *,
+    layer_names: list[str],
+    signal_map: dict[str, str],
+    output_dir: Path | str,
+    certificate_id: str,
+    timestep_hz: float = 20.0,
+) -> dict[str, Path]:
+    """Record success/failure/mitigated rollouts into scoreable trace files.
+
+    ``inputs_by_mode`` usually contains ``success``, ``failure``, and
+    ``mitigated`` sequences. Each item is passed to the model using the same
+    calling convention as :func:`record_forward_pass`.
+    """
+
+    output_root = Path(output_dir)
+    output_root.mkdir(parents=True, exist_ok=True)
+    paths: dict[str, Path] = {}
+    for mode, rollout_inputs in inputs_by_mode.items():
+        recorder = ActivationRecorder(layer_names=layer_names).attach(model)
+        try:
+            for inputs in rollout_inputs:
+                if isinstance(inputs, dict):
+                    model(**inputs)
+                elif isinstance(inputs, (list, tuple)):
+                    model(*inputs)
+                else:
+                    model(inputs)
+            paths[mode] = recorder.save_taco_trace_npz(
+                output_root / f"{certificate_id}_{mode}.npz",
+                signal_map,
+                timestep_hz=timestep_hz,
+            )
+        finally:
+            recorder.remove()
+    return paths

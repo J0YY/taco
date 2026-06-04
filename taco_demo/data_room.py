@@ -24,6 +24,8 @@ def build_data_room_checklist(
     suite_families = {str(case.get("failure_family", "unknown")) for case in suite_cases}
     metric_ids = {metric.certificate_id for metric in metrics}
     covered_metrics = sum(1 for cert in certificates if cert.certificate_id in metric_ids)
+    metric_sources = sorted({metric.metrics_source for metric in metrics})
+    metric_source_text = ", ".join(metric_sources) if metric_sources else "none"
     dreamaudit = _dreamaudit_status(dreamaudit_intake)
     items = [
         _item(
@@ -41,7 +43,7 @@ def build_data_room_checklist(
         _item(
             "Internal Risk Trace Coverage",
             "ready" if certificates and covered_metrics == len(certificates) else "needs_work",
-            f"{covered_metrics}/{len(certificates)} certificates have internal risk metrics.",
+            f"{covered_metrics}/{len(certificates)} certificates have internal risk metrics; sources: {metric_source_text}.",
             "Attach activation/trace NPZ evidence for every primary certificate.",
         ),
         _item(

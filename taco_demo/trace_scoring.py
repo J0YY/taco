@@ -110,6 +110,16 @@ def dominant_risk_signature(failure_type: str) -> str:
     return "internal_failure_precursor_detected"
 
 
+def _metrics_source(trace: dict[str, np.ndarray]) -> str:
+    raw = trace.get("trace_source")
+    if raw is None:
+        return "deterministic_generated_npz_trace"
+    value = np.asarray(raw).reshape(-1)
+    if value.size == 0:
+        return "deterministic_generated_npz_trace"
+    return str(value[0])
+
+
 def compute_internal_metrics(
     certificate: FailureCertificate,
     success_trace: dict[str, np.ndarray],
@@ -132,6 +142,10 @@ def compute_internal_metrics(
         internal_risk_score=score,
         dominant_risk_signature=dominant_risk_signature(certificate.failure_type),
         monitor_possible=margin >= 0.25,
-        metrics_source="deterministic_generated_npz_trace",
-        details={"failure_timestep": certificate.failure_timestep, "required_signals": REQUIRED_SIGNALS},
+        metrics_source=_metrics_source(failure_trace),
+        details={
+            "failure_timestep": certificate.failure_timestep,
+            "required_signals": REQUIRED_SIGNALS,
+            "recorded_required_signal_count": int(np.asarray(failure_trace.get("recorded_required_signal_count", [0])).reshape(-1)[0]),
+        },
     )

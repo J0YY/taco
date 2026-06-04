@@ -203,7 +203,7 @@ def build_diligence_memo(
             "## Assumptions And Current Limits",
             "",
             "* Current bundled videos are local replay renderings; DreamAudit/simulator videos can be ingested through the same certificate workflow.",
-            "* Current bundled trace arrays are local evidence fixtures; recorded VLA activations can be captured with the activation recorder.",
+            "* Current bundled trace arrays are local evidence fixtures; recorded VLA activations can now be exported through an explicit layer-to-signal map into the same metric path.",
             "* The quote formula is transparent demo logic, not filed actuarial pricing.",
             "* This is not an insurance offer or insurance policy.",
             "",

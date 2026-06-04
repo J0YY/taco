@@ -520,3 +520,22 @@
   - `git diff --check` -> clean.
 - Pushed data-room manifest export commit `ab046d9` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` reported that the manifest export is consistently wired into the Streamlit app, diligence memo, and tests, with no discrete introduced bug found.
+
+## 2026-06-04 - Improvement loop: activation trace bridge
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `e0efeca`.
+- Captured `_review-loop-baseline` at `e0efeca11b9e9a7d6046e97110913ad5b3fafeeb` for the independent review loop.
+- Identified the next VC diligence gap: `ActivationRecorder` captured raw hook outputs, but did not yet export scoreable TACO trace NPZ bundles for `compute_internal_metrics`.
+- Added an explicit layer-to-signal bridge so recorded activations can be mapped into TACO's underwriting signals:
+  - `build_taco_trace_from_activations`,
+  - `save_taco_trace_npz`,
+  - `ActivationRecorder.save_taco_trace_npz`,
+  - `record_taco_trace_bundle` for success/failure/mitigated rollout traces.
+- Added `trace_source` and recorded required-signal count metadata so `InternalRiskMetrics.metrics_source` can distinguish recorded activation traces from deterministic local fixture traces.
+- Updated the Streamlit Real Internals Path example, README architecture, diligence memo caveat, and data-room trace evidence text to describe the scoreable activation bridge without implying automatic or hardcoded interpretability.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_activation_recorder.py taco_demo/tests/test_trace_scoring.py taco_demo/tests/test_investor_case.py` -> 22 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 56 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `.venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force` -> regenerated local demo evidence under `taco_demo/data`.
+  - `git diff --check` -> clean.
