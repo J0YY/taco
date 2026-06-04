@@ -681,6 +681,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 69 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed transferred packet verification commit `4cdbddb` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one issue:
+  - the uploaded packet verifier was inside the audit-only branch, so a reviewer with only a transferred ZIP and no local audit could not access it.
+- Moved transferred-packet upload verification outside the audit branch so it always renders on the Investor Case tab.
+- Verification after upload-verifier branch fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 23 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 69 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
