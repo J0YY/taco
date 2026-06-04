@@ -5,7 +5,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
-from taco_demo.activation_recorder import ActivationRecorder, record_forward_pass, record_taco_trace_bundle
+from taco_demo.activation_recorder import ActivationRecorder, record_forward_pass, record_taco_trace_bundle, torch_available
 from taco_demo.sample_data import DEMO_CERTIFICATES
 from taco_demo.trace_scoring import compute_internal_metrics, load_trace
 
@@ -113,6 +113,19 @@ def test_activation_recorder_records_selected_layer_and_saves_npz(tmp_path):
     with np.load(path) as data:
         assert data.files == ["policy_encoder__0000"]
         assert np.allclose(data["policy_encoder__0000"], np.array([2.0, 4.0, 6.0]))
+
+
+def test_torch_available_treats_broken_optional_torch_as_unavailable(monkeypatch):
+    original_import = __import__
+
+    def broken_torch_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "torch":
+            raise OSError("missing torch native library")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr("builtins.__import__", broken_torch_import)
+
+    assert torch_available() is False
 
 
 def test_record_forward_pass_removes_hooks_after_run(tmp_path):
