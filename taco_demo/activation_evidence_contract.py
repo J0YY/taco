@@ -23,7 +23,12 @@ def build_activation_evidence_contract(
 
     primary_ids = {cert.certificate_id for cert in certificates}
     primary_metrics = [metric for metric in metrics if metric.certificate_id in primary_ids]
-    real_activation_metric_count = sum(1 for metric in primary_metrics if metric.metrics_source in REAL_ACTIVATION_SOURCES)
+    real_activation_metric_ids = {
+        metric.certificate_id
+        for metric in primary_metrics
+        if metric.metrics_source in REAL_ACTIVATION_SOURCES
+    }
+    real_activation_metric_count = len(real_activation_metric_ids)
     complete_primary_coverage = bool(primary_ids) and {metric.certificate_id for metric in primary_metrics} == primary_ids
     return {
         "contract_id": f"AEV-{application.application_id}",

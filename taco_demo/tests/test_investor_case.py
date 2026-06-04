@@ -1245,6 +1245,31 @@ def test_activation_evidence_contract_closes_internals_workflow_without_overclai
     assert activation_workflow_rows(contract)
 
 
+def test_activation_evidence_contract_counts_unique_real_activation_certificates():
+    app = default_application()
+    first, second, third = DEMO_CERTIFICATES
+    metrics = [
+        InternalRiskMetrics(first.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "recorded_activation_forward_hooks", {}),
+        InternalRiskMetrics(first.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "recorded_activation_forward_hooks", {}),
+        InternalRiskMetrics(second.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "demo_trace_fixture", {}),
+        InternalRiskMetrics(third.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "demo_trace_fixture", {}),
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    manifest = build_data_room_manifest(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        _carrier_ready_dreamaudit_intake(),
+    )
+    contract = manifest["activation_evidence_contract"]
+
+    assert contract["current_evidence"]["primary_metric_count"] == 4
+    assert contract["current_evidence"]["real_activation_metric_count"] == 1
+    assert contract["status"] == "trace_contract_ready_demo_metrics_need_recorded_activations"
+
+
 def test_commercial_traction_plan_converts_proof_workflows_into_countable_seed_traction():
     app = default_application()
     metrics = [
