@@ -1,4 +1,5 @@
 import io
+import hashlib
 import json
 import zipfile
 from dataclasses import replace
@@ -348,6 +349,44 @@ def test_data_room_bundle_verifier_rejects_empty_packet_index():
 
         assert verification["valid"] is False
         assert expected_issue in verification["issues"]
+
+
+def test_data_room_bundle_verifier_rejects_trailing_parent_directory_paths():
+    required_files = [
+        "README.md",
+        "manifest.json",
+        "application.json",
+        "quote.json",
+        "checklist.json",
+        "diligence_memo.md",
+        "insurance/workflow_examples.json",
+        "research/sources.json",
+        "suite/video_index.json",
+        "dreamaudit/summary.json",
+    ]
+    for unsafe_name in ["..", "safe/.."]:
+        entries = {name: b"" for name in required_files}
+        entries[unsafe_name] = b"indexed hostile member"
+        packet_index = {
+            "files": [
+                {
+                    "path": name,
+                    "bytes": len(payload),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                }
+                for name, payload in entries.items()
+            ]
+        }
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for name, payload in entries.items():
+                archive.writestr(name, payload)
+            archive.writestr("packet/index.json", json.dumps(packet_index))
+
+        verification = verify_data_room_bundle(buffer.getvalue())
+
+        assert verification["valid"] is False
+        assert f"Unsafe ZIP member path: {unsafe_name}" in verification["issues"]
 
 
 def test_data_room_bundle_sanitizes_external_certificate_ids_in_zip_paths():

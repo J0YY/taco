@@ -370,7 +370,7 @@ def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[st
 
 
 def _unsafe_zip_name(name: str) -> bool:
-    return name.startswith("/") or name.startswith("../") or "/../" in name or "\\" in name
+    return name.startswith("/") or "\\" in name or any(part == ".." for part in name.split("/"))
 
 
 def _safe_zip_stem(raw_id: str, used: set[str]) -> str:

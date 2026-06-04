@@ -587,6 +587,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 63 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed null packet-index fix commit `b21344d` to GitHub `main`.
+- Third independent `codex review --base _review-loop-baseline` found one issue:
+  - ZIP members named `..` or ending in `/..` could bypass the unsafe-path guard if they were indexed with matching hashes.
+- Tightened unsafe ZIP path detection to reject any `..` path segment and added regression coverage for `..` and `safe/..` members.
+- Verification after parent-directory path fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 18 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 64 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
