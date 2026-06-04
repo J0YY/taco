@@ -494,3 +494,5 @@
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - real DreamAudit-backed data-room smoke check returned internal packet score `100/100`, `7/7` internal items ready, and `1` external item pending.
   - `git diff --check` -> clean.
+- Pushed VC data-room checklist commit `e744efc` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` reported that the checklist is consistent across the app, diligence memo, README, and tests, and does not appear to break existing behavior.
