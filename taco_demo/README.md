@@ -109,6 +109,20 @@ Generate it locally or on the cluster with:
 python -m taco_demo.scripts.generate_maniskill_video_suite --force
 ```
 
+## Insurance Failure And Pricing Workflows
+
+The app includes 10 concrete insurance examples in the `Insurance Examples` tab. Each example shows:
+
+* the insured and robot deployment,
+* the failure that would create a claim or exclusion,
+* what TACO identifies from replay/internal evidence,
+* pricing with controls vs. without controls,
+* the required control,
+* the exclusion if the control is missing,
+* the end-to-end workflow from application to renewal or claim linkage.
+
+The examples cover warehouse manipulation, mobile picking, retail restocking, kitchen prep, parcel sorting, hospital delivery, greenhouse harvesting, inspection/repair, deformable goods packing, and model-update re-audit workflows. The `Investor Case` tab can also download a diligence memo that folds these scenarios into the quote, certificate, metric, and 40-video evidence package.
+
 ## Internal Underwriting Metrics
 
 Concept Coverage Score measures whether the trace contains non-flat concept signals: `target_feature`, `general_grasp_feature`, `transport_feature`, `memorized_trajectory_feature`, `unsafe_trajectory_dominance`, and `action_risk`.

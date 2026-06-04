@@ -9,7 +9,9 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from taco_demo.binder import issue_binder
+from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
+from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
 from taco_demo.schemas import FailureCertificate, InsuranceApplication, ReplayArtifacts, dataclass_to_dict, default_application, read_json
@@ -162,6 +164,7 @@ tabs = st.tabs(
         "Quote",
         "Binder",
         "ManiSkill Suite",
+        "Insurance Examples",
         "Investor Case",
         "Spec",
     ]
@@ -390,6 +393,47 @@ with tabs[6]:
         st.json(selected)
 
 with tabs[7]:
+    st.markdown("### Insurance Failure And Pricing Workflows")
+    st.caption("Ten concrete buyer scenarios showing failure evidence, quote impact, controls, exclusions, and end-to-end insurance workflow.")
+    summary = scenario_summary()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Examples", summary["scenarios"])
+    c2.metric("Coverage lines", summary["coverages"])
+    c3.metric("Required controls", summary["controls"])
+    scenario_rows = [
+        {
+            "Scenario": scenario["scenario_id"],
+            "Insured": scenario["insured"],
+            "Coverage": scenario["coverage"],
+            "Failure": scenario["failure"],
+            "With controls": _money(scenario["pricing"]["with_controls_monthly_usd"]),
+            "Without controls": _money(scenario["pricing"]["without_controls_monthly_usd"]),
+            "Required control": scenario["required_control"],
+        }
+        for scenario in INSURANCE_SCENARIOS
+    ]
+    st.dataframe(pd.DataFrame(scenario_rows), width="stretch")
+    scenario_id = st.selectbox("Workflow example", [scenario["scenario_id"] for scenario in INSURANCE_SCENARIOS], key="insurance_workflow_case")
+    scenario = next(item for item in INSURANCE_SCENARIOS if item["scenario_id"] == scenario_id)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("With controls", _money(scenario["pricing"]["with_controls_monthly_usd"]))
+    c2.metric("Without controls", _money(scenario["pricing"]["without_controls_monthly_usd"]))
+    c3.metric(
+        "Control delta",
+        _money(scenario["pricing"]["without_controls_monthly_usd"] - scenario["pricing"]["with_controls_monthly_usd"]),
+    )
+    st.markdown("**Failure**")
+    st.write(scenario["failure"])
+    st.markdown("**What TACO identifies**")
+    st.write(scenario["evidence_identified"])
+    st.markdown("**Coverage condition / exclusion**")
+    st.write(f"{scenario['required_control']} - {scenario['exclusion_if_missing']}")
+    st.markdown("**End-to-end workflow**")
+    for step in scenario["workflow"]:
+        st.markdown(f"* {step}")
+    st.json(scenario)
+
+with tabs[8]:
     st.markdown("### Investor Case")
     st.caption("Why this could plausibly support a venture-scale seed story if the fallback evidence is replaced with real DreamAudit and VLA traces.")
     if audit:
@@ -406,6 +450,13 @@ with tabs[7]:
         st.write(summary["research_backed_method"])
         st.markdown("**Known investor risks**")
         st.write(summary["investor_risk"])
+        memo = build_diligence_memo(application, audit["certificates"], list(audit["metrics"].values()), audit["quote"], _load_maniskill_manifest())
+        st.download_button(
+            "Download Investor Diligence Memo",
+            memo.encode("utf-8"),
+            file_name=f"TACO-DILIGENCE-{application.application_id}.md",
+            mime="text/markdown",
+        )
     else:
         st.info("Run the audit to populate the investor proof-point metrics.")
 
@@ -428,7 +479,7 @@ with tabs[7]:
     for foundation in RESEARCH_FOUNDATIONS:
         st.markdown(f"* **{foundation['source']}**: {foundation['taco_translation']} [link]({foundation['url']})")
 
-with tabs[8]:
+with tabs[9]:
     readme = Path(__file__).with_name("README.md")
     if readme.exists():
         st.markdown(readme.read_text(encoding="utf-8"))

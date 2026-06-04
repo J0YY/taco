@@ -67,3 +67,26 @@
 - Completion audit found that `bootstrap_demo_data --force` rewrote the application `created_at` timestamp, leaving the worktree dirty after a required command. Fixed `default_application()` to use deterministic `DEMO_CREATED_AT`, regenerated `APP-APEX-001.json`, and added a schema/bootstrap regression test.
 - Updated Streamlit width calls from deprecated `use_container_width=True` to `width="stretch"` after the app import emitted the 2026 deprecation warning.
 - Pushed deterministic bootstrap fix at `c96234d` and ran a final independent `codex review --base _review-loop-baseline`; reviewer reported no actionable correctness issues relative to the specified base.
+
+## 2026-06-04 - Improvement loop: insurance workflow examples
+
+- Pulled `origin/main`; repository was already up to date at `072b7c9`.
+- Added a reusable diligence memo generator that creates a single Markdown artifact for investors, brokers, and underwriters.
+- Added 10 concrete insurance failure/pricing/workflow examples covering:
+  - warehouse manipulation,
+  - mobile picking,
+  - retail restocking,
+  - kitchen prep,
+  - parcel sorting,
+  - hospital delivery,
+  - greenhouse harvesting,
+  - inspection/repair,
+  - deformable goods packing,
+  - model-update re-audit.
+- Added an `Insurance Examples` tab with failure evidence, pricing with/without controls, exclusions, and end-to-end workflows.
+- Added an `Investor Diligence Memo` download in the Investor Case tab.
+- Added pytest coverage for the 10 scenarios, pricing deltas, workflow completeness, and memo contents.
+- Verification:
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 19 passed.
+  - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
