@@ -105,6 +105,7 @@ def build_diligence_memo(
         data_room_manifest["dreamaudit"],
         enterprise_security_plan,
     )
+    external_validation_kit = data_room_manifest["external_validation_capture_kit"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -316,6 +317,29 @@ def build_diligence_memo(
     lines.extend(["", "| Gate | Pass condition | Fail condition |", "| --- | --- | --- |"])
     for gate in technical_runbook["pass_fail_gates"]:
         lines.append(f"| {gate['gate']} | {gate['pass_condition']} | {gate['fail_condition']} |")
+
+    lines.extend(
+        [
+            "",
+            "## External Validation Capture Kit",
+            "",
+            f"* Status: {external_validation_kit['status']}",
+            f"* Boundary: {external_validation_kit['boundary']}",
+            f"* Reviewer tracks: {len(external_validation_kit['reviewer_tracks'])}",
+            f"* Scorecard weight: {sum(item['weight'] for item in external_validation_kit['scorecard'])}",
+            "",
+            "| Track | Decision to test | Conversion document |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for track in external_validation_kit["reviewer_tracks"]:
+        lines.append(f"| {track['track_id']} | {track['decision_to_test']} | {track['conversion_document']} |")
+    lines.extend(["", "| Scorecard gate | Weight | Pass condition |", "| --- | ---: | --- |"])
+    for item in external_validation_kit["scorecard"]:
+        lines.append(f"| {item['gate']} | {item['weight']} | {item['pass_condition']} |")
+    lines.extend(["", "| Evidence status | Investor weight | Proof required |", "| --- | --- | --- |"])
+    for item in external_validation_kit["evidence_status_ladder"]:
+        lines.append(f"| {item['status']} | {item['investor_weight']} | {item['proof_required']} |")
 
     lines.extend(
         [

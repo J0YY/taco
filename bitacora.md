@@ -1006,3 +1006,18 @@
 - Pushed technical diligence runbook commit `5c44dc6` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the technical runbook, Investor Case UI, memo wiring, v11 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `86291`.
+
+## 2026-06-04 - Improvement loop: external validation capture kit
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `e4266ac`.
+- Captured `_review-loop-baseline` at `e4266acc50a6aeb31e949a6a74c7c011c37a0975` for the independent review loop.
+- Identified the next VC diligence gap: TACO had a design-partner plan and pilot walkthrough, but no single machine-readable capture kit that converts reviewer meetings into scored external feedback, LOI/pilot-scope terms, permission-to-quote controls, and next-proof artifacts without claiming signed customers.
+- Added `taco_demo/external_validation.py` with reviewer tracks, six-gate scorecard, feedback forms, LOI/pilot-scope template, evidence-status ladder, red flags, next actions, and explicit boundaries against claiming signed customers, completed pilots, revenue, capacity, or permission to quote feedback.
+- Added the external validation capture kit to the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v12` while preserving verifier compatibility for legacy v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, and v11 packets.
+- Added tests for the capture-kit contract, scorecard rows, evidence ladder, manifest/ZIP export, memo section, current v12 packet indexing, invalid packet-format messaging, and legacy v11 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 51 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 97 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

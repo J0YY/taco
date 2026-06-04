@@ -101,6 +101,7 @@ InsuranceApplication
          insurance capacity roadmap with licensing, MGA/fronting, filing, and claims gates
          enterprise security plan with data classes, control backlog, and SOC2/NIST readiness gates
          technical diligence runbook for tests, packet verification, live evidence, and cluster regeneration
+         external validation capture kit for scorecards, LOIs, pilot scopes, and permission-to-quote controls
 ```
 
 ## Real Integration Path
@@ -246,7 +247,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, methodology evidence map, pricing diligence sensitivity, investor objection register, pilot walkthrough playbook, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, methodology evidence map, pricing diligence sensitivity, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
@@ -277,6 +278,8 @@ The enterprise security plan maps the data-room workflow to sensitive data class
 
 The technical diligence runbook gives reviewers exact commands and pass/fail gates for local setup, fixture regeneration, pytest, Streamlit import, packet verification, DreamAudit intake, activation recording, and ManiSkill/cluster evidence regeneration. It proves local reproducibility and integration paths, not live customer deployment or external validation.
 
+The external validation capture kit turns reviewer meetings into an auditable workflow: decision-authority checks, artifact-usefulness scoring, missing-evidence requests, source-data paths, LOI or pilot-scope fields, evidence-status ladder, and permission-to-quote controls. It is a capture workflow, not evidence that feedback, pilots, LOIs, revenue, or capacity already exist.
+
 ## Venture Thesis
 
 TACO is not just robot QA. The larger opportunity is a system of record for autonomy-risk evidence:
@@ -295,4 +298,4 @@ The financing plan in the Investor Case tab connects a proposed $5M seed round t
 
 ## Boundaries
 
-This repository is a local proof of concept and not an offer of insurance. The shipped evidence set is there so the workflow can be tested offline. The design-partner plan and pilot walkthrough playbook are external-validation workflows, not evidence of signed partners, completed pilots, or customer demand. The commercial scale model is a bounded scenario model, not committed revenue or audited market sizing. The insurance capacity roadmap is not legal advice, regulatory approval, carrier capacity, or filed pricing. The enterprise security plan is not SOC 2 certification, penetration-test evidence, or customer security approval. The technical diligence runbook is local reproducibility guidance, not proof of live customer deployment. The seed financing plan is a proposed use-of-funds and milestone plan, not committed financing. Real deployment would require carrier partnerships, compliance review, filed pricing or MGA structure, design-partner evidence, and live simulator/model integrations.
+This repository is a local proof of concept and not an offer of insurance. The shipped evidence set is there so the workflow can be tested offline. The design-partner plan, pilot walkthrough playbook, and external validation capture kit are external-validation workflows, not evidence of signed partners, completed pilots, LOIs, customer demand, or permission to quote feedback. The commercial scale model is a bounded scenario model, not committed revenue or audited market sizing. The insurance capacity roadmap is not legal advice, regulatory approval, carrier capacity, or filed pricing. The enterprise security plan is not SOC 2 certification, penetration-test evidence, or customer security approval. The technical diligence runbook is local reproducibility guidance, not proof of live customer deployment. The seed financing plan is a proposed use-of-funds and milestone plan, not committed financing. Real deployment would require carrier partnerships, compliance review, filed pricing or MGA structure, design-partner evidence, and live simulator/model integrations.

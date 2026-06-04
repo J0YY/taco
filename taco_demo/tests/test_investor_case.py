@@ -33,7 +33,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V9,
     PACKET_FORMAT_V10,
     PACKET_FORMAT_V11,
+    PACKET_FORMAT_V12,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V11,
     REQUIRED_BUNDLE_FILES_V10,
     REQUIRED_BUNDLE_FILES_V9,
     REQUIRED_BUNDLE_FILES_V8,
@@ -53,6 +55,12 @@ from taco_demo.data_room import (
 )
 from taco_demo.design_partner_plan import build_design_partner_plan, design_partner_plan_rows
 from taco_demo.diligence_memo import build_diligence_memo
+from taco_demo.external_validation import (
+    build_external_validation_capture_kit,
+    external_validation_ladder_rows,
+    external_validation_scorecard_rows,
+    external_validation_track_rows,
+)
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.investor_objections import build_investor_objection_register, investor_objection_rows
@@ -365,6 +373,74 @@ def test_pilot_walkthrough_playbook_turns_plan_into_capture_workflow_without_cla
     assert any("actuarial pricing" in flag for flag in playbook["red_flags"])
     assert all(row["Evidence To Collect"] for row in rows)
     assert all(row["Reviewer Role"] for row in rows)
+
+
+def test_external_validation_capture_kit_scores_reviewer_feedback_without_claiming_customers():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "demo_trace_fixture", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    suite_manifest = {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()}
+    readiness = build_fundraise_readiness(app, DEMO_CERTIFICATES, metrics, quote, suite_manifest, _carrier_ready_dreamaudit_intake())
+    methodology_map = build_methodology_evidence_map(app, DEMO_CERTIFICATES, metrics, quote, suite_manifest, _carrier_ready_dreamaudit_intake())
+    pricing = build_pricing_diligence(app, DEMO_CERTIFICATES, metrics, quote)
+    design_partner_plan = build_design_partner_plan(app, quote)
+    seed_financing_plan = build_seed_financing_plan(app, quote, readiness, design_partner_plan)
+    objection_register = build_investor_objection_register(
+        readiness,
+        methodology_map,
+        pricing,
+        design_partner_plan,
+        seed_financing_plan,
+    )
+    pilot_walkthrough = build_pilot_walkthrough_playbook(
+        app,
+        quote,
+        design_partner_plan,
+        objection_register,
+        methodology_map,
+        pricing,
+    )
+    kit = build_external_validation_capture_kit(
+        app,
+        quote,
+        design_partner_plan,
+        pilot_walkthrough,
+        {
+            "manifest_id": "DR-APP-APEX-001",
+            "packet_files": {
+                "packet/index.json",
+                "manifest.json",
+                "diligence_memo.md",
+                "research/methodology_evidence_map.json",
+                "commercial/pricing_diligence.json",
+                "commercial/pilot_walkthrough_playbook.json",
+                "technical/technical_diligence_runbook.json",
+            },
+        },
+    )
+
+    assert kit["kit_id"] == "EXTVAL-APP-APEX-001"
+    assert kit["status"] == "capture_ready_external_evidence_not_collected"
+    assert "not evidence of signed customers" in kit["boundary"]
+    assert kit["packet_context"]["packet_verification_required"] is True
+    assert len(kit["packet_context"]["attached_required_review_artifacts"]) == kit["packet_context"]["minimum_external_packet_artifact_count"]
+    assert len(kit["reviewer_tracks"]) == len(design_partner_plan["tracks"])
+    assert sum(item["weight"] for item in kit["scorecard"]) == 100
+    assert {item["gate"] for item in kit["scorecard"]} >= {
+        "decision_authority",
+        "artifact_usefulness",
+        "commercial_document_path",
+        "boundary_acceptance",
+    }
+    assert kit["loi_or_pilot_scope_template"]["document_status"] == "template_only_not_signed"
+    assert "permission_to_quote_feedback" in kit["loi_or_pilot_scope_template"]["commercial_terms_to_fill"]
+    assert kit["evidence_status_ladder"][-1]["status"] == "loi_or_paid_pilot"
+    assert external_validation_track_rows(kit)
+    assert external_validation_scorecard_rows(kit)[0]["Weight"] == 20
+    assert external_validation_ladder_rows(kit)[-1]["Investor Weight"] == "round_anchor"
 
 
 def test_commercial_scale_model_ties_market_context_to_revenue_scenarios_without_claiming_revenue():
@@ -775,6 +851,9 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert "not SOC 2 certification" in manifest["enterprise_security_plan"]["boundary"]
     assert manifest["technical_diligence_runbook"]["runbook_id"] == "TECH-APP-APEX-001"
     assert "not proof of live customer deployment" in manifest["technical_diligence_runbook"]["boundary"]
+    assert manifest["external_validation_capture_kit"]["kit_id"] == "EXTVAL-APP-APEX-001"
+    assert "not evidence of signed customers" in manifest["external_validation_capture_kit"]["boundary"]
+    assert sum(item["weight"] for item in manifest["external_validation_capture_kit"]["scorecard"]) == 100
     assert len(manifest["suite_summary"]["video_paths"]) == 40
 
 
@@ -854,6 +933,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/commercial_scale_model.json" in summary["files"]
     assert "commercial/capacity_roadmap.json" in summary["files"]
     assert "commercial/enterprise_security_plan.json" in summary["files"]
+    assert "commercial/external_validation_capture_kit.json" in summary["files"]
     assert "technical/technical_diligence_runbook.json" in summary["files"]
     assert "research/methodology_evidence_map.json" in summary["files"]
     assert "insurance/workflow_examples.json" in summary["files"]
@@ -874,11 +954,12 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         commercial_model = json.loads(archive.read("commercial/commercial_scale_model.json"))
         capacity_roadmap = json.loads(archive.read("commercial/capacity_roadmap.json"))
         enterprise_security_plan = json.loads(archive.read("commercial/enterprise_security_plan.json"))
+        external_validation_kit = json.loads(archive.read("commercial/external_validation_capture_kit.json"))
         technical_runbook = json.loads(archive.read("technical/technical_diligence_runbook.json"))
         methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V11
+    assert index["packet_format"] == PACKET_FORMAT_V12
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -905,6 +986,10 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert technical_runbook["runbook_id"] == "TECH-APP-APEX-001"
     assert technical_runbook["status"] == "local_reproducibility_defined_live_evidence_optional"
     assert any(step["step_id"] == "verify_data_room_packet" for step in technical_runbook["local_repro_steps"])
+    assert external_validation_kit["kit_id"] == "EXTVAL-APP-APEX-001"
+    assert external_validation_kit["status"] == "capture_ready_external_evidence_not_collected"
+    assert external_validation_kit["loi_or_pilot_scope_template"]["document_status"] == "template_only_not_signed"
+    assert any(item["gate"] == "commercial_document_path" for item in external_validation_kit["scorecard"])
     assert methodology_map["map_id"] == "METHOD-APP-APEX-001"
     assert methodology_map["score"] >= 85
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
@@ -960,6 +1045,10 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "## Technical Diligence Runbook" in memo
     assert "local_reproducibility_defined_live_evidence_optional" in memo
     assert "run_full_test_suite" in memo
+    assert "## External Validation Capture Kit" in memo
+    assert "capture_ready_external_evidence_not_collected" in memo
+    assert "commercial_document_path" in memo
+    assert "loi_or_paid_pilot" in memo
 
 
 def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
@@ -987,7 +1076,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, or taco_data_room_zip_v11",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, taco_data_room_zip_v11, or taco_data_room_zip_v12",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -1292,6 +1381,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v10_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V10 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v11_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V11}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V11"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V11,
+        "manifest_id": "DR-LEGACY-V11",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V11 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

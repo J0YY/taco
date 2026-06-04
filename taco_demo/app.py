@@ -27,6 +27,8 @@ from taco_demo.commercial_model import (
 )
 from taco_demo.data_room import (
     MAX_PACKET_BYTES,
+    PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES,
     build_data_room_bundle,
     build_data_room_checklist,
     build_data_room_manifest,
@@ -36,6 +38,12 @@ from taco_demo.data_room import (
 from taco_demo.design_partner_plan import build_design_partner_plan, design_partner_plan_rows
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
+from taco_demo.external_validation import (
+    build_external_validation_capture_kit,
+    external_validation_ladder_rows,
+    external_validation_scorecard_rows,
+    external_validation_track_rows,
+)
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.investor_objections import build_investor_objection_register, investor_objection_rows
@@ -615,6 +623,16 @@ with tabs[9]:
             methodology_map,
             pricing_diligence,
         )
+        external_validation_kit = build_external_validation_capture_kit(
+            application,
+            audit["quote"],
+            design_partner_plan,
+            pilot_walkthrough,
+            {
+                "manifest_id": f"DR-{application.application_id}",
+                "packet_files": sorted(REQUIRED_BUNDLE_FILES | {PACKET_INDEX_PATH}),
+            },
+        )
         commercial_model = build_commercial_scale_model(
             application,
             audit["quote"],
@@ -660,6 +678,15 @@ with tabs[9]:
         c3.metric("Conversion gates", len(pilot_walkthrough["conversion_gates"]))
         st.caption(pilot_walkthrough["boundary"])
         st.dataframe(pd.DataFrame(pilot_walkthrough_rows(pilot_walkthrough)), width="stretch")
+        st.markdown("#### External Validation Capture Kit")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Capture status", str(external_validation_kit["status"]).replace("_", " ").title())
+        c2.metric("Reviewer tracks", len(external_validation_kit["reviewer_tracks"]))
+        c3.metric("Scorecard weight", sum(item["weight"] for item in external_validation_kit["scorecard"]))
+        st.caption(external_validation_kit["boundary"])
+        st.dataframe(pd.DataFrame(external_validation_track_rows(external_validation_kit)), width="stretch")
+        st.dataframe(pd.DataFrame(external_validation_scorecard_rows(external_validation_kit)), width="stretch")
+        st.dataframe(pd.DataFrame(external_validation_ladder_rows(external_validation_kit)), width="stretch")
         st.markdown("#### Commercial Scale Model")
         c1, c2, c3 = st.columns(3)
         c1.metric("Model status", str(commercial_model["status"]).replace("_", " ").title())
