@@ -6,7 +6,7 @@ from typing import Any
 
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
-from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown
+from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
 
 
 def build_data_room_checklist(
@@ -103,6 +103,37 @@ def data_room_rows(checklist: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
+def build_data_room_manifest(
+    application: InsuranceApplication,
+    certificates: list[FailureCertificate],
+    metrics: list[InternalRiskMetrics],
+    quote: QuoteBreakdown,
+    suite_manifest: dict[str, Any],
+    dreamaudit_intake: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a machine-readable diligence manifest for export."""
+
+    checklist = build_data_room_checklist(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
+    suite_cases = list(suite_manifest.get("cases", []))
+    dreamaudit_summary = _dreamaudit_manifest_summary(dreamaudit_intake)
+    return {
+        "manifest_id": f"DR-{application.application_id}",
+        "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
+        "application": dataclass_to_dict(application),
+        "quote": dataclass_to_dict(quote),
+        "checklist": checklist,
+        "primary_certificates": [dataclass_to_dict(cert) for cert in certificates],
+        "internal_metrics": [dataclass_to_dict(metric) for metric in metrics],
+        "suite_summary": {
+            "suite_name": suite_manifest.get("suite_name", "unknown"),
+            "suite_size": int(suite_manifest.get("suite_size", len(suite_cases)) or 0),
+            "failure_families": sorted({str(case.get("failure_family", "unknown")) for case in suite_cases}),
+            "video_paths": [str(case.get("video_path", "")) for case in suite_cases if case.get("video_path")],
+        },
+        "dreamaudit": dreamaudit_summary,
+    }
+
+
 def _dreamaudit_status(dreamaudit_intake: dict[str, Any] | None) -> dict[str, str]:
     if not dreamaudit_intake:
         return {
@@ -135,6 +166,23 @@ def _dreamaudit_status(dreamaudit_intake: dict[str, Any] | None) -> dict[str, st
         else "Expand the DreamAudit scan until a carrier-ready ladder depth is available."
     )
     return {"status": status, "evidence": evidence, "next_action": next_action}
+
+
+def _dreamaudit_manifest_summary(dreamaudit_intake: dict[str, Any] | None) -> dict[str, Any]:
+    if not dreamaudit_intake:
+        return {"attached": False, "status": "not_scanned"}
+    readiness = dreamaudit_intake.get("readiness", {})
+    return {
+        "attached": True,
+        "root": dreamaudit_intake.get("root"),
+        "root_exists": bool(dreamaudit_intake.get("root_exists")),
+        "selected_certificates": int(dreamaudit_intake.get("summary", {}).get("certificates", 0) or 0),
+        "readiness_score": int(readiness.get("readiness_score", 0) or 0),
+        "readiness_status": readiness.get("status", "unknown"),
+        "recommended_scan_limit": dreamaudit_intake.get("recommended_scan_limit"),
+        "evidence_depth_ladder": dreamaudit_intake.get("evidence_depth_ladder", []),
+        "gaps": readiness.get("gaps", []),
+    }
 
 
 def _item(artifact: str, status: str, evidence: str, next_action: str) -> dict[str, str]:

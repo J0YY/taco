@@ -41,6 +41,7 @@ def test_diligence_memo_includes_scenarios_and_suite_breadth():
     assert "VC Readiness Gates" in memo
     assert "Readiness score:" in memo
     assert "VC Data Room Checklist" in memo
+    assert "Data room manifest: DR-APP-APEX-001" in memo
     assert "Ten Insurance Workflow Examples" in memo
     assert "IW-001" in memo
     assert "IW-010" in memo

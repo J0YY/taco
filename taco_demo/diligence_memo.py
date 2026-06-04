@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
-from .data_room import build_data_room_checklist, data_room_rows
+from .data_room import build_data_room_checklist, build_data_room_manifest, data_room_rows
 from .fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS
 from .insurance_scenarios import INSURANCE_SCENARIOS
@@ -40,6 +40,7 @@ def build_diligence_memo(
         dreamaudit_intake,
     )
     data_room = build_data_room_checklist(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
+    data_room_manifest = build_data_room_manifest(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -67,6 +68,7 @@ def build_diligence_memo(
             "",
             "## VC Data Room Checklist",
             "",
+            f"* Data room manifest: {data_room_manifest['manifest_id']}",
             f"* Internal packet score: {data_room['internal_packet_score']}/100",
             f"* Internal ready items: {data_room['internal_ready_items']}/{data_room['internal_total_items']}",
             f"* External pending items: {data_room['external_pending_items']}",

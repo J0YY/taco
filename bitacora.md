@@ -496,3 +496,25 @@
   - `git diff --check` -> clean.
 - Pushed VC data-room checklist commit `e744efc` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` reported that the checklist is consistent across the app, diligence memo, README, and tests, and does not appear to break existing behavior.
+
+## 2026-06-04 - Improvement loop: data-room manifest export
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `0e0fbaf`.
+- Captured `_review-loop-baseline` at `0e0fbaf1ebbcf4f78053b433f900848f10e553ba` for the independent review loop.
+- Added a machine-readable data-room manifest builder to `taco_demo/data_room.py`:
+  - application and quote objects,
+  - checklist status,
+  - primary certificates,
+  - internal metrics,
+  - ManiSkill/RMA suite summary and video paths,
+  - DreamAudit readiness and ladder summary.
+- Added a Streamlit `Download Data Room Manifest` JSON button in the Investor tab.
+- Added the manifest ID to the diligence memo data-room section.
+- Updated the README product surface to mention data-room manifest export.
+- Added tests for manifest shape, checklist score, DreamAudit recommendation, suite video paths, and memo manifest ID.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py taco_demo/tests/test_renewal_loop.py` -> 15 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 54 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - real DreamAudit-backed manifest smoke check serialized JSON successfully: manifest `DR-APP-APEX-001`, internal packet score `100`, recommended DreamAudit scan limit `5000`.
+  - `git diff --check` -> clean.

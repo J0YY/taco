@@ -1,4 +1,4 @@
-from taco_demo.data_room import build_data_room_checklist, data_room_rows
+from taco_demo.data_room import build_data_room_checklist, build_data_room_manifest, data_room_rows
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.maniskill_suite import build_maniskill_suite_cases
@@ -183,3 +183,33 @@ def test_data_room_checklist_marks_live_dreamaudit_missing_without_scan():
     dreamaudit_item = next(item for item in checklist["items"] if item["artifact"] == "Live DreamAudit Corpus")
     assert dreamaudit_item["status"] == "needs_live_scan"
     assert checklist["internal_packet_score"] < 100
+
+
+def test_data_room_manifest_exports_machine_readable_packet():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "test", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    controls = {
+        "reaudit_required_after_model_update": True,
+        "occlusion_risk_monitor_enabled": True,
+        "language_override_sanitizer_enabled": True,
+        "target_identity_confirmation_enabled": True,
+    }
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, controls)
+    manifest = build_data_room_manifest(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        _carrier_ready_dreamaudit_intake(),
+    )
+
+    assert manifest["manifest_id"] == "DR-APP-APEX-001"
+    assert manifest["checklist"]["internal_packet_score"] == 100
+    assert len(manifest["primary_certificates"]) == len(DEMO_CERTIFICATES)
+    assert len(manifest["internal_metrics"]) == len(metrics)
+    assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
+    assert len(manifest["suite_summary"]["video_paths"]) == 40
