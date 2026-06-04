@@ -411,3 +411,25 @@
   - `git diff --check` -> clean.
 - Pushed empty-scan review-fix commit `b680506` to GitHub `main`.
 - Third independent `codex review --base _review-loop-baseline` reported no discrete correctness issue in the cumulative evidence-depth ladder changes.
+
+## 2026-06-04 - Improvement loop: VC readiness gates
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `bd09f43`.
+- Captured `_review-loop-baseline` at `bd09f43b00ad204d534037156e61db3424c27c6d` for the independent review loop.
+- Added `taco_demo/fundraise_readiness.py` to compute investor-facing diligence gates from current artifacts:
+  - replay/video breadth,
+  - insurance workflow and pricing depth,
+  - internals-based risk metric coverage,
+  - commercial underwriting package completeness,
+  - research-backed methodology,
+  - design-partner diligence path.
+- Updated the Streamlit Investor tab to show VC readiness score, gate pass count, posture, gate evidence, and remaining design-partner caveat.
+- Updated the downloadable diligence memo to include the VC readiness gate table.
+- Updated the root README product surface to mention VC readiness gates.
+- Added tests for strong artifact-backed seed-package scoring, empty-package gap surfacing, and memo inclusion of the VC readiness section.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py taco_demo/tests/test_renewal_loop.py` -> 10 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 49 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - bundled readiness smoke check returned `100/100`, posture `seed_diligence_ready_with_live_evidence_caveats`, and the design-partner caveat.
+  - `git diff --check` -> clean.

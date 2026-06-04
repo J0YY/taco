@@ -38,6 +38,8 @@ def test_diligence_memo_includes_scenarios_and_suite_breadth():
         quote,
         {"suite_size": 40, "cases": build_maniskill_suite_cases()},
     )
+    assert "VC Readiness Gates" in memo
+    assert "Readiness score:" in memo
     assert "Ten Insurance Workflow Examples" in memo
     assert "IW-001" in memo
     assert "IW-010" in memo

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from .fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
@@ -28,6 +29,7 @@ def build_diligence_memo(
     mean_risk = sum(metric.internal_risk_score for metric in metrics) / len(metrics) if metrics else 0.0
     mean_mitigability = sum(metric.causal_mitigability_score for metric in metrics) / len(metrics) if metrics else 0.0
     renewal = renewal_summary(quote)
+    fundraise_readiness = build_fundraise_readiness(application, certificates, metrics, quote, suite_manifest)
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -36,31 +38,49 @@ def build_diligence_memo(
         "",
         "TACO is the evidence layer that makes learned robot policies insurable before claims history exists.",
         "",
-        "## Customer And Coverage Wedge",
+        "## VC Readiness Gates",
         "",
-        f"* Named insured: {application.company_name}",
-        f"* Robot type: {application.robot_type}",
-        f"* Policy ID: {application.policy_id}",
-        f"* Deployment units: {application.deployment_units:,}",
-        f"* Coverage requested: ${application.coverage_requested_usd:,.0f}",
-        f"* Deployment stage: {application.deployment_stage}",
-        f"* Fleet telemetry available: {application.telemetry_available}",
+        f"* Readiness score: {fundraise_readiness['score']}/100",
+        f"* Posture: {str(fundraise_readiness['posture']).replace('_', ' ')}",
+        f"* Gates passed: {fundraise_readiness['gates_passed']}/{fundraise_readiness['gates_total']}",
         "",
-        "## Underwriting Result",
-        "",
-        f"* Quote status: {quote.status}",
-        f"* Monthly premium: ${quote.final_monthly_premium_usd:,.0f}",
-        f"* Required controls: {', '.join(quote.required_controls)}",
-        f"* Exclusions: {', '.join(quote.exclusions) if quote.exclusions else 'None while controls remain enabled'}",
-        f"* Earliest internal warning margin: {earliest_warning:.2f}s",
-        f"* Mean internal risk score: {mean_risk:.2f}",
-        f"* Mean causal mitigability score: {mean_mitigability:.2f}",
-        "",
-        "## Replayable Failure Evidence",
-        "",
-        "| Certificate | Failure family | Minimal cost | Neighborhood rate | Internal signal | Required control |",
-        "| --- | --- | ---: | ---: | --- | --- |",
+        "| Gate | Weight | Status | Evidence | Next action |",
+        "| --- | ---: | --- | --- | --- |",
     ]
+    for row in fundraise_readiness_rows(fundraise_readiness):
+        lines.append(
+            f"| {row['Gate']} | {row['Weight']} | {row['Status']} | {row['Evidence']} | {row['Next Action']} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Customer And Coverage Wedge",
+            "",
+            f"* Named insured: {application.company_name}",
+            f"* Robot type: {application.robot_type}",
+            f"* Policy ID: {application.policy_id}",
+            f"* Deployment units: {application.deployment_units:,}",
+            f"* Coverage requested: ${application.coverage_requested_usd:,.0f}",
+            f"* Deployment stage: {application.deployment_stage}",
+            f"* Fleet telemetry available: {application.telemetry_available}",
+            "",
+            "## Underwriting Result",
+            "",
+            f"* Quote status: {quote.status}",
+            f"* Monthly premium: ${quote.final_monthly_premium_usd:,.0f}",
+            f"* Required controls: {', '.join(quote.required_controls)}",
+            f"* Exclusions: {', '.join(quote.exclusions) if quote.exclusions else 'None while controls remain enabled'}",
+            f"* Earliest internal warning margin: {earliest_warning:.2f}s",
+            f"* Mean internal risk score: {mean_risk:.2f}",
+            f"* Mean causal mitigability score: {mean_mitigability:.2f}",
+            "",
+            "## Replayable Failure Evidence",
+            "",
+            "| Certificate | Failure family | Minimal cost | Neighborhood rate | Internal signal | Required control |",
+            "| --- | --- | ---: | ---: | --- | --- |",
+        ]
+    )
 
     for cert in certificates:
         metric = metrics_by_id.get(cert.certificate_id)

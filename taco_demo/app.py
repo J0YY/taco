@@ -12,6 +12,7 @@ from taco_demo.binder import issue_binder
 from taco_demo.activation_recorder import torch_available
 from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
+from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
@@ -504,7 +505,25 @@ with tabs[9]:
         st.write(summary["research_backed_method"])
         st.markdown("**Known investor risks**")
         st.write(summary["investor_risk"])
-        memo = build_diligence_memo(application, audit["certificates"], list(audit["metrics"].values()), audit["quote"], _load_maniskill_manifest())
+        suite_manifest = _load_maniskill_manifest()
+        readiness = build_fundraise_readiness(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            suite_manifest,
+        )
+        st.markdown("#### VC Readiness Gates")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Readiness score", f"{readiness['score']}/100")
+        c2.metric("Gates passed", f"{readiness['gates_passed']}/{readiness['gates_total']}")
+        c3.metric("Posture", str(readiness["posture"]).replace("_", " ").title())
+        st.dataframe(pd.DataFrame(fundraise_readiness_rows(readiness)), width="stretch")
+        if readiness["caveats"]:
+            st.markdown("**Still required before institutional diligence**")
+            for caveat in readiness["caveats"]:
+                st.markdown(f"* {caveat}")
+        memo = build_diligence_memo(application, audit["certificates"], list(audit["metrics"].values()), audit["quote"], suite_manifest)
         st.download_button(
             "Download Investor Diligence Memo",
             memo.encode("utf-8"),
