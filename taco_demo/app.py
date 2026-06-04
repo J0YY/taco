@@ -11,6 +11,13 @@ import streamlit as st
 
 from taco_demo.binder import issue_binder
 from taco_demo.activation_recorder import torch_available
+from taco_demo.capacity_roadmap import (
+    build_capacity_roadmap,
+    capacity_gate_rows,
+    capacity_path_rows,
+    capacity_phase_rows,
+    regulatory_workstream_rows,
+)
 from taco_demo.commercial_model import (
     build_commercial_scale_model,
     commercial_gate_rows,
@@ -606,6 +613,13 @@ with tabs[9]:
             seed_financing_plan,
             pilot_walkthrough,
         )
+        capacity_roadmap = build_capacity_roadmap(
+            application,
+            audit["quote"],
+            pricing_diligence,
+            commercial_model,
+            pilot_walkthrough,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -629,6 +643,16 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(commercial_segment_rows(commercial_model)), width="stretch")
         st.dataframe(pd.DataFrame(commercial_scenario_rows(commercial_model)), width="stretch")
         st.dataframe(pd.DataFrame(commercial_gate_rows(commercial_model)), width="stretch")
+        st.markdown("#### Insurance Capacity Roadmap")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Capacity status", str(capacity_roadmap["status"]).replace("_", " ").title())
+        c2.metric("Launch phases", len(capacity_roadmap["recommended_sequence"]))
+        c3.metric("Readiness gates", len(capacity_roadmap["readiness_gates"]))
+        st.caption(capacity_roadmap["boundary"])
+        st.dataframe(pd.DataFrame(capacity_phase_rows(capacity_roadmap)), width="stretch")
+        st.dataframe(pd.DataFrame(capacity_path_rows(capacity_roadmap)), width="stretch")
+        st.dataframe(pd.DataFrame(regulatory_workstream_rows(capacity_roadmap)), width="stretch")
+        st.dataframe(pd.DataFrame(capacity_gate_rows(capacity_roadmap)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

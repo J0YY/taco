@@ -5,6 +5,13 @@ import struct
 import zipfile
 from dataclasses import replace
 
+from taco_demo.capacity_roadmap import (
+    build_capacity_roadmap,
+    capacity_gate_rows,
+    capacity_path_rows,
+    capacity_phase_rows,
+    regulatory_workstream_rows,
+)
 from taco_demo.commercial_model import (
     build_commercial_scale_model,
     commercial_gate_rows,
@@ -23,7 +30,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V6,
     PACKET_FORMAT_V7,
     PACKET_FORMAT_V8,
+    PACKET_FORMAT_V9,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V8,
     REQUIRED_BUNDLE_FILES_V7,
     REQUIRED_BUNDLE_FILES_V6,
     REQUIRED_BUNDLE_FILES_V5,
@@ -392,6 +401,61 @@ def test_commercial_scale_model_ties_market_context_to_revenue_scenarios_without
     assert len(commercial_gate_rows(model)) >= 4
 
 
+def test_capacity_roadmap_separates_evidence_revenue_from_insurance_authority():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "demo_trace_fixture", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    suite_manifest = {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()}
+    readiness = build_fundraise_readiness(app, DEMO_CERTIFICATES, metrics, quote, suite_manifest, _carrier_ready_dreamaudit_intake())
+    methodology_map = build_methodology_evidence_map(app, DEMO_CERTIFICATES, metrics, quote, suite_manifest, _carrier_ready_dreamaudit_intake())
+    pricing = build_pricing_diligence(app, DEMO_CERTIFICATES, metrics, quote)
+    design_partner_plan = build_design_partner_plan(app, quote)
+    seed_financing_plan = build_seed_financing_plan(app, quote, readiness, design_partner_plan)
+    objection_register = build_investor_objection_register(
+        readiness,
+        methodology_map,
+        pricing,
+        design_partner_plan,
+        seed_financing_plan,
+    )
+    pilot_walkthrough = build_pilot_walkthrough_playbook(
+        app,
+        quote,
+        design_partner_plan,
+        objection_register,
+        methodology_map,
+        pricing,
+    )
+    commercial_model = build_commercial_scale_model(app, quote, readiness, seed_financing_plan, pilot_walkthrough)
+    roadmap = build_capacity_roadmap(app, quote, pricing, commercial_model, pilot_walkthrough)
+
+    assert roadmap["roadmap_id"] == "CAP-APP-APEX-001"
+    assert roadmap["status"] == "capacity_path_defined_not_committed"
+    assert "not legal advice" in roadmap["boundary"]
+    assert "carrier capacity" in roadmap["boundary"]
+    assert len(roadmap["recommended_sequence"]) == 4
+    assert roadmap["recommended_sequence"][0]["phase"] == "phase_0_evidence_vendor"
+    assert "binder issuance for real insureds" in roadmap["recommended_sequence"][0]["blocked_outputs_until_approved"]
+    assert {path["path"] for path in roadmap["capacity_paths"]} >= {
+        "evidence_vendor",
+        "licensed_broker_or_referral_partner",
+        "mga_mgu_fronting",
+        "carrier_reinsurer_product_path",
+    }
+    assert any("SERFF" in source["fact_used"] for source in roadmap["source_material"])
+    assert all(source["url"].startswith("https://") for source in roadmap["source_material"])
+    assert len(roadmap["regulatory_workstreams"]) >= 4
+    assert len(roadmap["readiness_gates"]) >= 4
+    assert roadmap["links_to_existing_artifacts"]["pricing_boundary"] == "PRICE-APP-APEX-001"
+    assert capacity_phase_rows(roadmap)
+    assert capacity_path_rows(roadmap)
+    assert regulatory_workstream_rows(roadmap)
+    assert capacity_gate_rows(roadmap)
+
+
 def test_underwriting_workflow_spans_application_to_binder():
     artifacts = [item["artifact"] for item in UNDERWRITING_WORKFLOW]
     assert artifacts[0] == "InsuranceApplication JSON"
@@ -592,6 +656,8 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert manifest["commercial_scale_model"]["model_id"] == "COMM-APP-APEX-001"
     assert "signed pipeline" in manifest["commercial_scale_model"]["boundary"]
     assert manifest["commercial_scale_model"]["base_case"]["modeled_arr_usd"] == 3_800_000
+    assert manifest["capacity_roadmap"]["roadmap_id"] == "CAP-APP-APEX-001"
+    assert "not legal advice" in manifest["capacity_roadmap"]["boundary"]
     assert len(manifest["suite_summary"]["video_paths"]) == 40
 
 
@@ -669,6 +735,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "commercial/investor_objection_register.json" in summary["files"]
     assert "commercial/pilot_walkthrough_playbook.json" in summary["files"]
     assert "commercial/commercial_scale_model.json" in summary["files"]
+    assert "commercial/capacity_roadmap.json" in summary["files"]
     assert "research/methodology_evidence_map.json" in summary["files"]
     assert "insurance/workflow_examples.json" in summary["files"]
     assert "research/sources.json" in summary["files"]
@@ -686,10 +753,11 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         objection_register = json.loads(archive.read("commercial/investor_objection_register.json"))
         pilot_walkthrough = json.loads(archive.read("commercial/pilot_walkthrough_playbook.json"))
         commercial_model = json.loads(archive.read("commercial/commercial_scale_model.json"))
+        capacity_roadmap = json.loads(archive.read("commercial/capacity_roadmap.json"))
         methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V8
+    assert index["packet_format"] == PACKET_FORMAT_V9
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -707,6 +775,9 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert commercial_model["model_id"] == "COMM-APP-APEX-001"
     assert commercial_model["status"] == "scenario_model_not_revenue_forecast"
     assert commercial_model["base_case"]["modeled_arr_usd"] == 3_800_000
+    assert capacity_roadmap["roadmap_id"] == "CAP-APP-APEX-001"
+    assert capacity_roadmap["status"] == "capacity_path_defined_not_committed"
+    assert "not legal advice" in capacity_roadmap["boundary"]
     assert methodology_map["map_id"] == "METHOD-APP-APEX-001"
     assert methodology_map["score"] >= 85
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
@@ -753,6 +824,9 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "## Commercial Scale Model" in memo
     assert "scenario_model_not_revenue_forecast" in memo
     assert "base_evidence_platform" in memo
+    assert "## Insurance Capacity Roadmap" in memo
+    assert "capacity_path_defined_not_committed" in memo
+    assert "phase_0_evidence_vendor" in memo
 
 
 def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
@@ -780,7 +854,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, or taco_data_room_zip_v8",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, taco_data_room_zip_v8, or taco_data_room_zip_v9",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -995,6 +1069,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v7_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V7 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v8_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V8}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V8"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V8,
+        "manifest_id": "DR-LEGACY-V8",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V8 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

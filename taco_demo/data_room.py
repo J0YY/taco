@@ -12,6 +12,7 @@ import zlib
 
 from .design_partner_plan import build_design_partner_plan
 from .commercial_model import build_commercial_scale_model
+from .capacity_roadmap import build_capacity_roadmap
 from .fundraise_readiness import build_fundraise_readiness
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
@@ -33,6 +34,7 @@ PACKET_FORMAT_V5 = "taco_data_room_zip_v5"
 PACKET_FORMAT_V6 = "taco_data_room_zip_v6"
 PACKET_FORMAT_V7 = "taco_data_room_zip_v7"
 PACKET_FORMAT_V8 = "taco_data_room_zip_v8"
+PACKET_FORMAT_V9 = "taco_data_room_zip_v9"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -67,8 +69,11 @@ REQUIRED_BUNDLE_FILES_V6 = REQUIRED_BUNDLE_FILES_V5 | {
 REQUIRED_BUNDLE_FILES_V7 = REQUIRED_BUNDLE_FILES_V6 | {
     "commercial/pilot_walkthrough_playbook.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V7 | {
+REQUIRED_BUNDLE_FILES_V8 = REQUIRED_BUNDLE_FILES_V7 | {
     "commercial/commercial_scale_model.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V8 | {
+    "commercial/capacity_roadmap.json",
 }
 
 
@@ -138,6 +143,12 @@ def build_data_room_checklist(
             "ready" if application.coverage_requested_usd > 0 and quote.final_monthly_premium_usd > 0 else "needs_work",
             "Market-context, buyer-segment, revenue-scenario, and proof-gate model is attached with explicit boundaries.",
             "Validate ACV, packet fees, and paid pilot conversion with external reviewers.",
+        ),
+        _item(
+            "Insurance Capacity Roadmap",
+            "ready" if quote.final_monthly_premium_usd > 0 and bool(quote.required_controls) else "needs_work",
+            "Capacity, licensing, MGA/fronting, rate/form, actuarial, and claims workstreams are attached with non-offer boundaries.",
+            "Collect counsel memo, licensed-partner path, capacity term sheet, and actuarial/filing plan before launch.",
         ),
         _item(
             "Design-Partner References",
@@ -228,6 +239,13 @@ def build_data_room_manifest(
         seed_financing_plan,
         pilot_walkthrough_playbook,
     )
+    capacity_roadmap = build_capacity_roadmap(
+        application,
+        quote,
+        pricing_diligence,
+        commercial_scale_model,
+        pilot_walkthrough_playbook,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -250,6 +268,7 @@ def build_data_room_manifest(
         "investor_objection_register": objection_register,
         "pilot_walkthrough_playbook": pilot_walkthrough_playbook,
         "commercial_scale_model": commercial_scale_model,
+        "capacity_roadmap": capacity_roadmap,
     }
 
 
@@ -283,6 +302,7 @@ def build_data_room_bundle(
         ("commercial/investor_objection_register.json", _json_bytes(manifest["investor_objection_register"])),
         ("commercial/pilot_walkthrough_playbook.json", _json_bytes(manifest["pilot_walkthrough_playbook"])),
         ("commercial/commercial_scale_model.json", _json_bytes(manifest["commercial_scale_model"])),
+        ("commercial/capacity_roadmap.json", _json_bytes(manifest["capacity_roadmap"])),
     ]
     certificate_names: set[str] = set()
     for cert in certificates:
@@ -386,7 +406,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "Invalid packet index: packet_format must be taco_data_room_zip_v1, "
                         "taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, "
                         "taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, "
-                        "or taco_data_room_zip_v8"
+                        "taco_data_room_zip_v8, or taco_data_room_zip_v9"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -535,7 +555,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V8,
+        "packet_format": PACKET_FORMAT_V9,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -567,6 +587,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V7:
         return REQUIRED_BUNDLE_FILES_V7
     if packet_format == PACKET_FORMAT_V8:
+        return REQUIRED_BUNDLE_FILES_V8
+    if packet_format == PACKET_FORMAT_V9:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -624,6 +646,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/investor_objection_register.json` - evidence-linked investor and carrier objection register",
             "* `commercial/pilot_walkthrough_playbook.json` - reviewer walkthrough agenda, role tracks, and evidence capture form",
             "* `commercial/commercial_scale_model.json` - market-context, buyer-segment, revenue-scenario, and proof-gate model",
+            "* `commercial/capacity_roadmap.json` - insurance capacity, licensing, filing, actuarial, and claims-readiness roadmap",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",
             "",

@@ -942,3 +942,23 @@
 - Pushed commercial scale model commit `f9a0292` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the commercial scale model, Investor Case UI, memo wiring, v8 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `79811`.
+
+## 2026-06-04 - Improvement loop: insurance capacity roadmap
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `ca7d2a9`.
+- Captured `_review-loop-baseline` at `ca7d2a9115fdaa9dffeb081e123de37b32b8745f` for the independent review loop.
+- Identified the next VC diligence gap: TACO had evidence, pricing, walkthrough, and commercial-scale artifacts, but no structured insurance-capacity and compliance roadmap separating evidence-only revenue from producer, MGA/fronting, carrier, reinsurer, rate/form, and claims-handling paths.
+- Reviewed current official regulatory anchors:
+  - NAIC industry page for UCAA, NIPR, SERFF, and rate/form filing infrastructure,
+  - NAIC State Licensing Handbook for state-based producer licensing context,
+  - NAIC Managing General Agents Act model law for MGA authority/contract concepts,
+  - Washington Office of the Insurance Commissioner P&C rate/form filing instructions as a state-specific filing example.
+- Added `taco_demo/capacity_roadmap.py` with evidence-only, producer/referral, MGA/fronting, and carrier/reinsurer launch phases; regulatory workstreams; readiness gates; source material; and explicit boundaries against legal advice, regulatory approval, carrier capacity, live insurance offers, or filed products.
+- Added the insurance capacity roadmap to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and root README architecture/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v9` while preserving verifier compatibility for legacy v1, v2, v3, v4, v5, v6, v7, and v8 packets.
+- Added tests for the capacity roadmap contract, manifest/ZIP export, memo section, current v9 packet indexing, and legacy v8 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 45 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 91 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

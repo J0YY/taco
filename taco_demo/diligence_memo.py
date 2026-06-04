@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from .capacity_roadmap import build_capacity_roadmap
 from .commercial_model import build_commercial_scale_model
 from .data_room import build_data_room_checklist, build_data_room_manifest, data_room_rows
 from .design_partner_plan import build_design_partner_plan
@@ -79,6 +80,13 @@ def build_diligence_memo(
         quote,
         fundraise_readiness,
         seed_financing_plan,
+        pilot_walkthrough,
+    )
+    capacity_roadmap = build_capacity_roadmap(
+        application,
+        quote,
+        pricing_diligence,
+        commercial_model,
         pilot_walkthrough,
     )
 
@@ -216,6 +224,35 @@ def build_diligence_memo(
         )
     lines.extend(["", "| Gate | Proof required |", "| --- | --- |"])
     for gate in commercial_model["seed_round_commercial_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['proof_required']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Insurance Capacity Roadmap",
+            "",
+            f"* Status: {capacity_roadmap['status']}",
+            f"* Boundary: {capacity_roadmap['boundary']}",
+            f"* Launch phases: {len(capacity_roadmap['recommended_sequence'])}",
+            f"* Readiness gates: {len(capacity_roadmap['readiness_gates'])}",
+            "",
+            "| Phase | Posture | Proof to collect |",
+            "| --- | --- | --- |",
+        ]
+    )
+    for phase in capacity_roadmap["recommended_sequence"]:
+        lines.append(f"| {phase['phase']} | {phase['posture']} | {phase['proof_to_collect']} |")
+    lines.extend(["", "| Path | Why it matters | Proof required |", "| --- | --- | --- |"])
+    for path in capacity_roadmap["capacity_paths"]:
+        lines.append(f"| {path['path']} | {path['why_it_matters']} | {path['proof_required']} |")
+    lines.extend(["", "| Workstream | Diligence question | Required artifacts |", "| --- | --- | --- |"])
+    for workstream in capacity_roadmap["regulatory_workstreams"]:
+        lines.append(
+            f"| {workstream['workstream']} | {workstream['diligence_question']} | "
+            f"{'; '.join(workstream['required_artifacts'])} |"
+        )
+    lines.extend(["", "| Gate | Proof required |", "| --- | --- |"])
+    for gate in capacity_roadmap["readiness_gates"]:
         lines.append(f"| {gate['gate']} | {gate['proof_required']} |")
 
     lines.extend(
