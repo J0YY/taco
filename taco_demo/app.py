@@ -11,6 +11,7 @@ import streamlit as st
 from taco_demo.binder import issue_binder
 from taco_demo.activation_recorder import torch_available
 from taco_demo.diligence_memo import build_diligence_memo
+from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
@@ -103,6 +104,10 @@ def _load_maniskill_manifest() -> dict[str, object]:
     return load_maniskill_suite(DATA_ROOT)
 
 
+def _scan_dreamaudit_artifacts(root: str, limit: int) -> dict[str, object]:
+    return build_dreamaudit_intake_summary(root, limit=limit)
+
+
 st.set_page_config(page_title="TACO", page_icon="T", layout="wide")
 
 if "application" not in st.session_state:
@@ -169,6 +174,7 @@ tabs = st.tabs(
         "Insurance Examples",
         "Renewal Loop",
         "Investor Case",
+        "DreamAudit Intake",
         "Spec",
     ]
 )
@@ -552,6 +558,41 @@ with tabs[9]:
         )
 
 with tabs[10]:
+    st.markdown("### DreamAudit Intake")
+    st.caption("Scan local DreamAudit artifacts and normalize real certificates into TACO underwriting evidence.")
+    default_root = str(DEFAULT_DREAMAUDIT_ARTIFACTS)
+    root = st.text_input("DreamAudit artifacts path", value=default_root)
+    limit = int(st.number_input("Certificate scan limit", min_value=1, max_value=5000, value=250, step=50))
+    if st.button("Scan DreamAudit Certificates", type="primary"):
+        st.session_state.dreamaudit_intake = _scan_dreamaudit_artifacts(root, limit)
+    intake = st.session_state.get("dreamaudit_intake")
+    if not intake:
+        st.info("Enter a DreamAudit artifact directory and scan to verify live certificate intake.")
+    elif not intake["root_exists"]:
+        st.warning(f"Path not found: {intake['root']}")
+    else:
+        summary = intake["summary"]
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Adapted certificates", summary["certificates"])
+        c2.metric("Failure families", len(summary["failure_families"]))
+        c3.metric("High severity", summary["high_severity"])
+        c4.metric("Mean neighborhood rate", f"{summary['mean_failure_rate_neighborhood']:.2f}")
+        cols = st.columns(3)
+        with cols[0]:
+            st.markdown("**Failure families**")
+            st.json(intake["failure_counts"])
+        with cols[1]:
+            st.markdown("**Schemas**")
+            st.json(intake["schema_counts"])
+        with cols[2]:
+            st.markdown("**Backends**")
+            st.json(intake["backend_counts"])
+        st.markdown("#### Adapted Certificate Sample")
+        st.dataframe(pd.DataFrame(intake["rows"]), width="stretch")
+        st.markdown("#### Source Examples")
+        st.write(summary["sources"])
+
+with tabs[11]:
     readme = Path(__file__).resolve().parents[1] / "README.md"
     if readme.exists():
         st.markdown(readme.read_text(encoding="utf-8"))

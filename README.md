@@ -205,6 +205,7 @@ The Streamlit app includes:
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
 * investor case and diligence memo download,
+* live DreamAudit artifact intake,
 * architecture/spec view.
 
 ## Research Backing

@@ -208,3 +208,23 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 33 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+
+## 2026-06-04 - Improvement loop: live DreamAudit intake tab
+
+- Pulled `origin/main`; repository was already up to date at `f85fb1b`.
+- Added `taco_demo/dreamaudit_intake.py` to summarize live DreamAudit artifact directories through the existing adapter.
+- Added a Streamlit `DreamAudit Intake` tab:
+  - accepts a local DreamAudit artifacts path,
+  - scans certificates on demand,
+  - shows adapted certificate count, failure-family count, high-severity count, mean neighborhood failure rate, schema/backend counts, source examples, and sample certificate rows.
+- Added tests for missing roots, adapted certificate counts, schema/backend/failure summaries, and row limiting.
+- Updated the root README product surface to include live DreamAudit artifact intake.
+- Verified the intake path against `/Users/joyyang/Projects/dreamaudit/artifacts`:
+  - 250 adapted certificates at scan limit 250,
+  - failure families included action-noise, language override, occlusion, and vision perturbation certificates,
+  - 25 sample rows returned for display.
+- Verification from `.venv`:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py` -> 8 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 36 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
