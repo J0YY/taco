@@ -173,8 +173,8 @@ def _segments(
             "Autonomy Submission Triage",
             "Broker/MGA submission memo marking how the packet changes bind, decline, exclusion, or referral workflow.",
             "A broker intro that does not name an underwriting decision or missing-evidence request.",
-            tracks.get("broker_mga_program", {}).get("buyer_question", ""),
-            capture.get("broker_mga_program", {}).get("minimum_success", ""),
+            tracks.get("broker_mga_underwriting_desk", {}).get("buyer_question", ""),
+            capture.get("broker_mga_underwriting_desk", {}).get("minimum_success", ""),
         ),
         _segment(
             "carrier_reinsurer_model_risk",
@@ -183,8 +183,8 @@ def _segments(
             "Capacity Diligence Packet",
             "Capacity, actuarial, model-risk, or counsel memo naming requirements for the next review.",
             "General interest in robotics insurance without capacity, compliance, data-quality, or actuarial next steps.",
-            tracks.get("carrier_capacity_review", {}).get("buyer_question", ""),
-            capture.get("carrier_capacity_review", {}).get("minimum_success", ""),
+            tracks.get("carrier_reinsurer_model_risk", {}).get("buyer_question", ""),
+            capture.get("carrier_reinsurer_model_risk", {}).get("minimum_success", ""),
         ),
         _segment(
             "enterprise_risk_procurement",

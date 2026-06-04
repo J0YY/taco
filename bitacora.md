@@ -1148,3 +1148,11 @@
   - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed commercial traction plan commit `4683d83` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one P2 issue: broker and carrier traction segments used non-existent source track IDs, causing their exported buyer question and minimum-success fields to fall back to generic text.
+- Fixed the traction segment lookups to use `broker_mga_underwriting_desk` and `carrier_reinsurer_model_risk`, and added regression assertions for source-specific broker/carrier questions and minimum-success text.
+- Verification after review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 63 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 109 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

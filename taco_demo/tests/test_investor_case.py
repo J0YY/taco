@@ -1065,6 +1065,10 @@ def test_commercial_traction_plan_converts_proof_workflows_into_countable_seed_t
         "carrier_reinsurer_model_risk",
         "enterprise_risk_procurement",
     }
+    segments_by_id = {segment["segment_id"]: segment for segment in traction_plan["icp_segments"]}
+    assert "triage submissions before loss history exists" in segments_by_id["broker_mga_submission_desk"]["buyer_question"]
+    assert "auditable risk-control framework" in segments_by_id["carrier_reinsurer_model_risk"]["buyer_question"]
+    assert "Named decision context" in segments_by_id["broker_mga_submission_desk"]["minimum_success"]
     assert any(package["package_id"] == "policy_evidence_sprint" and package["price_usd"] == 45_000 for package in traction_plan["commercial_packages"])
     assert any(metric["metric"] == "paid_pilot_scopes_or_lois" for metric in traction_plan["weekly_metrics"])
     assert any(rule["rule"] == "packet_fingerprinted_review" for rule in traction_plan["counting_rules"])
