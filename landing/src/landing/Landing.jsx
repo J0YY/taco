@@ -486,26 +486,22 @@ function Commercial() {
 
 /* ================= SECTION — EXPLAINER (mechanistic interpretation) ================= */
 const EXPLAINER = [
-  ['01_opening', 'Open the black box', 'We look inside the policy, not just its benchmark score.'],
-  ['02_activations', 'Neurons fire', 'As the robot acts, neurons in the network light up.'],
-  ['03_features', 'What a feature is', 'A feature is a concept the network reuses across many situations.'],
-  ['04_superposition', 'Superposition', 'A single neuron can carry several different meanings at once.'],
-  ['05_sae_mechanics', 'Sparse autoencoder', 'It pulls those tangled meanings apart into clean features.'],
-  ['06_topk', 'TopK sparsity', 'Keep only the few features that actually fire at each step.'],
-  ['07_monitor_rule', 'Feature monitor', 'Put a trip wire on a risky feature and watch it during the task.'],
-  ['08_replay_timing', 'Early warning', 'The internal signal trips before the visible failure happens.'],
-  ['09_sae_prism', 'SAE as a prism', 'It splits one mixed signal into separate, readable parts.'],
-  ['10_feature_quality', 'General vs memorized', 'Real skills generalize; memorized shortcuts do not.'],
-  ['11_dreamaudit', 'DreamAudit timing', 'We force the failure and measure how early the warning fires.'],
-  ['12_insurance', 'From risk to terms', 'A risk we can watch becomes a coverage and certification condition.'],
-  ['13_claim', 'The claim', 'So we can certify a robot policy before it is ever deployed.'],
+  ['01_opening', 'The certification question', 'A replay can show that a robot failed. Certification needs a sharper question: did the model give an internal warning before the failure became visible? We use a sparse autoencoder on policy activations, a few active features per step, and a real FR-004 monitor that fired many steps before failure.'],
+  ['02_activations', 'Activations', 'Pixels and the language instruction flow into the model, and each neuron computes a weighted sum plus a bias through a nonlinearity. At one moment in a rollout, all of those numbers form an activation vector h, a snapshot of what the model is representing right now. The question is whether h already contains a warning.'],
+  ['03_features', 'What a feature is', 'A feature is not one neuron, it is a direction in activation space. The feature score is how strongly the current state h lines up with that direction. So a label like "gripper closing near object" or "language target is orange" is a name for a direction that repeatedly lights up in similar model states.'],
+  ['04_superposition', 'Superposition', 'Why not read neurons directly? The network packs many concepts into fewer coordinates, so one neuron can mean object closeness, a language target, and a memorized shortcut in different contexts. That is the polysemantic neuron problem, and it is why we rotate into a cleaner feature basis.'],
+  ['05_sae_mechanics', 'Sparse autoencoder', 'The encoder turns the activation vector h into feature scores z, most of them inactive, and the decoder reconstructs h from only the active feature directions. Training balances two goals: reconstruct h accurately, and keep the code sparse enough that individual features can be inspected.'],
+  ['06_topk', 'TopK sparsity', 'TopK keeps only the K largest feature scores and sets the rest to zero. In the drawing K is three; in the TACO Octo SAE the typical active count is about 64 out of 4096 slots per step. That sparsity is what makes the feature vector readable over time.'],
+  ['07_monitor_rule', 'The monitor rule', 'A monitor is just a rule over time on the sparse feature vector z(t). If a risk feature rises above a threshold, the robot can slow down, hand off, or abort before the visible failure. For certification the object is a runtime rule with a threshold, a lead time, and a known false-alert profile.'],
+  ['08_replay_timing', 'Replay vs internal timing', 'A replay tells us what happened; internals tell us when the risk started. The same frame and instruction flow through the policy, the visible trajectory can look fine for a while, but the residual stream may already be moving toward a risky state. So TACO looks at both.'],
+  ['09_sae_prism', 'SAE as a prism', 'The residual stream has 256 mixed dimensions; the SAE expands it into 4096 feature slots, with only a few active per step. Some active slots read as grasp primitives, task progress, or language-target features. The point is not perfect labels, it is that the model state becomes auditable.'],
+  ['10_feature_quality', 'General vs memorized', 'Not every feature is certification grade. A general feature fires across related scenes and lines up with behavior, so it can become a monitor candidate. A memorized feature fires sharply in one replay and disappears under a small perturbation, which is weaker evidence on its own.'],
+  ['11_dreamaudit', 'DreamAudit timing', 'DreamAudit turns an internal hint into replayable evidence. In FR-004 the SAE monitor first alerts at step 32 and the physical failure arrives near step 80, a 48-step warning lead. That lead is what makes the failure operationally useful: the system can intervene before the robot commits to the bad behavior.'],
+  ['12_insurance', 'Readiness tier', 'The certificate does not claim the robot is safe in general. It says a specific failure mode was identified, the internal signal appears early, and a required runtime control can respond. That is how the internals set the readiness tier: they name the failure family and the condition for certified deployment.'],
+  ['13_claim', 'The narrow claim', 'The final claim is deliberately narrow. SAE features, DreamAudit replay, and a runtime monitor do not prove every feature is causal. They do support a practical workflow: identify a failure mode from internals, replay it, test whether the warning arrives early, and issue a conditional readiness tier.'],
 ]
 function Explainer() {
   const [i, setI] = useState(0)
-  useEffect(() => {
-    const t = setInterval(() => setI((x) => (x + 1) % EXPLAINER.length), 7000)
-    return () => clearInterval(t)
-  }, [])
   const [id, title, cap] = EXPLAINER[i]
   const nav = (d) => setI((x) => (x + d + EXPLAINER.length) % EXPLAINER.length)
   const btn = { cursor: 'pointer', borderRadius: 6, padding: '7px 14px', fontFamily: 'DM Mono, monospace', fontSize: 12, border: '1px solid #4d4641', background: 'transparent', color: '#c9c0ad' }
@@ -516,15 +512,15 @@ function Explainer() {
           <div className="eyebrow" style={{ marginBottom: 16 }}>How it works</div>
           <h2 className="display-lg">From neurons to certification.</h2>
           <p className="body-lg" style={{ marginTop: 16 }}>
-            A short visual walkthrough of how we read a robot policy from the inside, why the
-            internal warning fires before the physical failure, and how that turns into a certificate.
+            A chapter walkthrough of how we read a robot policy from the inside, why the
+            internal warning fires before the physical failure, and how that becomes a certificate.
           </p>
         </div>
-        <div className="card" style={{ maxWidth: 840, margin: '0 auto' }}>
-          <img key={id} src={`/videos/explainer/${id}.gif`} alt={title}
+        <div className="card" style={{ maxWidth: 860, margin: '0 auto' }}>
+          <video key={id} src={`/videos/explainer/${id}.mp4`} controls autoPlay muted loop playsInline
             style={{ width: '100%', borderRadius: 8, background: '#221e1b', display: 'block' }} />
           <div className="card-title" style={{ marginTop: 14 }}>{i + 1}. {title}</div>
-          <p style={{ marginTop: 4 }}>{cap}</p>
+          <p style={{ marginTop: 6, maxWidth: 760 }}>{cap}</p>
           <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
             <button style={btn} onClick={() => nav(-1)}>‹ prev</button>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -535,7 +531,7 @@ function Explainer() {
             </div>
             <button style={btn} onClick={() => nav(1)}>next ›</button>
           </div>
-          <div className="label-mono" style={{ marginTop: 10, textAlign: 'center' }}>Chapter {i + 1} of {EXPLAINER.length} · auto-advances</div>
+          <div className="label-mono" style={{ marginTop: 10, textAlign: 'center' }}>Chapter {i + 1} of {EXPLAINER.length}</div>
         </div>
       </div>
     </section>
@@ -567,28 +563,29 @@ const POLICY_CATS = [
 const VSTYLE = { width: '100%', display: 'block', borderRadius: 6, background: '#221e1b', aspectRatio: '16 / 10', objectFit: 'cover' }
 
 const KIND_METHOD = {
-  vla: 'We hook the VLA residual stream and train a TopK sparse autoencoder (the Dr. VLA method), then read which interpretable features drive each action and watch the failure-linked feature step by step.',
-  'rl-arm': 'We hook the PPO actor MLP (three 256-unit Tanh layers) and record its hidden activations at every control step, then fit a linear probe that separates failing rollouts from succeeding ones.',
-  'rl-leg': 'We hook the locomotion PPO actor MLP and record hidden activations every step, then probe for an about-to-fall direction (base tilt and center-of-mass velocity).',
+  vla: 'We capture the VLA residual stream at four evenly spaced layers during the rollout. On the Octo policy we trained a TopK sparse autoencoder (256 to 4096 dimensions, about 64 active features per step, ~99.8% reconstruction explained variance) and labeled features by the episodes that most activate them. A feature is a direction in activation space; its score is how strongly the current state aligns with that direction. We then track the language-target and unsafe-action feature scores step by step and define a monitor that trips when the failure-linked score crosses a threshold.',
+  'rl-arm': 'We register forward hooks on the PPO actor MLP (observation, then three 256-unit Tanh layers, then the action) and record the layer-3 hidden vector at every control step. We fit a logistic-regression probe on those vectors to predict per-episode failure, using the trained checkpoint vs the early checkpoint rollouts as the two labels. The probe weight vector is the failure direction; projecting each step onto it gives a per-step risk score we can threshold over time.',
+  'rl-leg': 'Same actor-MLP forward hooks as the arms, on the locomotion policy. We probe for an about-to-fall direction by regressing the hidden activations against base orientation (tilt) and center-of-mass velocity, the quantities that physically precede a fall, then track that probe score across the episode to see whether it rises before the body contacts the ground.',
 }
-const FIND_RLARM = 'We record the actor MLP hidden state during the task and a probe separates the trained policy from the early, failing checkpoint. We have not yet fit an in-time early-warning monitor for this task.'
 const MECH = {
   'ANYmal-C (ManiSkill PPO)': { kind: 'rl-leg', monitorable: false,
-    finding: 'The probe reads the hidden state live and separates failing from succeeding episodes, but the fall is a slow loss of balance with no sharp pre-fall spike, so there is no usable early-warning lead, and no recovery controller is verified yet.',
-    tierWhy: 'Tier 3, remediate and re-audit. A real reproducible failure with readable internals, but it is not monitorable in time and has no verified fix, so it cannot be conditionally certified yet.' },
+    finding: 'Result: the probe cleanly separates failing from succeeding episodes, so the fall direction is recoverable from the hidden state. But its score is elevated across the whole failed episode instead of spiking at a clear onset, because the failure is a gradual loss of balance rather than a discrete event, so there is no crisp lead time to threshold on. We also have not trained a recovery controller.',
+    tierWhy: 'Tier 3, remediate and re-audit. Readable internals and a reproducible failure, but no in-time early warning and no verified fix, so it cannot be conditionally certified yet.' },
   'OpenVLA · language override': { kind: 'vla', monitorable: true,
-    finding: 'The SAE isolates a language-override feature that dominates action selection and rises before the wrong action. A sanitizer that strips the conflicting suffix is verified to restore success on a real rollout.',
-    tierWhy: 'Tier 1, certified for conditional deployment. The failure is monitorable and a control is verified to restore success. Required condition: keep the instruction-conflict sanitizer enabled.' },
+    finding: 'Result: one SAE feature aligned with the injected language target dominates action selection and its score rises several steps before the wrong action commits. When we sanitize the conflicting suffix, that feature spike disappears and the same policy completes the task, verified on a real rollout. So the feature is both predictive and the control that suppresses it restores success.',
+    tierWhy: 'Tier 1, certified for conditional deployment. Monitorable internal signature plus a control verified to restore success. Required condition: keep the instruction-conflict sanitizer enabled.' },
   'OpenVLA · warehouse occlusion': { kind: 'vla', monitorable: true,
-    finding: 'Under occlusion the target-object feature collapses while unsafe-trajectory dominance rises, and the internal risk crosses threshold before the wrong grasp. A second-view monitor is recommended but not yet verified to restore success.',
-    tierWhy: 'Tier 2, conditional. Monitorable internal signature, but the fix is not yet verified. Deploy only with the occlusion monitor enabled and re-audit after any model or camera change.' },
+    finding: 'Result: under occlusion the target-object feature score collapses while an unsafe-trajectory feature rises, and the combined internal risk crosses threshold before the wrong grasp. We have a recommended second-view monitor but have not yet verified it restores success across the occlusion neighborhood.',
+    tierWhy: 'Tier 2, conditional. Monitorable internal signature, but the fix is recommended not verified. Deploy only with the occlusion monitor enabled and re-audit after any model or camera change.' },
   _vlaMon: { kind: 'vla', monitorable: true,
-    finding: 'An SAE feature monitor on the residual stream flags the failure regime before the task is lost (a 48-step lead on the curated set, recall 1.0). The handoff control is recommended but not yet verified to restore success.',
-    tierWhy: 'Tier 2, conditional. Real internal early-warning exists, but the control is not yet verified. Deploy with the monitor enabled and re-audit.' },
-  'PPO · PickCube': { kind: 'rl-arm', monitorable: false, finding: FIND_RLARM,
+    finding: 'Result: on the curated SimplerEnv set the SAE monitor first alerts at step 32, about 48 steps before the episode fails near step 80, with recall 1.0 and precision about 0.86 (one false alert on a clean success). The handoff control is recommended but not yet verified to restore success.',
+    tierWhy: 'Tier 2, conditional. A real early-warning lead exists, but the control is not yet verified. Deploy with the monitor enabled and re-audit.' },
+  'PPO · PickCube': { kind: 'rl-arm', monitorable: false,
+    finding: 'Result: the probe distinguishes the trained policy (success_once 1.0) from the early checkpoint (0.0), so the failure regime is linearly readable from the hidden state. But we have not yet fit an in-time monitor with a measured lead and false-alert rate for this task.',
     tierWhy: 'Tier 2, conditional. The trained policy succeeds and internals are readable, but a runtime monitor still needs to be fit and verified before deployment.' },
-  _rlRemediate: { kind: 'rl-arm', monitorable: false, finding: FIND_RLARM,
-    tierWhy: 'Tier 3, remediate and re-audit. Real failure rate with readable internals, but no in-time monitor or verified fix yet.' },
+  _rlRemediate: { kind: 'rl-arm', monitorable: false,
+    finding: 'Result: a probe separates failing from succeeding rollouts, so the failure regime is readable, but the policy still has a high residual failure rate and we have no in-time monitor or verified recovery for it yet.',
+    tierWhy: 'Tier 3, remediate and re-audit. Readable internals and a real failure rate, but no in-time monitor or verified fix yet.' },
 }
 function mechFor(name) {
   if (MECH[name]) return MECH[name]
