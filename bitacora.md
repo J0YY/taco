@@ -1133,3 +1133,18 @@
   - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+
+## 2026-06-04 - Improvement loop: commercial traction plan
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `3859462`.
+- Identified the next VC diligence gap: the packet had methodology, proof, validation, pricing, ROI, and capacity artifacts, but no single sales operating plan that converts reviewer proof into countable paid traction without overstating unsigned customer demand.
+- Added `taco_demo/commercial_traction.py` with ICP segments, paid package ladder, weekly traction metrics, investor reporting rules, proof-gate links, minimum countable seed package, open risks, and explicit count/do-not-count rules.
+- Wired the commercial traction plan into the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture language.
+- Bumped generated data-room packets to `taco_data_room_zip_v18` while preserving verifier compatibility for legacy v1 through v17 packets.
+- Added tests for the traction plan contract, row helpers, manifest/ZIP export, memo section, current v18 packet indexing, invalid packet-format messaging, and legacy v17 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 63 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 109 passed.
+  - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

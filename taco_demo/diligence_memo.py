@@ -111,6 +111,7 @@ def build_diligence_memo(
     claim_validation_ledger = data_room_manifest["claim_validation_ledger"]
     investor_proof_pipeline = data_room_manifest["investor_proof_pipeline"]
     research_validation_plan = data_room_manifest["research_validation_plan"]
+    commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -217,6 +218,38 @@ def build_diligence_memo(
     lines.extend(["", "| Proof gate | Pass condition | Do not count |", "| --- | --- | --- |"])
     for gate in investor_proof_pipeline["proof_gates"]:
         lines.append(f"| {gate['gate']} | {gate['pass_condition']} | {gate['do_not_count']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Commercial Traction Plan",
+            "",
+            f"* Status: {commercial_traction_plan['status']}",
+            f"* Boundary: {commercial_traction_plan['boundary']}",
+            f"* Target raise: ${commercial_traction_plan['target_raise_usd']:,.0f}",
+            f"* Safe claim: {commercial_traction_plan['traction_thesis']['safe_claim']}",
+            "",
+            "| Segment | Target prospects | First offer | Conversion artifact | Do not count |",
+            "| --- | ---: | --- | --- | --- |",
+        ]
+    )
+    for segment in commercial_traction_plan["icp_segments"]:
+        lines.append(
+            f"| {segment['segment_id']} | {segment['target_prospects']} | {segment['first_offer']} | "
+            f"{segment['conversion_artifact']} | {segment['do_not_count']} |"
+        )
+    lines.extend(["", "| Package | Price | Term | Output | Upgrade gate |", "| --- | ---: | --- | --- | --- |"])
+    for package in commercial_traction_plan["commercial_packages"]:
+        lines.append(
+            f"| {package['package_id']} | ${package['price_usd']:,.0f} | {package['term']} | "
+            f"{package['deliverable']} | {package['upgrade_gate']} |"
+        )
+    lines.extend(["", "| Weekly metric | Target | Count only if |", "| --- | ---: | --- |"])
+    for metric in commercial_traction_plan["weekly_metrics"]:
+        lines.append(f"| {metric['metric']} | {metric['weekly_target']} | {metric['count_only_if']} |")
+    lines.extend(["", "| Counting rule | Count | Do not count |", "| --- | --- | --- |"])
+    for rule in commercial_traction_plan["counting_rules"]:
+        lines.append(f"| {rule['rule']} | {rule['count']} | {rule['do_not_count']} |")
 
     lines.extend(
         [

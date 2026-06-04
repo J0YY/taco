@@ -13,6 +13,7 @@ import zlib
 from .actuarial_readiness import build_actuarial_readiness_plan
 from .buyer_roi import build_buyer_roi_model
 from .claim_validation import build_claim_validation_ledger
+from .commercial_traction import build_commercial_traction_plan
 from .design_partner_plan import build_design_partner_plan
 from .external_validation import build_external_validation_capture_kit
 from .commercial_model import build_commercial_scale_model
@@ -52,6 +53,7 @@ PACKET_FORMAT_V14 = "taco_data_room_zip_v14"
 PACKET_FORMAT_V15 = "taco_data_room_zip_v15"
 PACKET_FORMAT_V16 = "taco_data_room_zip_v16"
 PACKET_FORMAT_V17 = "taco_data_room_zip_v17"
+PACKET_FORMAT_V18 = "taco_data_room_zip_v18"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -113,8 +115,11 @@ REQUIRED_BUNDLE_FILES_V15 = REQUIRED_BUNDLE_FILES_V14 | {
 REQUIRED_BUNDLE_FILES_V16 = REQUIRED_BUNDLE_FILES_V15 | {
     "commercial/investor_proof_pipeline.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V16 | {
+REQUIRED_BUNDLE_FILES_V17 = REQUIRED_BUNDLE_FILES_V16 | {
     "research/research_validation_plan.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V17 | {
+    "commercial/commercial_traction_plan.json",
 }
 
 
@@ -238,6 +243,12 @@ def build_data_room_checklist(
             "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
             "Weekly operating workflow, reviewer targets, external-proof gates, and data-room upgrade rules are attached.",
             "Execute the workflow with external reviewers and attach only written artifacts with packet fingerprints and permission metadata.",
+        ),
+        _item(
+            "Commercial Traction Plan",
+            "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
+            "ICP targets, paid package ladder, weekly traction metrics, investor reporting rules, and count/do-not-count controls are attached.",
+            "Convert walkthroughs into packet-fingerprinted reviewer memos, paid scopes, source-data paths, or permission-to-quote artifacts before calling it traction.",
         ),
         _item(
             "Design-Partner References",
@@ -409,6 +420,18 @@ def build_data_room_manifest(
         investor_proof_pipeline,
         dreamaudit_intake,
     )
+    commercial_traction_plan = build_commercial_traction_plan(
+        application,
+        quote,
+        commercial_scale_model,
+        buyer_roi_model,
+        investor_proof_pipeline,
+        external_validation_capture_kit,
+        claim_validation_ledger,
+        research_validation_plan,
+        design_partner_plan,
+        seed_financing_plan,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -440,6 +463,7 @@ def build_data_room_manifest(
         "claim_validation_ledger": claim_validation_ledger,
         "investor_proof_pipeline": investor_proof_pipeline,
         "research_validation_plan": research_validation_plan,
+        "commercial_traction_plan": commercial_traction_plan,
     }
 
 
@@ -481,6 +505,7 @@ def build_data_room_bundle(
         ("commercial/actuarial_readiness_plan.json", _json_bytes(manifest["actuarial_readiness_plan"])),
         ("commercial/buyer_roi_model.json", _json_bytes(manifest["buyer_roi_model"])),
         ("commercial/investor_proof_pipeline.json", _json_bytes(manifest["investor_proof_pipeline"])),
+        ("commercial/commercial_traction_plan.json", _json_bytes(manifest["commercial_traction_plan"])),
         ("technical/technical_diligence_runbook.json", _json_bytes(manifest["technical_diligence_runbook"])),
     ]
     certificate_names: set[str] = set()
@@ -588,7 +613,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, "
                         "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
                         "taco_data_room_zip_v14, taco_data_room_zip_v15, taco_data_room_zip_v16, "
-                        "or taco_data_room_zip_v17"
+                        "taco_data_room_zip_v17, or taco_data_room_zip_v18"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -737,7 +762,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V17,
+        "packet_format": PACKET_FORMAT_V18,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -787,6 +812,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V16:
         return REQUIRED_BUNDLE_FILES_V16
     if packet_format == PACKET_FORMAT_V17:
+        return REQUIRED_BUNDLE_FILES_V17
+    if packet_format == PACKET_FORMAT_V18:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -852,6 +879,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/actuarial_readiness_plan.json` - future-cost, data-quality, modeling, credibility, filing, and claims-loop readiness plan",
             "* `commercial/buyer_roi_model.json` - modeled buyer economics, payback scenarios, proof gates, and ROI sensitivity cases",
             "* `commercial/investor_proof_pipeline.json` - weekly external-proof workflow, reviewer targets, proof gates, and data-room upgrade rules",
+            "* `commercial/commercial_traction_plan.json` - ICP targets, paid package ladder, weekly traction metrics, investor reporting rules, and count/do-not-count controls",
             "* `technical/technical_diligence_runbook.json` - local reproduction, live-evidence, packet-verification, and cluster-regeneration runbook",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",

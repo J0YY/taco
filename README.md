@@ -98,6 +98,7 @@ InsuranceApplication
          role-specific external-review agenda
          evidence capture form for pilots, LOIs, or reviewer memos
          commercial scale model with market sources, buyer segments, and proof gates
+         commercial traction plan with ICP targets, paid package ladder, weekly metrics, and count/do-not-count reporting
          buyer ROI model with stakeholder value drivers, payback cases, and procurement proof gates
          research validation plan with falsifiable hypotheses, workstreams, thresholds, and downgrade rules
          investor claim validation ledger with safe claims, evidence levels, upgrade gates, and disallowed overclaims

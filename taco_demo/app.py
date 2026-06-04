@@ -43,6 +43,13 @@ from taco_demo.commercial_model import (
     commercial_scenario_rows,
     commercial_segment_rows,
 )
+from taco_demo.commercial_traction import (
+    build_commercial_traction_plan,
+    commercial_traction_metric_rows,
+    commercial_traction_package_rows,
+    commercial_traction_rule_rows,
+    commercial_traction_segment_rows,
+)
 from taco_demo.data_room import (
     MAX_PACKET_BYTES,
     PACKET_INDEX_PATH,
@@ -745,6 +752,18 @@ with tabs[9]:
             investor_proof_pipeline,
             dreamaudit_intake,
         )
+        commercial_traction_plan = build_commercial_traction_plan(
+            application,
+            audit["quote"],
+            commercial_model,
+            buyer_roi_model,
+            investor_proof_pipeline,
+            external_validation_kit,
+            claim_validation_ledger,
+            research_validation_plan,
+            design_partner_plan,
+            seed_financing_plan,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -851,6 +870,19 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(investor_proof_stage_rows(investor_proof_pipeline)), width="stretch")
         st.dataframe(pd.DataFrame(investor_proof_reviewer_rows(investor_proof_pipeline)), width="stretch")
         st.dataframe(pd.DataFrame(investor_proof_gate_rows(investor_proof_pipeline)), width="stretch")
+        st.markdown("#### Commercial Traction Plan")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Traction status", str(commercial_traction_plan["status"]).replace("_", " ").title())
+        c2.metric(
+            "Target prospects",
+            sum(int(item["target_prospects"]) for item in commercial_traction_plan["icp_segments"]),
+        )
+        c3.metric("Paid packages", len(commercial_traction_plan["commercial_packages"]))
+        st.caption(commercial_traction_plan["boundary"])
+        st.dataframe(pd.DataFrame(commercial_traction_segment_rows(commercial_traction_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(commercial_traction_package_rows(commercial_traction_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(commercial_traction_metric_rows(commercial_traction_plan)), width="stretch")
+        st.dataframe(pd.DataFrame(commercial_traction_rule_rows(commercial_traction_plan)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],
