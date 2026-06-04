@@ -631,6 +631,7 @@ const POLICY_CATS = [
   ] },
   { key: 'mskill', label: 'Manipulation arms · RL (ManiSkill)', policies: [
     { name: 'PPO · PickCube', task: 'pick the cube to a goal pose · ManiSkill3 (trained vs early)', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/pickcube_success.mp4', f: '/videos/pickcube_failure.mp4' },
+    { name: 'PPO · PokeCube', task: 'poke the cube to the target with the peg · ManiSkill3 (trained vs mid)', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/pokecube_success.mp4', f: '/videos/pokecube_failure.mp4' },
     { name: 'PPO · StackCube', task: 'stack the red cube on the green cube · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/stackcube_success.mp4', f: '/videos/stackcube_failure.mp4' },
     { name: 'PPO · PullCube', task: 'pull cube to target · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/pullcube_success.mp4', f: '/videos/pullcube_failure.mp4' },
   ] },
@@ -667,6 +668,9 @@ const MECH = {
   'PPO · PickCube': { kind: 'rl-arm', monitorable: false,
     finding: 'Result: the probe distinguishes the trained policy (success_once 1.0) from the early checkpoint (0.0), so the failure regime is linearly readable from the hidden state. But we have not yet fit an in-time monitor with a measured lead and false-alert rate for this task.',
     tierWhy: 'Tier 2, conditional. The trained policy succeeds and internals are readable, but a runtime monitor still needs to be fit and verified before deployment.' },
+  'PPO · PokeCube': { kind: 'rl-arm', monitorable: false,
+    finding: 'Result: the trained policy pokes the cube to the target on 28 of 28 eval episodes; a mid-training checkpoint succeeds only 13 of 28 and the failed episodes overshoot or stall short of the target. The probe separates the two checkpoints from the actor hidden state, but we have not yet fit an in-time monitor for the overshoot failure.',
+    tierWhy: 'Tier 2, conditional. High task success and a readable failure regime, but no verified runtime monitor yet, so deploy with a target-reached check and re-audit on any task change.' },
   _rlRemediate: { kind: 'rl-arm', monitorable: false,
     finding: 'Result: a probe separates failing from succeeding rollouts, so the failure regime is readable, but the policy still has a high residual failure rate and we have no in-time monitor or verified recovery for it yet.',
     tierWhy: 'Tier 3, remediate and re-audit. Readable internals and a real failure rate, but no in-time monitor or verified fix yet.' },
