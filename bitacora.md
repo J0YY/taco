@@ -365,3 +365,5 @@
   - full 6,531-certificate DreamAudit scan: readiness `100/100`, status `carrier_review_ready`, unmapped families `[]`, gaps `[]`.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed generic calibration/grasp review-fix commit `3f8a41c` to GitHub `main`.
+- Final independent `codex review --base _review-loop-baseline` reported no discrete correctness issues in the cumulative control-taxonomy, normalization, exclusion, UI, and test changes.
