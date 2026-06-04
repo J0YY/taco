@@ -632,6 +632,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 66 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed read-time ZIP error fix commit `7cd4354` to GitHub `main`.
+- Eighth independent `codex review --base _review-loop-baseline` found one issue:
+  - corrupted deflate payloads could raise `zlib.error` during `archive.read(...)` and escape the verifier instead of failing closed.
+- Added `zlib.error` to verifier fail-closed handling and regression coverage that corrupts a compressed `packet/index.json` payload.
+- Verification after corrupt-deflate fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 21 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 67 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

@@ -8,6 +8,7 @@ import json
 import re
 from typing import Any
 import zipfile
+import zlib
 
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
@@ -278,6 +279,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
         NotImplementedError,
         zipfile.BadZipFile,
         json.JSONDecodeError,
+        zlib.error,
     ) as exc:
         issues.append(f"Invalid data-room packet: {exc}")
     return {

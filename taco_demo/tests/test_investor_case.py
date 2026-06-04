@@ -57,6 +57,31 @@ def _mark_zip_member_encrypted(bundle: bytes, member_name: str) -> bytes:
         position = central_offset + 46 + name_length + extra_length + comment_length
 
 
+def _corrupt_zip_member_payload(bundle: bytes, member_name: str) -> bytes:
+    data = bytearray(bundle)
+    target = member_name.encode("utf-8")
+    position = 0
+    while True:
+        central_offset = data.find(b"PK\x01\x02", position)
+        if central_offset == -1:
+            raise AssertionError(f"ZIP member not found: {member_name}")
+        name_length = struct.unpack("<H", data[central_offset + 28 : central_offset + 30])[0]
+        extra_length = struct.unpack("<H", data[central_offset + 30 : central_offset + 32])[0]
+        comment_length = struct.unpack("<H", data[central_offset + 32 : central_offset + 34])[0]
+        name = data[central_offset + 46 : central_offset + 46 + name_length]
+        if name == target:
+            compressed_size = struct.unpack("<I", data[central_offset + 20 : central_offset + 24])[0]
+            local_offset = struct.unpack("<I", data[central_offset + 42 : central_offset + 46])[0]
+            local_name_length = struct.unpack("<H", data[local_offset + 26 : local_offset + 28])[0]
+            local_extra_length = struct.unpack("<H", data[local_offset + 28 : local_offset + 30])[0]
+            payload_start = local_offset + 30 + local_name_length + local_extra_length
+            if compressed_size == 0:
+                raise AssertionError(f"ZIP member has no compressed payload: {member_name}")
+            data[payload_start + compressed_size // 2] ^= 0xFF
+            return bytes(data)
+        position = central_offset + 46 + name_length + extra_length + comment_length
+
+
 def test_research_foundations_have_sources_and_translations():
     assert len(RESEARCH_FOUNDATIONS) >= 4
     for foundation in RESEARCH_FOUNDATIONS:
@@ -373,6 +398,41 @@ def test_data_room_bundle_verifier_fails_closed_on_read_time_zip_errors():
         archive.writestr("packet/index.json", json.dumps(packet_index))
 
     verification = verify_data_room_bundle(_mark_zip_member_encrypted(buffer.getvalue(), "packet/index.json"))
+
+    assert verification["valid"] is False
+    assert any(issue.startswith("Invalid data-room packet:") for issue in verification["issues"])
+
+
+def test_data_room_bundle_verifier_fails_closed_on_corrupt_deflate_payloads():
+    required_files = [
+        "README.md",
+        "manifest.json",
+        "application.json",
+        "quote.json",
+        "checklist.json",
+        "diligence_memo.md",
+        "insurance/workflow_examples.json",
+        "research/sources.json",
+        "suite/video_index.json",
+        "dreamaudit/summary.json",
+    ]
+    packet_index = {
+        "files": [
+            {
+                "path": name,
+                "bytes": 0,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            }
+            for name in required_files
+        ]
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name in required_files:
+            archive.writestr(name, b"")
+        archive.writestr("packet/index.json", json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(_corrupt_zip_member_payload(buffer.getvalue(), "packet/index.json"))
 
     assert verification["valid"] is False
     assert any(issue.startswith("Invalid data-room packet:") for issue in verification["issues"])
