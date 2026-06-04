@@ -1092,3 +1092,6 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 103 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed investor claim validation ledger commit `2a0967a` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found no correctness-breaking regression in the claim validation ledger, Investor Case UI, memo wiring, v15 data-room packet, or legacy verifier paths.
+- Restarted Streamlit at `http://127.0.0.1:8501` with PID `99656`.
