@@ -66,3 +66,4 @@
 - Ran a second independent `codex review --base _review-loop-baseline` after adding the ManiSkill suite; reviewer found no observable regressions and noted that the added tests pass and the Streamlit app imports successfully.
 - Completion audit found that `bootstrap_demo_data --force` rewrote the application `created_at` timestamp, leaving the worktree dirty after a required command. Fixed `default_application()` to use deterministic `DEMO_CREATED_AT`, regenerated `APP-APEX-001.json`, and added a schema/bootstrap regression test.
 - Updated Streamlit width calls from deprecated `use_container_width=True` to `width="stretch"` after the app import emitted the 2026 deprecation warning.
+- Pushed deterministic bootstrap fix at `c96234d` and ran a final independent `codex review --base _review-loop-baseline`; reviewer reported no actionable correctness issues relative to the specified base.
