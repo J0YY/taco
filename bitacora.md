@@ -187,3 +187,5 @@
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 33 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed bf16 fix commit `9a89d86` to GitHub `main`.
+- Final independent `codex review --base _review-loop-baseline` reported no discrete functional regression in the DreamAudit adapter or activation recorder changes.
