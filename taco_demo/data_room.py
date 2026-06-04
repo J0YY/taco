@@ -229,21 +229,32 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
     indexed_file_count = 0
     if len(bundle_bytes) > MAX_PACKET_BYTES:
         issues.append(f"Packet exceeds maximum byte size: {len(bundle_bytes)} > {MAX_PACKET_BYTES}")
+        return {
+            "valid": False,
+            "issues": issues,
+            "file_count": 0,
+            "indexed_file_count": 0,
+            "packet_sha256": hashlib.sha256(bundle_bytes).hexdigest(),
+        }
     try:
         with zipfile.ZipFile(io.BytesIO(bundle_bytes), mode="r") as archive:
             infos = archive.infolist()
             names = sorted(archive.namelist())
             infos_by_name = {info.filename: info for info in infos}
             total_uncompressed = sum(info.file_size for info in infos)
+            size_limit_failed = False
             if len(infos) > MAX_ZIP_MEMBERS:
                 issues.append(f"ZIP member count exceeds limit: {len(infos)} > {MAX_ZIP_MEMBERS}")
+                size_limit_failed = True
             if total_uncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES:
                 issues.append(
                     f"ZIP uncompressed size exceeds limit: {total_uncompressed} > {MAX_TOTAL_UNCOMPRESSED_BYTES}"
                 )
+                size_limit_failed = True
             oversized_names = sorted(info.filename for info in infos if info.file_size > MAX_ZIP_MEMBER_BYTES)
             if oversized_names:
                 issues.extend(f"ZIP member too large: {name}" for name in oversized_names)
+                size_limit_failed = True
             unsafe_names = [name for name in names if _unsafe_zip_name(name)]
             if unsafe_names:
                 issues.extend(f"Unsafe ZIP member path: {name}" for name in unsafe_names)
@@ -255,6 +266,8 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                 issues.extend(f"Missing required file: {name}" for name in required_missing)
             if PACKET_INDEX_PATH not in names:
                 issues.append(f"Missing required file: {PACKET_INDEX_PATH}")
+            elif size_limit_failed:
+                issues.append("Packet index not read because ZIP size limits failed")
             else:
                 index_info = infos_by_name.get(PACKET_INDEX_PATH)
                 if index_info is not None and index_info.file_size <= MAX_ZIP_MEMBER_BYTES:

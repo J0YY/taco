@@ -704,6 +704,16 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 70 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed uploaded ZIP resource-bound fix commit `3975b0f` to GitHub `main`.
+- Third independent `codex review --base _review-loop-baseline` found one issue:
+  - ZIP size-limit failures were recorded as issues, but verifier execution could still continue into `archive.read(...)` for aggregate oversize or oversized manifest cases.
+- Changed verifier behavior to fail closed before any ZIP reads when packet bytes exceed the limit and to skip packet-index/member reads after ZIP-level size limits fail.
+- Tightened oversized-member regression coverage to prove the packet index is not read after a size-limit failure.
+- Verification after size-limit fail-fast fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 24 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 70 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

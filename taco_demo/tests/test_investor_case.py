@@ -530,7 +530,9 @@ def test_data_room_bundle_verifier_rejects_oversized_members_before_reading():
     verification = verify_data_room_bundle(buffer.getvalue())
 
     assert verification["valid"] is False
+    assert verification["indexed_file_count"] == 0
     assert "ZIP member too large: huge.bin" in verification["issues"]
+    assert "Packet index not read because ZIP size limits failed" in verification["issues"]
 
 
 def test_data_room_bundle_verifier_rejects_empty_packet_index():
