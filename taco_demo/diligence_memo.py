@@ -9,6 +9,7 @@ from .data_room import build_data_room_checklist, build_data_room_manifest, data
 from .design_partner_plan import build_design_partner_plan
 from .fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS
+from .investor_objections import build_investor_objection_register
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .methodology_evidence import build_methodology_evidence_map
 from .pricing_diligence import build_pricing_diligence
@@ -56,6 +57,13 @@ def build_diligence_memo(
         dreamaudit_intake,
     )
     pricing_diligence = build_pricing_diligence(application, certificates, metrics, quote)
+    objection_register = build_investor_objection_register(
+        fundraise_readiness,
+        methodology_map,
+        pricing_diligence,
+        design_partner_plan,
+        seed_financing_plan,
+    )
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -118,6 +126,24 @@ def build_diligence_memo(
         lines.append(
             f"| {control['control']} | ${control['premium_with_control_disabled_usd']:,.0f} | "
             f"${control['monthly_delta_usd']:,.0f} | {control['status_with_control_disabled']} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Investor Objection Register",
+            "",
+            f"* Status: {objection_register['status']}",
+            f"* Boundary: {objection_register['boundary']}",
+            "",
+            "| Objection | Answer strength | Current evidence | Next proof |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for objection in objection_register["objections"]:
+        lines.append(
+            f"| {objection['objection_id']} | {objection['answer_strength']} | "
+            f"{'; '.join(objection['current_evidence'])} | {'; '.join(objection['next_proof_to_collect'])} |"
         )
 
     lines.extend(

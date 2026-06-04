@@ -14,6 +14,7 @@ from .design_partner_plan import build_design_partner_plan
 from .fundraise_readiness import build_fundraise_readiness
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
+from .investor_objections import build_investor_objection_register
 from .methodology_evidence import build_methodology_evidence_map
 from .pricing_diligence import build_pricing_diligence
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
@@ -27,6 +28,7 @@ PACKET_FORMAT_V2 = "taco_data_room_zip_v2"
 PACKET_FORMAT_V3 = "taco_data_room_zip_v3"
 PACKET_FORMAT_V4 = "taco_data_room_zip_v4"
 PACKET_FORMAT_V5 = "taco_data_room_zip_v5"
+PACKET_FORMAT_V6 = "taco_data_room_zip_v6"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -52,8 +54,11 @@ REQUIRED_BUNDLE_FILES_V3 = REQUIRED_BUNDLE_FILES_V2 | {
 REQUIRED_BUNDLE_FILES_V4 = REQUIRED_BUNDLE_FILES_V3 | {
     "research/methodology_evidence_map.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V4 | {
+REQUIRED_BUNDLE_FILES_V5 = REQUIRED_BUNDLE_FILES_V4 | {
     "commercial/pricing_diligence.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V5 | {
+    "commercial/investor_objection_register.json",
 }
 
 
@@ -185,6 +190,13 @@ def build_data_room_manifest(
         dreamaudit_intake,
     )
     pricing_diligence = build_pricing_diligence(application, certificates, metrics, quote)
+    objection_register = build_investor_objection_register(
+        fundraise_readiness,
+        methodology_evidence_map,
+        pricing_diligence,
+        design_partner_plan,
+        seed_financing_plan,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -204,6 +216,7 @@ def build_data_room_manifest(
         "seed_financing_plan": seed_financing_plan,
         "methodology_evidence_map": methodology_evidence_map,
         "pricing_diligence": pricing_diligence,
+        "investor_objection_register": objection_register,
     }
 
 
@@ -234,6 +247,7 @@ def build_data_room_bundle(
         ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
         ("commercial/seed_financing_plan.json", _json_bytes(manifest["seed_financing_plan"])),
         ("commercial/pricing_diligence.json", _json_bytes(manifest["pricing_diligence"])),
+        ("commercial/investor_objection_register.json", _json_bytes(manifest["investor_objection_register"])),
     ]
     certificate_names: set[str] = set()
     for cert in certificates:
@@ -336,7 +350,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                     issues.append(
                         "Invalid packet index: packet_format must be taco_data_room_zip_v1, "
                         "taco_data_room_zip_v2, taco_data_room_zip_v3, taco_data_room_zip_v4, "
-                        "or taco_data_room_zip_v5"
+                        "taco_data_room_zip_v5, or taco_data_room_zip_v6"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -485,7 +499,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V5,
+        "packet_format": PACKET_FORMAT_V6,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -511,6 +525,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V4:
         return REQUIRED_BUNDLE_FILES_V4
     if packet_format == PACKET_FORMAT_V5:
+        return REQUIRED_BUNDLE_FILES_V5
+    if packet_format == PACKET_FORMAT_V6:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -565,6 +581,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/design_partner_plan.json` - external-validation plan for broker/carrier/OEM pilots",
             "* `commercial/seed_financing_plan.json` - proposed $5M seed use-of-funds and milestone plan",
             "* `commercial/pricing_diligence.json` - quote-factor and control-sensitivity diligence artifact",
+            "* `commercial/investor_objection_register.json` - evidence-linked investor and carrier objection register",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",
             "",

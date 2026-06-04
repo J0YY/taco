@@ -24,6 +24,7 @@ from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.dreamaudit_intake import DEFAULT_DREAMAUDIT_ARTIFACTS, build_dreamaudit_intake_summary
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
+from taco_demo.investor_objections import build_investor_objection_register, investor_objection_rows
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
 from taco_demo.methodology_evidence import build_methodology_evidence_map, methodology_evidence_rows
@@ -573,6 +574,21 @@ with tabs[9]:
         c3.metric("Control delta", _money(pricing_diligence["aggregate_control_delta_usd"]))
         st.dataframe(pd.DataFrame(pricing_factor_rows(pricing_diligence)), width="stretch")
         st.dataframe(pd.DataFrame(pricing_control_rows(pricing_diligence)), width="stretch")
+        design_partner_plan = build_design_partner_plan(application, audit["quote"])
+        seed_financing_plan = build_seed_financing_plan(application, audit["quote"], readiness, design_partner_plan)
+        objection_register = build_investor_objection_register(
+            readiness,
+            methodology_map,
+            pricing_diligence,
+            design_partner_plan,
+            seed_financing_plan,
+        )
+        st.markdown("#### Investor Objection Register")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
+        c2.metric("Objections mapped", len(objection_register["objections"]))
+        c3.metric("Needs work", sum(1 for item in objection_register["objections"] if item["answer_strength"] == "needs_work"))
+        st.dataframe(pd.DataFrame(investor_objection_rows(objection_register)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],
@@ -587,14 +603,12 @@ with tabs[9]:
         c2.metric("Internal ready items", f"{data_room['internal_ready_items']}/{data_room['internal_total_items']}")
         c3.metric("External pending", data_room["external_pending_items"])
         st.dataframe(pd.DataFrame(data_room_rows(data_room)), width="stretch")
-        design_partner_plan = build_design_partner_plan(application, audit["quote"])
         st.markdown("#### Design-Partner Diligence Plan")
         c1, c2, c3 = st.columns(3)
         c1.metric("Validation status", str(design_partner_plan["status"]).replace("_", " ").title())
         c2.metric("Pilot tracks", len(design_partner_plan["tracks"]))
         c3.metric("Plan horizon", "90 days")
         st.dataframe(pd.DataFrame(design_partner_plan_rows(design_partner_plan)), width="stretch")
-        seed_financing_plan = build_seed_financing_plan(application, audit["quote"], readiness, design_partner_plan)
         st.markdown("#### Seed Financing Plan")
         c1, c2, c3 = st.columns(3)
         c1.metric("Target raise", _money(seed_financing_plan["target_raise_usd"]))

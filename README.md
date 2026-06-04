@@ -236,7 +236,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, methodology evidence map, pricing diligence sensitivity, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, methodology evidence map, pricing diligence sensitivity, investor objection register, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
@@ -254,6 +254,8 @@ The methodology is intentionally research-adjacent without overstating actuarial
 TACO translates those directions into an insurance workflow: failure evidence, internal risk signatures, required controls, exclusions, binders, and renewal signals.
 
 The Investor Case tab now includes a methodology evidence map. It separates research-backed direction, local artifact evidence, live DreamAudit transfer evidence, and still-open assumptions so the product does not imply that demo traces are actuarial validation or that simulator evidence alone is enough for launch.
+
+It also includes an investor objection register that maps likely VC and carrier pushback to current artifacts, open gaps, and the next proof to collect. This keeps the pitch honest: objection answers can be artifact-backed while still requiring external validation.
 
 ## Venture Thesis
 

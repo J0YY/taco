@@ -881,3 +881,22 @@
 - Pushed pricing diligence sensitivity commit `edbb8ee` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the pricing diligence artifact, Investor Case UI, memo wiring, v5 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `73733`.
+
+## 2026-06-04 - Improvement loop: investor objection register
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `10238e0`.
+- Captured `_review-loop-baseline` at `10238e0d6948254422928789e1114d625282883f` for the independent review loop.
+- Identified the next VC diligence gap: the data room had strong artifacts, but no concise objection register that maps the hardest investor/carrier questions to current evidence, remaining gaps, and next proof to collect.
+- Added `taco_demo/investor_objections.py` with:
+  - six investor/carrier objections,
+  - answer-strength labels,
+  - current evidence bullets,
+  - next proof to collect,
+  - explicit boundaries against claiming signed customers, committed capital, insurance capacity, or actuarial approval.
+- Added the objection register to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and README product/research language.
+- Bumped generated data-room packets to `taco_data_room_zip_v6` while preserving verifier compatibility for legacy v1, v2, v3, v4, and v5 packets.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 39 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 85 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
