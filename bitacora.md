@@ -25,3 +25,4 @@
   - `/tmp/taco-demo-venv/bin/python -m taco_demo.scripts.bootstrap_demo_data --force`
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 11 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed, with expected Streamlit bare-mode warnings.
+- After independent review round 1 passed, tuned generated traces so the exact quote formula lands in the updated spec's target range: monitors enabled -> `$29,800/month`; occlusion monitor disabled -> `$51,500/month`. Re-ran tests and import verification successfully.

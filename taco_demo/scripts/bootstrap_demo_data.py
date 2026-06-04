@@ -45,44 +45,44 @@ def make_trace(certificate_id: str, mode: str, seed: int = 20260604) -> dict[str
         risk = _step(p, 0.58)
         if mode == "failure":
             occlusion += 0.82 * risk
-            target -= 0.58 * risk
-            grasp -= 0.42 * risk
-            unsafe += 0.74 * risk
-            memorized += 0.66 * risk
-            action += 0.70 * risk
+            target -= 0.30 * risk
+            grasp -= 0.25 * risk
+            unsafe += 0.15 * risk
+            memorized += 0.18 * risk
+            action += 0.35 * risk
         elif mode == "mitigated":
             occlusion += 0.70 * risk
             target -= 0.20 * risk
             grasp -= 0.10 * risk
-            unsafe += 0.38 * risk
-            memorized += 0.32 * risk
-            action += 0.16 * risk
+            unsafe += 0.25 * risk
+            memorized += 0.20 * risk
+            action += 0.02 * risk
     elif certificate_id == "FR-002":
         risk = _step(p, 0.46)
         if mode == "failure":
             language += 0.86 * risk
-            unsafe += 0.64 * risk
-            action += 0.78 * risk
-            memorized += 0.35 * risk
+            unsafe += 0.18 * risk
+            action += 0.42 * risk
+            memorized += 0.15 * risk
         elif mode == "mitigated":
             language += 0.72 * risk
-            unsafe += 0.28 * risk
-            action += 0.14 * risk
+            unsafe += 0.15 * risk
+            action += 0.02 * risk
             memorized += 0.20 * risk
     else:
         risk = _step(p, 0.62)
         if mode == "failure":
             distractor += 0.78 * risk
-            memorized += 0.62 * risk
-            target -= 0.34 * risk
-            unsafe += 0.58 * risk
-            action += 0.55 * risk
+            memorized += 0.20 * risk
+            target -= 0.15 * risk
+            unsafe += 0.12 * risk
+            action += 0.30 * risk
         elif mode == "mitigated":
             distractor += 0.48 * risk
-            memorized += 0.34 * risk
+            memorized += 0.20 * risk
             target -= 0.18 * risk
-            unsafe += 0.34 * risk
-            action += 0.26 * risk
+            unsafe += 0.18 * risk
+            action += 0.03 * risk
 
     def noisy(values: np.ndarray, scale: float = 0.01) -> np.ndarray:
         return np.clip(values + rng.normal(0, scale, len(values)), 0, 1)
@@ -97,6 +97,8 @@ def make_trace(certificate_id: str, mode: str, seed: int = 20260604) -> dict[str
     distractor = noisy(distractor)
     unsafe = noisy(unsafe)
     action = noisy(action)
+    if mode == "mitigated":
+        action = np.clip(action * (1.0 - 0.85 * risk), 0, 1)
     risk_bundle = np.maximum.reduce([occlusion, language, distractor, unsafe, action, memorized])
     internal = np.clip(0.15 + 0.85 * risk_bundle, 0, 1)
     return {
