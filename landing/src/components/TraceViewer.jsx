@@ -132,6 +132,7 @@ export default function TraceViewer({ compact = false }) {
       {!compact && (
         <div className="label-mono" style={{ marginTop: 10, fontSize: 11, color: 'var(--text-mute)' }}>
           REAL captured internals · {TRACE.source}
+        </div>
       )}
     </div>
   )
