@@ -6,6 +6,7 @@ import zipfile
 from dataclasses import replace
 
 from taco_demo.data_room import (
+    MAX_ZIP_MEMBERS,
     MAX_ZIP_MEMBER_BYTES,
     build_data_room_bundle,
     build_data_room_checklist,
@@ -533,6 +534,21 @@ def test_data_room_bundle_verifier_rejects_oversized_members_before_reading():
     assert verification["indexed_file_count"] == 0
     assert "ZIP member too large: huge.bin" in verification["issues"]
     assert "Packet index not read because ZIP size limits failed" in verification["issues"]
+
+
+def test_data_room_bundle_verifier_stops_on_member_count_limit():
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for index in range(MAX_ZIP_MEMBERS + 1):
+            archive.writestr(f"extra-{index}.txt", b"")
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is False
+    assert verification["file_count"] == MAX_ZIP_MEMBERS + 1
+    assert verification["indexed_file_count"] == 0
+    assert f"ZIP member count exceeds limit: {MAX_ZIP_MEMBERS + 1} > {MAX_ZIP_MEMBERS}" in verification["issues"]
+    assert all("Missing required file" not in issue for issue in verification["issues"])
 
 
 def test_data_room_bundle_verifier_rejects_empty_packet_index():

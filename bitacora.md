@@ -714,6 +714,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 70 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed size-limit fail-fast fix commit `29be695` to GitHub `main`.
+- Fourth independent `codex review --base _review-loop-baseline` found one issue:
+  - uploaded ZIPs over the member-count limit still continued into later path checks, including quadratic duplicate-name scanning.
+- Changed verifier behavior to return immediately once `MAX_ZIP_MEMBERS` is exceeded and added regression coverage for the short-circuit.
+- Verification after member-count short-circuit fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 25 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 71 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
