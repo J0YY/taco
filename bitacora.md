@@ -650,6 +650,16 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 68 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed duplicate packet-index path fix commit `5f7ad46` to GitHub `main`.
+- Tenth independent `codex review --base _review-loop-baseline` found one issue:
+  - packet-index metadata such as `checksum_algorithm`, `indexed_file_count`, `required_files`, `packet_format`, or `manifest_id` could be tampered while file hashes still matched.
+- Added packet-index metadata validation against the expected packet format, SHA-256 algorithm, required-file set, indexed-file count, and `manifest.json` manifest ID.
+- Updated malformed-index fixtures to use a valid manifest where tests target deeper index validation.
+- Verification after packet-index metadata validation:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 23 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 69 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

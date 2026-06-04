@@ -325,6 +325,53 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert verify_data_room_bundle(bundle)["valid"] is True
 
 
+def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "test", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    controls = {
+        "reaudit_required_after_model_update": True,
+        "occlusion_risk_monitor_enabled": True,
+        "language_override_sanitizer_enabled": True,
+        "target_identity_confirmation_enabled": True,
+    }
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, controls)
+    bundle = build_data_room_bundle(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        "# diligence memo\n",
+    )
+    cases = [
+        ("packet_format", "evil_format", "Invalid packet index: packet_format must be taco_data_room_zip_v1"),
+        ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
+        ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
+        ("manifest_id", "DR-EVIL", "Invalid packet index: manifest_id does not match manifest.json"),
+        ("indexed_file_count", 0, "Invalid packet index: indexed_file_count does not match files"),
+        ("indexed_file_count", "16", "Invalid packet index: indexed_file_count must be an integer"),
+    ]
+    for key, value, expected_issue in cases:
+        tampered = io.BytesIO()
+        with zipfile.ZipFile(io.BytesIO(bundle), mode="r") as original:
+            with zipfile.ZipFile(tampered, mode="w", compression=zipfile.ZIP_DEFLATED) as modified:
+                for name in original.namelist():
+                    payload = original.read(name)
+                    if name == "packet/index.json":
+                        index = json.loads(payload)
+                        index[key] = value
+                        payload = json.dumps(index).encode("utf-8")
+                    modified.writestr(name, payload)
+
+        verification = verify_data_room_bundle(tampered.getvalue())
+
+        assert verification["valid"] is False
+        assert expected_issue in verification["issues"]
+
+
 def test_data_room_bundle_verifier_detects_tampering():
     app = default_application()
     metrics = [
@@ -460,7 +507,8 @@ def test_data_room_bundle_verifier_rejects_empty_packet_index():
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
             for name in required_files:
-                archive.writestr(name, b"")
+                payload = b'{"manifest_id":"DR-TEST"}' if name == "manifest.json" else b""
+                archive.writestr(name, payload)
             archive.writestr("packet/index.json", index_payload)
 
         verification = verify_data_room_bundle(buffer.getvalue())
@@ -522,6 +570,11 @@ def test_data_room_bundle_verifier_rejects_non_integer_byte_counts():
     ]
     for malformed_byte_count in [0.9, "0", False]:
         packet_index = {
+            "packet_format": "taco_data_room_zip_v1",
+            "manifest_id": "DR-TEST",
+            "checksum_algorithm": "sha256",
+            "indexed_file_count": len(required_files),
+            "required_files": sorted(required_files + ["packet/index.json"]),
             "files": [
                 {
                     "path": name,
@@ -534,7 +587,8 @@ def test_data_room_bundle_verifier_rejects_non_integer_byte_counts():
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
             for name in required_files:
-                archive.writestr(name, b"")
+                payload = b'{"manifest_id":"DR-TEST"}' if name == "manifest.json" else b""
+                archive.writestr(name, payload)
             archive.writestr("packet/index.json", json.dumps(packet_index))
 
         verification = verify_data_room_bundle(buffer.getvalue())
@@ -575,8 +629,21 @@ def test_data_room_bundle_verifier_rejects_duplicate_packet_index_paths():
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
         for name in required_files:
-            archive.writestr(name, b"")
-        archive.writestr("packet/index.json", json.dumps({"files": files}))
+            payload = b'{"manifest_id":"DR-TEST"}' if name == "manifest.json" else b""
+            archive.writestr(name, payload)
+        archive.writestr(
+            "packet/index.json",
+            json.dumps(
+                {
+                    "packet_format": "taco_data_room_zip_v1",
+                    "manifest_id": "DR-TEST",
+                    "checksum_algorithm": "sha256",
+                    "indexed_file_count": len(files),
+                    "required_files": sorted(required_files + ["packet/index.json"]),
+                    "files": files,
+                }
+            ),
+        )
 
     verification = verify_data_room_bundle(buffer.getvalue())
 

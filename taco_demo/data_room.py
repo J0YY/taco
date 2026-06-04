@@ -243,6 +243,16 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                 else:
                     issues.append("Invalid packet index: expected JSON object")
             if index is not None:
+                if index.get("packet_format") != "taco_data_room_zip_v1":
+                    issues.append("Invalid packet index: packet_format must be taco_data_room_zip_v1")
+                if index.get("checksum_algorithm") != "sha256":
+                    issues.append("Invalid packet index: checksum_algorithm must be sha256")
+                if index.get("required_files") != sorted(REQUIRED_BUNDLE_FILES | {PACKET_INDEX_PATH}):
+                    issues.append("Invalid packet index: required_files does not match packet requirements")
+                if "manifest.json" in names:
+                    manifest = json.loads(archive.read("manifest.json"))
+                    if not isinstance(manifest, dict) or index.get("manifest_id") != manifest.get("manifest_id"):
+                        issues.append("Invalid packet index: manifest_id does not match manifest.json")
                 indexed_items = index.get("files")
                 if not isinstance(indexed_items, list) or not indexed_items:
                     issues.append("Invalid packet index: files must be a non-empty list")
@@ -260,6 +270,11 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         continue
                     indexed_files[item["path"]] = item
                 indexed_file_count = len(indexed_files)
+                expected_indexed_count = index.get("indexed_file_count")
+                if not isinstance(expected_indexed_count, int) or isinstance(expected_indexed_count, bool):
+                    issues.append("Invalid packet index: indexed_file_count must be an integer")
+                elif expected_indexed_count != indexed_file_count:
+                    issues.append("Invalid packet index: indexed_file_count does not match files")
                 for name, item in indexed_files.items():
                     if name not in names:
                         issues.append(f"Indexed file missing from ZIP: {name}")
