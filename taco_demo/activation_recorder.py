@@ -165,7 +165,8 @@ class ActivationRecorder:
         """Persist captured activations to an NPZ file."""
 
         output_path = Path(path)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        save_path = output_path if output_path.suffix == ".npz" else Path(f"{output_path}.npz")
+        save_path.parent.mkdir(parents=True, exist_ok=True)
         payload: dict[str, np.ndarray] = {}
         sanitized_counts: dict[str, int] = {}
         for name in self.captures:
@@ -176,8 +177,8 @@ class ActivationRecorder:
             key_prefix = base if sanitized_counts[base] == 1 else f"{base}__{_stable_suffix(name)}"
             for idx, array in enumerate(arrays):
                 payload[f"{key_prefix}__{idx:04d}"] = np.asarray(array)
-        np.savez(output_path, **payload)
-        return output_path
+        np.savez(save_path, **payload)
+        return save_path
 
 
 def record_forward_pass(

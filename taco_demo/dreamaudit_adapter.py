@@ -134,16 +134,28 @@ def _failure_mode(payload: JsonDict) -> str:
 
 def _minimal_cost(payload: JsonDict) -> float:
     perturbation = _get(payload, "perturbation", default={}) or {}
+    perturbation_type = str(perturbation.get("type", "")).lower()
     candidates = [
         _get(payload, "minimality", "smallest_failing_cost_found"),
         perturbation.get("perturbation_cost"),
-        perturbation.get("mean_image_l1"),
-        perturbation.get("mean_image_mse"),
+        _get(payload, "minimality", "smallest_failing_sigma"),
+        perturbation.get("noise_sigma"),
+        perturbation.get("mean_action_l2"),
+        perturbation.get("mean_action_mse"),
+        perturbation.get("mean_translation_mse"),
+        perturbation.get("mean_rotation_mse"),
         _get(payload, "minimality", "failure_cost"),
     ]
     for candidate in candidates:
         if candidate is not None:
             return max(0.0, _float(candidate))
+    for key in ("mean_image_l1", "mean_image_mse"):
+        value = perturbation.get(key)
+        if value is not None and _float(value) > 0:
+            return max(0.0, _float(value))
+    if "language" in perturbation_type or perturbation.get("instruction_changed") is True:
+        suffix = _get(perturbation, "perturbation_params", "suffix", default="")
+        return max(0.05, min(0.3, len(str(suffix)) / 240.0 if suffix else 0.1))
     params = perturbation.get("perturbation_params")
     if isinstance(params, dict):
         for key in ("fraction", "magnitude", "severity", "shift_px", "brightness_delta"):

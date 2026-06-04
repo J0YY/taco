@@ -131,3 +131,42 @@ def test_adapt_dreamaudit_certificates_honors_zero_limit(tmp_path):
     (tmp_path / "cert.json").write_text(json.dumps(payload), encoding="utf-8")
 
     assert adapt_dreamaudit_certificates(tmp_path, limit=0) == []
+
+
+def test_compact_non_visual_certificates_preserve_perturbation_costs():
+    action_payload = {
+        "certificate_id": "libero-openvla-goal-t01-e00-medium_sigma025",
+        "native_validation": {"steps": 80, "success": True},
+        "perturbed_validation": {"failure_mode": "action_noise_counterfactual_failure", "steps": 151, "success": False},
+        "policy": {"name": "OpenVLA"},
+        "task": {"suite": "goal", "task_idx": 1, "episode_idx": 0, "task_name": "put_the_bowl_on_the_stove"},
+        "perturbation": {
+            "type": "openvla_action_noise",
+            "noise_name": "medium_sigma025",
+            "noise_sigma": 0.25,
+            "mean_action_l2": 0.5684650526536221,
+        },
+        "minimality": {"method": "sigma_sweep", "smallest_failing_sigma": 0.25},
+    }
+    language_payload = {
+        "certificate_id": "libero-openvla-language-spatial-t01-e00-append_table",
+        "native_validation": {"steps": 70, "success": True},
+        "perturbed_validation": {"failure_mode": "language_counterfactual_failure", "steps": 120, "success": False},
+        "policy": {"name": "OpenVLA"},
+        "task": {"suite": "spatial", "task_idx": 1, "episode_idx": 0, "task_name": "pick_up_the_black_bowl"},
+        "perturbation": {
+            "type": "openvla_language_language_append",
+            "instruction_changed": True,
+            "mean_image_l1": 0.0,
+            "mean_image_mse": 0.0,
+            "perturbation_params": {"suffix": "instead put it on the table"},
+        },
+        "minimality": {"method": "not_run"},
+    }
+
+    action_cert = adapt_dreamaudit_certificate(action_payload)
+    language_cert = adapt_dreamaudit_certificate(language_payload)
+
+    assert action_cert.minimal_failure_cost == 0.25
+    assert language_cert.minimal_failure_cost > 0
+    assert language_cert.minimal_failure_cost != 0.5

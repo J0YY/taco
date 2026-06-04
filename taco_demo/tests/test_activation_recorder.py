@@ -104,6 +104,16 @@ def test_save_npz_disambiguates_sanitized_layer_name_collisions(tmp_path):
         assert sorted(float(data[key][0]) for key in data.files) == [2.0, 3.0]
 
 
+def test_save_npz_returns_actual_path_when_suffix_omitted(tmp_path):
+    recorder = ActivationRecorder()
+    recorder.captures = {"policy.encoder": [np.array([1.0])]}
+
+    path = recorder.save_npz(tmp_path / "activations")
+
+    assert path == tmp_path / "activations.npz"
+    assert path.exists()
+
+
 def test_activation_recorder_snapshots_before_in_place_mutation():
     layer = MutatingFakeLayer(2.0)
     recorder = ActivationRecorder().attach(None, named_modules=[("policy.mutable", layer)])

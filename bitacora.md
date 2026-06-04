@@ -162,3 +162,16 @@
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 30 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed third review-fix commit `13b0c4b` to GitHub `main`.
+- Fourth independent `codex review --base _review-loop-baseline` found two more integration issues:
+  - non-visual DreamAudit certificates could lose meaningful perturbation costs when cost fields are action or language specific,
+  - `ActivationRecorder.save_npz()` returned an unsuffixed path when `np.savez` actually wrote `<path>.npz`.
+- Fixed both:
+  - adapter cost extraction now handles `smallest_failing_sigma`, `noise_sigma`, action-distance fields, and semantic instruction edits with zero image delta,
+  - `save_npz()` now returns the actual `.npz` path written.
+- Added regression coverage for action-noise cost extraction, language semantic-edit cost extraction, and unsuffixed NPZ output paths.
+- Verification after fourth review fixes:
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_activation_recorder.py` -> 10 passed.
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 32 passed.
+  - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
