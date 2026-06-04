@@ -501,6 +501,14 @@ const EXPLAINER = [
   ['13_claim', 'The claim', 'So we can certify a robot policy before it is ever deployed.'],
 ]
 function Explainer() {
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setI((x) => (x + 1) % EXPLAINER.length), 7000)
+    return () => clearInterval(t)
+  }, [])
+  const [id, title, cap] = EXPLAINER[i]
+  const nav = (d) => setI((x) => (x + d + EXPLAINER.length) % EXPLAINER.length)
+  const btn = { cursor: 'pointer', borderRadius: 6, padding: '7px 14px', fontFamily: 'DM Mono, monospace', fontSize: 12, border: '1px solid #4d4641', background: 'transparent', color: '#c9c0ad' }
   return (
     <section id="explainer" className="band">
       <div className="container">
@@ -512,15 +520,22 @@ function Explainer() {
             internal warning fires before the physical failure, and how that turns into a certificate.
           </p>
         </div>
-        <div className="grid grid-3">
-          {EXPLAINER.map(([id, title, cap], k) => (
-            <div className="card" key={id}>
-              <img src={`/videos/explainer/${id}.gif`} alt={title} loading="lazy"
-                style={{ width: '100%', borderRadius: 6, background: '#221e1b', display: 'block' }} />
-              <div className="card-title" style={{ marginTop: 10, fontSize: 14 }}>{k + 1}. {title}</div>
-              <p style={{ marginTop: 4 }}>{cap}</p>
+        <div className="card" style={{ maxWidth: 840, margin: '0 auto' }}>
+          <img key={id} src={`/videos/explainer/${id}.gif`} alt={title}
+            style={{ width: '100%', borderRadius: 8, background: '#221e1b', display: 'block' }} />
+          <div className="card-title" style={{ marginTop: 14 }}>{i + 1}. {title}</div>
+          <p style={{ marginTop: 4 }}>{cap}</p>
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <button style={btn} onClick={() => nav(-1)}>‹ prev</button>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {EXPLAINER.map((_, k) => (
+                <button key={k} onClick={() => setI(k)} aria-label={`chapter ${k + 1}`}
+                  style={{ width: 9, height: 9, borderRadius: 999, border: 'none', cursor: 'pointer', padding: 0, background: k === i ? '#f7f5f0' : '#4d4641' }} />
+              ))}
             </div>
-          ))}
+            <button style={btn} onClick={() => nav(1)}>next ›</button>
+          </div>
+          <div className="label-mono" style={{ marginTop: 10, textAlign: 'center' }}>Chapter {i + 1} of {EXPLAINER.length} · auto-advances</div>
         </div>
       </div>
     </section>
@@ -550,6 +565,63 @@ const POLICY_CATS = [
   ] },
 ]
 const VSTYLE = { width: '100%', display: 'block', borderRadius: 6, background: '#221e1b', aspectRatio: '16 / 10', objectFit: 'cover' }
+
+const KIND_METHOD = {
+  vla: 'We hook the VLA residual stream and train a TopK sparse autoencoder (the Dr. VLA method), then read which interpretable features drive each action and watch the failure-linked feature step by step.',
+  'rl-arm': 'We hook the PPO actor MLP (three 256-unit Tanh layers) and record its hidden activations at every control step, then fit a linear probe that separates failing rollouts from succeeding ones.',
+  'rl-leg': 'We hook the locomotion PPO actor MLP and record hidden activations every step, then probe for an about-to-fall direction (base tilt and center-of-mass velocity).',
+}
+const FIND_RLARM = 'We record the actor MLP hidden state during the task and a probe separates the trained policy from the early, failing checkpoint. We have not yet fit an in-time early-warning monitor for this task.'
+const MECH = {
+  'ANYmal-C (ManiSkill PPO)': { kind: 'rl-leg', monitorable: false,
+    finding: 'The probe reads the hidden state live and separates failing from succeeding episodes, but the fall is a slow loss of balance with no sharp pre-fall spike, so there is no usable early-warning lead, and no recovery controller is verified yet.',
+    tierWhy: 'Tier 3, remediate and re-audit. A real reproducible failure with readable internals, but it is not monitorable in time and has no verified fix, so it cannot be conditionally certified yet.' },
+  'OpenVLA · language override': { kind: 'vla', monitorable: true,
+    finding: 'The SAE isolates a language-override feature that dominates action selection and rises before the wrong action. A sanitizer that strips the conflicting suffix is verified to restore success on a real rollout.',
+    tierWhy: 'Tier 1, certified for conditional deployment. The failure is monitorable and a control is verified to restore success. Required condition: keep the instruction-conflict sanitizer enabled.' },
+  'OpenVLA · warehouse occlusion': { kind: 'vla', monitorable: true,
+    finding: 'Under occlusion the target-object feature collapses while unsafe-trajectory dominance rises, and the internal risk crosses threshold before the wrong grasp. A second-view monitor is recommended but not yet verified to restore success.',
+    tierWhy: 'Tier 2, conditional. Monitorable internal signature, but the fix is not yet verified. Deploy only with the occlusion monitor enabled and re-audit after any model or camera change.' },
+  _vlaMon: { kind: 'vla', monitorable: true,
+    finding: 'An SAE feature monitor on the residual stream flags the failure regime before the task is lost (a 48-step lead on the curated set, recall 1.0). The handoff control is recommended but not yet verified to restore success.',
+    tierWhy: 'Tier 2, conditional. Real internal early-warning exists, but the control is not yet verified. Deploy with the monitor enabled and re-audit.' },
+  'PPO · PickCube': { kind: 'rl-arm', monitorable: false, finding: FIND_RLARM,
+    tierWhy: 'Tier 2, conditional. The trained policy succeeds and internals are readable, but a runtime monitor still needs to be fit and verified before deployment.' },
+  _rlRemediate: { kind: 'rl-arm', monitorable: false, finding: FIND_RLARM,
+    tierWhy: 'Tier 3, remediate and re-audit. Real failure rate with readable internals, but no in-time monitor or verified fix yet.' },
+}
+function mechFor(name) {
+  if (MECH[name]) return MECH[name]
+  if (name === 'Unitree Go2 (ManiSkill PPO)') return MECH['ANYmal-C (ManiSkill PPO)']
+  if (name.startsWith('OpenVLA')) return MECH._vlaMon
+  return MECH._rlRemediate
+}
+
+function MechTrace({ monitorable }) {
+  const W = 340, H = 120, base = H - 12, thrY = H * 0.42
+  const path = monitorable
+    ? `M0,${base} C70,${base} 95,55 130,46 S210,30 ${W},22`
+    : `M0,${base - 2} C150,${base - 2} 210,${base - 6} 255,${base - 14} S300,42 ${W},26`
+  const crossX = 118, failX = 300
+  const tx = { fontFamily: 'DM Mono, monospace', fontSize: '8px' }
+  return (
+    <div>
+      <style>{'@keyframes mdraw{to{stroke-dashoffset:0}}.mline{stroke-dasharray:900;stroke-dashoffset:900;animation:mdraw 3.4s ease-in-out infinite}'}</style>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="internal-signal animation">
+        {monitorable && <rect x={crossX} y="0" width={failX - crossX} height={H} fill="#9db58f" opacity="0.10" />}
+        <line x1="0" y1={thrY} x2={W} y2={thrY} stroke="#6b7280" strokeDasharray="4 3" strokeWidth="0.8" />
+        <text x="2" y={thrY - 4} style={tx} fill="#aea69c">monitor threshold</text>
+        <path className="mline" d={path} fill="none" stroke="#cf8f7a" strokeWidth="2" />
+        <line x1={failX} y1="0" x2={failX} y2={H} stroke="#cf8f7a" strokeWidth="1.2" />
+        <text x={failX - 3} y="12" style={tx} fill="#cf8f7a" textAnchor="end">failure</text>
+        {monitorable
+          ? (<g><line x1={crossX} y1="0" x2={crossX} y2={H} stroke="#9db58f" strokeDasharray="3 3" strokeWidth="1" />
+            <text x={crossX + 3} y="12" style={tx} fill="#9db58f">monitor fires (lead)</text></g>)
+          : (<text x="4" y={H - 4} style={tx} fill="#cf8f7a">no early-warning lead: signal rises only at failure</text>)}
+      </svg>
+    </div>
+  )
+}
 
 function PolicyExplorer() {
   const [cat, setCat] = useState(0)
@@ -599,6 +671,20 @@ function PolicyExplorer() {
           <div style={{ marginTop: 14 }}>
             <span className="status-pill"><span className={`dot ${p.tone}`} /> {p.tier}</span>
           </div>
+          {(() => {
+            const m = mechFor(p.name)
+            return (
+              <div style={{ marginTop: 18, borderTop: '1px solid #3f3a36', paddingTop: 16 }}>
+                <div className="label-mono" style={{ marginBottom: 6 }}>What we ran to read the internals</div>
+                <p style={{ marginBottom: 12 }}>{KIND_METHOD[m.kind]}</p>
+                <MechTrace monitorable={m.monitorable} />
+                <div className="label-mono" style={{ marginTop: 16, marginBottom: 6 }}>What we found, and what is and is not working</div>
+                <p style={{ marginBottom: 12 }}>{m.finding}</p>
+                <div className="label-mono" style={{ marginBottom: 6 }}>Why this certificate tier</div>
+                <p>{m.tierWhy}</p>
+              </div>
+            )
+          })()}
         </div>
       </div>
     </section>
