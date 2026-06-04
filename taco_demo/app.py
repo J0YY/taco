@@ -28,6 +28,7 @@ from taco_demo.investor_objections import build_investor_objection_register, inv
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
 from taco_demo.methodology_evidence import build_methodology_evidence_map, methodology_evidence_rows
+from taco_demo.pilot_walkthrough import build_pilot_walkthrough_playbook, pilot_walkthrough_rows
 from taco_demo.pricing_diligence import build_pricing_diligence, pricing_control_rows, pricing_factor_rows
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
 from taco_demo.renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
@@ -583,12 +584,27 @@ with tabs[9]:
             design_partner_plan,
             seed_financing_plan,
         )
+        pilot_walkthrough = build_pilot_walkthrough_playbook(
+            application,
+            audit["quote"],
+            design_partner_plan,
+            objection_register,
+            methodology_map,
+            pricing_diligence,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
         c2.metric("Objections mapped", len(objection_register["objections"]))
         c3.metric("Needs work", sum(1 for item in objection_register["objections"] if item["answer_strength"] == "needs_work"))
         st.dataframe(pd.DataFrame(investor_objection_rows(objection_register)), width="stretch")
+        st.markdown("#### Pilot Walkthrough Playbook")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Walkthrough status", str(pilot_walkthrough["status"]).replace("_", " ").title())
+        c2.metric("Agenda steps", len(pilot_walkthrough["meeting_agenda"]))
+        c3.metric("Conversion gates", len(pilot_walkthrough["conversion_gates"]))
+        st.caption(pilot_walkthrough["boundary"])
+        st.dataframe(pd.DataFrame(pilot_walkthrough_rows(pilot_walkthrough)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

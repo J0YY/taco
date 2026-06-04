@@ -12,6 +12,7 @@ from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUND
 from .investor_objections import build_investor_objection_register
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .methodology_evidence import build_methodology_evidence_map
+from .pilot_walkthrough import build_pilot_walkthrough_playbook
 from .pricing_diligence import build_pricing_diligence
 from .renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown
@@ -63,6 +64,14 @@ def build_diligence_memo(
         pricing_diligence,
         design_partner_plan,
         seed_financing_plan,
+    )
+    pilot_walkthrough = build_pilot_walkthrough_playbook(
+        application,
+        quote,
+        design_partner_plan,
+        objection_register,
+        methodology_map,
+        pricing_diligence,
     )
 
     lines = [
@@ -145,6 +154,29 @@ def build_diligence_memo(
             f"| {objection['objection_id']} | {objection['answer_strength']} | "
             f"{'; '.join(objection['current_evidence'])} | {'; '.join(objection['next_proof_to_collect'])} |"
         )
+
+    lines.extend(
+        [
+            "",
+            "## Pilot Walkthrough Playbook",
+            "",
+            f"* Status: {pilot_walkthrough['status']}",
+            f"* Boundary: {pilot_walkthrough['boundary']}",
+            f"* Agenda steps: {len(pilot_walkthrough['meeting_agenda'])}",
+            f"* Conversion gates: {len(pilot_walkthrough['conversion_gates'])}",
+            "",
+            "| Track | Reviewer role | Meeting objective | Evidence to collect |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for track in pilot_walkthrough["role_tracks"]:
+        lines.append(
+            f"| {track['track_id']} | {track['reviewer_role']} | {track['meeting_objective']} | "
+            f"{'; '.join(track['evidence_to_collect'])} |"
+        )
+    lines.extend(["", "| Gate | Success condition |", "| --- | --- |"])
+    for gate in pilot_walkthrough["conversion_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['success_condition']} |")
 
     lines.extend(
         [

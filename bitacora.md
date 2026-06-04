@@ -903,3 +903,18 @@
 - Pushed investor objection register commit `71239c6` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the objection register, Investor Case UI, memo wiring, v6 data-room packet versioning, or legacy packet verification.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `75551`.
+
+## 2026-06-04 - Improvement loop: pilot walkthrough playbook
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `6324901`.
+- Captured `_review-loop-baseline` at `63249014a01bd9eb6f4df1a763ccc89e62374765` for the independent review loop.
+- Identified the next VC diligence gap: the data room had strong investor artifacts, but no concrete external reviewer meeting workflow that turns broker/OEM/carrier walkthroughs into captured evidence without claiming completed pilots.
+- Added `taco_demo/pilot_walkthrough.py` with a checksum-first reviewer agenda, role-specific tracks, evidence capture form, conversion gates, and red flags for overclaiming actuarial pricing, customer demand, or insurance capacity.
+- Added the pilot walkthrough playbook to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and root README architecture/product language.
+- Bumped generated data-room packets to `taco_data_room_zip_v7` while preserving verifier compatibility for legacy v1, v2, v3, v4, v5, and v6 packets.
+- Added tests for the playbook contract, manifest/ZIP export, memo section, current v7 packet indexing, and legacy v6 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 41 passed after fixing the playbook's pricing-question parsing.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 87 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
