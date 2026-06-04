@@ -26,6 +26,7 @@ from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_r
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
+from taco_demo.methodology_evidence import build_methodology_evidence_map, methodology_evidence_rows
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
 from taco_demo.renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from taco_demo.schemas import FailureCertificate, InsuranceApplication, ReplayArtifacts, dataclass_to_dict, default_application, read_json
@@ -544,6 +545,20 @@ with tabs[9]:
             st.markdown("**Still required before institutional diligence**")
             for caveat in readiness["caveats"]:
                 st.markdown(f"* {caveat}")
+        methodology_map = build_methodology_evidence_map(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            suite_manifest,
+            dreamaudit_intake,
+        )
+        st.markdown("#### Methodology Evidence Map")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Methodology score", f"{methodology_map['score']}/100")
+        c2.metric("Research sources", methodology_map["research_source_count"])
+        c3.metric("Claims mapped", len(methodology_map["claims"]))
+        st.dataframe(pd.DataFrame(methodology_evidence_rows(methodology_map)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

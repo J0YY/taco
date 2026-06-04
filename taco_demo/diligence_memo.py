@@ -10,6 +10,7 @@ from .design_partner_plan import build_design_partner_plan
 from .fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from .investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS
 from .insurance_scenarios import INSURANCE_SCENARIOS
+from .methodology_evidence import build_methodology_evidence_map
 from .renewal_loop import INCIDENT_LOG, RUNTIME_EVENTS, renewal_summary
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown
 from .seed_financing_plan import build_seed_financing_plan
@@ -45,6 +46,14 @@ def build_diligence_memo(
     data_room_manifest = build_data_room_manifest(application, certificates, metrics, quote, suite_manifest, dreamaudit_intake)
     design_partner_plan = build_design_partner_plan(application, quote)
     seed_financing_plan = build_seed_financing_plan(application, quote, fundraise_readiness, design_partner_plan)
+    methodology_map = build_methodology_evidence_map(
+        application,
+        certificates,
+        metrics,
+        quote,
+        suite_manifest,
+        dreamaudit_intake,
+    )
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -65,6 +74,24 @@ def build_diligence_memo(
     for row in fundraise_readiness_rows(fundraise_readiness):
         lines.append(
             f"| {row['Gate']} | {row['Weight']} | {row['Status']} | {row['Evidence']} | {row['Next Action']} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Methodology Evidence Map",
+            "",
+            f"* Methodology score: {methodology_map['score']}/100",
+            f"* Posture: {methodology_map['status']}",
+            f"* Boundary: {methodology_map['boundary']}",
+            "",
+            "| Claim | Status | Current evidence | Boundary |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for claim in methodology_map["claims"]:
+        lines.append(
+            f"| {claim['claim_id']} | {claim['status']} | {claim['current_evidence']} | {claim['boundary']} |"
         )
 
     lines.extend(

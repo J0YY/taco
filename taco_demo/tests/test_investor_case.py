@@ -11,7 +11,9 @@ from taco_demo.data_room import (
     PACKET_FORMAT_V1,
     PACKET_FORMAT_V2,
     PACKET_FORMAT_V3,
+    PACKET_FORMAT_V4,
     PACKET_INDEX_PATH,
+    REQUIRED_BUNDLE_FILES_V3,
     REQUIRED_BUNDLE_FILES_V2,
     REQUIRED_BUNDLE_FILES_V1,
     build_data_room_bundle,
@@ -26,6 +28,7 @@ from taco_demo.diligence_memo import build_diligence_memo
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.maniskill_suite import build_maniskill_suite_cases
+from taco_demo.methodology_evidence import build_methodology_evidence_map, methodology_evidence_rows
 from taco_demo.quote_engine import generate_quote
 from taco_demo.sample_data import DEMO_CERTIFICATES
 from taco_demo.schemas import InternalRiskMetrics, default_application
@@ -104,6 +107,50 @@ def test_research_foundations_have_sources_and_translations():
         assert foundation["claim"]
         assert foundation["url"].startswith("https://")
         assert "TACO" in foundation["taco_translation"]
+
+
+def test_methodology_evidence_map_separates_backed_claims_from_open_risks():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "demo_trace_fixture", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    evidence_map = build_methodology_evidence_map(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        _carrier_ready_dreamaudit_intake(),
+    )
+    rows = methodology_evidence_rows(evidence_map)
+
+    assert evidence_map["map_id"] == "METHOD-APP-APEX-001"
+    assert evidence_map["score"] >= 85
+    assert "does not claim actuarial validation" in evidence_map["boundary"]
+    assert len(evidence_map["claims"]) >= 6
+    assert len(evidence_map["open_methodology_risks"]) >= 4
+    assert any(claim["claim_id"] == "internal_activation_risk_path" for claim in evidence_map["claims"])
+    assert all(row["Current Evidence"] for row in rows)
+    assert all(claim["boundary"] for claim in evidence_map["claims"])
+
+
+def test_methodology_evidence_map_flags_missing_live_and_internal_evidence():
+    app = default_application()
+    quote = generate_quote(app, DEMO_CERTIFICATES, {}, {})
+    evidence_map = build_methodology_evidence_map(
+        app,
+        DEMO_CERTIFICATES,
+        [],
+        quote,
+        {"suite_name": "empty", "suite_size": 0, "cases": []},
+    )
+    claims_by_id = {claim["claim_id"]: claim for claim in evidence_map["claims"]}
+
+    assert evidence_map["score"] < 85
+    assert claims_by_id["internal_activation_risk_path"]["status"] == "needs_work"
+    assert claims_by_id["live_corpus_transfer"]["status"] == "needs_work"
 
 
 def test_underwriting_workflow_spans_application_to_binder():
@@ -295,6 +342,8 @@ def test_data_room_manifest_exports_machine_readable_packet():
     assert len(manifest["design_partner_plan"]["tracks"]) >= 3
     assert manifest["seed_financing_plan"]["target_raise_usd"] == TARGET_SEED_RAISE_USD
     assert "not committed financing" in manifest["seed_financing_plan"]["boundary"]
+    assert manifest["methodology_evidence_map"]["score"] >= 85
+    assert "does not claim actuarial validation" in manifest["methodology_evidence_map"]["boundary"]
     assert len(manifest["suite_summary"]["video_paths"]) == 40
 
 
@@ -368,6 +417,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert "packet/index.json" in summary["files"]
     assert "commercial/design_partner_plan.json" in summary["files"]
     assert "commercial/seed_financing_plan.json" in summary["files"]
+    assert "research/methodology_evidence_map.json" in summary["files"]
     assert "insurance/workflow_examples.json" in summary["files"]
     assert "research/sources.json" in summary["files"]
     assert f"certificates/{DEMO_CERTIFICATES[0].certificate_id}.json" in summary["files"]
@@ -380,9 +430,10 @@ def test_data_room_bundle_exports_auditable_zip_packet():
         metric = json.loads(archive.read(f"metrics/{metrics[0].certificate_id}.json"))
         design_partner_plan = json.loads(archive.read("commercial/design_partner_plan.json"))
         seed_financing_plan = json.loads(archive.read("commercial/seed_financing_plan.json"))
+        methodology_map = json.loads(archive.read("research/methodology_evidence_map.json"))
 
     assert manifest["manifest_id"] == "DR-APP-APEX-001"
-    assert index["packet_format"] == PACKET_FORMAT_V3
+    assert index["packet_format"] == PACKET_FORMAT_V4
     assert index["checksum_algorithm"] == "sha256"
     assert index["manifest_id"] == manifest["manifest_id"]
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
@@ -390,6 +441,8 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert design_partner_plan["status"] == "external_validation_pending"
     assert seed_financing_plan["plan_id"] == "SEED-APP-APEX-001"
     assert seed_financing_plan["target_raise_usd"] == 5_000_000
+    assert methodology_map["map_id"] == "METHOD-APP-APEX-001"
+    assert methodology_map["score"] >= 85
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
     assert "not an insurance offer" in readme
     assert "not an insurance offer, filed actuarial product, committed financing" in readme
@@ -421,6 +474,9 @@ def test_diligence_memo_includes_design_partner_and_seed_plan_boundaries():
     assert "## Seed Financing Plan" in memo
     assert "not committed financing" in memo
     assert "$5,000,000" in memo
+    assert "## Methodology Evidence Map" in memo
+    assert "does not claim actuarial validation" in memo
+    assert "internal_activation_risk_path" in memo
 
 
 def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
@@ -448,7 +504,7 @@ def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
         (
             "packet_format",
             "evil_format",
-            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, or taco_data_room_zip_v3",
+            "Invalid packet index: packet_format must be taco_data_room_zip_v1, taco_data_room_zip_v2, taco_data_room_zip_v3, or taco_data_room_zip_v4",
         ),
         ("checksum_algorithm", "md5", "Invalid packet index: checksum_algorithm must be sha256"),
         ("required_files", [], "Invalid packet index: required_files does not match packet requirements"),
@@ -513,6 +569,36 @@ def test_data_room_bundle_verifier_accepts_legacy_v2_packets():
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(payloads),
         "required_files": sorted(REQUIRED_BUNDLE_FILES_V2 | {PACKET_INDEX_PATH}),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in sorted(payloads.items())
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr(PACKET_INDEX_PATH, json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is True
+    assert verification["indexed_file_count"] == len(payloads)
+
+
+def test_data_room_bundle_verifier_accepts_legacy_v3_packets():
+    payloads = {name: b"{}" if name.endswith(".json") else b"" for name in REQUIRED_BUNDLE_FILES_V3}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-LEGACY-V3"}'
+    packet_index = {
+        "packet_format": PACKET_FORMAT_V3,
+        "manifest_id": "DR-LEGACY-V3",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(REQUIRED_BUNDLE_FILES_V3 | {PACKET_INDEX_PATH}),
         "files": [
             {
                 "path": name,

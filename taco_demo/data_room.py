@@ -14,6 +14,7 @@ from .design_partner_plan import build_design_partner_plan
 from .fundraise_readiness import build_fundraise_readiness
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
+from .methodology_evidence import build_methodology_evidence_map
 from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetrics, QuoteBreakdown, dataclass_to_dict
 from .seed_financing_plan import build_seed_financing_plan
 
@@ -23,6 +24,7 @@ PACKET_INDEX_PATH = "packet/index.json"
 PACKET_FORMAT_V1 = "taco_data_room_zip_v1"
 PACKET_FORMAT_V2 = "taco_data_room_zip_v2"
 PACKET_FORMAT_V3 = "taco_data_room_zip_v3"
+PACKET_FORMAT_V4 = "taco_data_room_zip_v4"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -42,8 +44,11 @@ REQUIRED_BUNDLE_FILES_V1 = {
 REQUIRED_BUNDLE_FILES_V2 = REQUIRED_BUNDLE_FILES_V1 | {
     "commercial/design_partner_plan.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V2 | {
+REQUIRED_BUNDLE_FILES_V3 = REQUIRED_BUNDLE_FILES_V2 | {
     "commercial/seed_financing_plan.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V3 | {
+    "research/methodology_evidence_map.json",
 }
 
 
@@ -166,6 +171,14 @@ def build_data_room_manifest(
         dreamaudit_intake,
     )
     seed_financing_plan = build_seed_financing_plan(application, quote, fundraise_readiness, design_partner_plan)
+    methodology_evidence_map = build_methodology_evidence_map(
+        application,
+        certificates,
+        metrics,
+        quote,
+        suite_manifest,
+        dreamaudit_intake,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -183,6 +196,7 @@ def build_data_room_manifest(
         "dreamaudit": dreamaudit_summary,
         "design_partner_plan": design_partner_plan,
         "seed_financing_plan": seed_financing_plan,
+        "methodology_evidence_map": methodology_evidence_map,
     }
 
 
@@ -207,6 +221,7 @@ def build_data_room_bundle(
         ("diligence_memo.md", _text_bytes(diligence_memo)),
         ("insurance/workflow_examples.json", _json_bytes(INSURANCE_SCENARIOS)),
         ("research/sources.json", _json_bytes(RESEARCH_FOUNDATIONS)),
+        ("research/methodology_evidence_map.json", _json_bytes(manifest["methodology_evidence_map"])),
         ("suite/video_index.json", _json_bytes(manifest["suite_summary"])),
         ("dreamaudit/summary.json", _json_bytes(manifest["dreamaudit"])),
         ("commercial/design_partner_plan.json", _json_bytes(manifest["design_partner_plan"])),
@@ -312,7 +327,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                 if expected_required_files is None:
                     issues.append(
                         "Invalid packet index: packet_format must be taco_data_room_zip_v1, "
-                        "taco_data_room_zip_v2, or taco_data_room_zip_v3"
+                        "taco_data_room_zip_v2, taco_data_room_zip_v3, or taco_data_room_zip_v4"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -461,7 +476,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V3,
+        "packet_format": PACKET_FORMAT_V4,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -483,6 +498,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V2:
         return REQUIRED_BUNDLE_FILES_V2
     if packet_format == PACKET_FORMAT_V3:
+        return REQUIRED_BUNDLE_FILES_V3
+    if packet_format == PACKET_FORMAT_V4:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -529,6 +546,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `packet/index.json` - SHA-256 checksum index for packet verification",
             "* `insurance/workflow_examples.json` - priced workflow examples",
             "* `research/sources.json` - research-methodology anchors",
+            "* `research/methodology_evidence_map.json` - claim-by-claim methodology evidence map",
             "* `certificates/` - primary replay failure certificates",
             "* `metrics/` - internal-risk metric contracts",
             "* `suite/video_index.json` - 40-video ManiSkill/RMA suite index",

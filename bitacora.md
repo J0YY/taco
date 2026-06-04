@@ -815,3 +815,23 @@
 - Pushed seed financing plan commit `a46e6c7` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the seed financing plan, UI/memo wiring, manifest/bundle changes, or v1/v2/v3 packet compatibility.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `67120`.
+
+## 2026-06-04 - Improvement loop: methodology diligence map
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `b58138b`.
+- Captured `_review-loop-baseline` at `b58138bc66a4b50fc5785958049cb83b21f4cc7b` for the independent review loop.
+- Identified the next VC diligence gap: the app linked research sources, but did not give investors a claim-by-claim methodology map showing which TACO claims are evidence-backed, which artifacts prove them, and which assumptions remain unproven.
+- Added `taco_demo/methodology_evidence.py` with:
+  - claim-by-claim methodology diligence questions,
+  - research anchors,
+  - local artifacts,
+  - current evidence,
+  - verification workflows,
+  - explicit boundaries and open methodology risks.
+- Added the methodology evidence map to the Investor Case UI, diligence memo, data-room manifest, data-room ZIP packet, packet README, and README product/research language.
+- Bumped generated data-room packets to `taco_data_room_zip_v4` while preserving verifier compatibility for legacy v1, v2, and v3 packets.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 33 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 79 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
