@@ -399,3 +399,13 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 46 passed.
   - uncapped real DreamAudit scan summarized `6531` certificates with readiness `100/100`, status `carrier_review_ready`, and recommended ladder depth `5000`.
   - `git diff --check` -> clean.
+- Pushed uncapped-summary review-fix commit `8c1e8b0` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found another compatibility edge case:
+  - non-positive `limit` values previously meant an empty scan, but ladder promotion could still adapt certificates for recommendations.
+- Fixed `limit <= 0` to return an empty existing-root scan with no ladder and no recommended scan limit.
+- Added regression coverage for `limit=0` at the summary API layer.
+- Verification after second review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_quote_engine.py` -> 24 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 47 passed.
+  - real DreamAudit `limit=0` repro returned `0` certificates, status `no_evidence`, ladder `[]`, and recommendation `None`.
+  - `git diff --check` -> clean.

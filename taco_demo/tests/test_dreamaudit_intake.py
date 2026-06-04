@@ -123,6 +123,20 @@ def test_build_dreamaudit_intake_summary_limit_none_keeps_summary_uncapped(tmp_p
     ]
 
 
+def test_build_dreamaudit_intake_summary_non_positive_limit_keeps_empty_scan(tmp_path):
+    payload = _ready_certificate_payload(0, "occlusion")
+    (tmp_path / "cert.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    summary = build_dreamaudit_intake_summary(tmp_path, limit=0, readiness_ladder_limits=(2,))
+
+    assert summary["root_exists"] is True
+    assert summary["summary"]["certificates"] == 0
+    assert summary["readiness"]["status"] == "no_evidence"
+    assert summary["evidence_depth_ladder"] == []
+    assert summary["recommended_scan_limit"] is None
+    assert summary["rows"] == []
+
+
 def test_certificate_rows_limits_output():
     cert = adapt_dreamaudit_certificate(
         {

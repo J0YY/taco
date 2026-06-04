@@ -168,6 +168,19 @@ def build_dreamaudit_intake_summary(
             "recommended_scan_limit": None,
             "rows": [],
         }
+    if limit is not None and limit <= 0:
+        return {
+            "root": str(root_path),
+            "root_exists": True,
+            "summary": summarize_adapted_certificates([]),
+            "failure_counts": {},
+            "schema_counts": {},
+            "backend_counts": {},
+            "readiness": underwriting_readiness([]),
+            "evidence_depth_ladder": [],
+            "recommended_scan_limit": None,
+            "rows": [],
+        }
     ladder_limits = tuple(limit for limit in readiness_ladder_limits if limit > 0)
     if limit is not None and limit > 0:
         ladder_limits = tuple(sorted(set((*ladder_limits, limit))))
