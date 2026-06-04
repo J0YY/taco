@@ -605,6 +605,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 64 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed drive-qualified ZIP path fix commit `79e1c7d` to GitHub `main`.
+- Fifth independent `codex review --base _review-loop-baseline` found one issue:
+  - packet index `bytes` values such as `0.9`, `"0"`, or `false` could be coerced to the actual byte length and still pass as valid.
+- Tightened packet index byte validation to require real integers and added regression coverage for float, string, and bool byte-count values.
+- Verification after byte-count schema fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 19 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 65 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

@@ -251,6 +251,9 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                     if not isinstance(item, dict) or not isinstance(item.get("path"), str):
                         issues.append("Invalid packet index: file entries must be objects with string paths")
                         continue
+                    if not isinstance(item.get("bytes"), int) or isinstance(item.get("bytes"), bool):
+                        issues.append(f"Invalid packet index: file bytes must be an integer for {item['path']}")
+                        continue
                     indexed_files[item["path"]] = item
                 indexed_file_count = len(indexed_files)
                 for name, item in indexed_files.items():
@@ -262,7 +265,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                     actual = hashlib.sha256(payload).hexdigest()
                     if actual != expected:
                         issues.append(f"Checksum mismatch: {name}")
-                    if len(payload) != int(item.get("bytes", -1)):
+                    if len(payload) != item["bytes"]:
                         issues.append(f"Byte length mismatch: {name}")
                 unindexed = sorted(set(names) - set(indexed_files) - {PACKET_INDEX_PATH})
                 if unindexed:
