@@ -21,6 +21,7 @@ from .fundraise_readiness import build_fundraise_readiness
 from .insurance_scenarios import INSURANCE_SCENARIOS
 from .investor_case import RESEARCH_FOUNDATIONS
 from .investor_objections import build_investor_objection_register
+from .investor_proof_pipeline import build_investor_proof_pipeline
 from .methodology_evidence import build_methodology_evidence_map
 from .pilot_walkthrough import build_pilot_walkthrough_playbook
 from .pricing_diligence import build_pricing_diligence
@@ -48,6 +49,7 @@ PACKET_FORMAT_V12 = "taco_data_room_zip_v12"
 PACKET_FORMAT_V13 = "taco_data_room_zip_v13"
 PACKET_FORMAT_V14 = "taco_data_room_zip_v14"
 PACKET_FORMAT_V15 = "taco_data_room_zip_v15"
+PACKET_FORMAT_V16 = "taco_data_room_zip_v16"
 MAX_PACKET_BYTES = 10_000_000
 MAX_ZIP_MEMBERS = 256
 MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
@@ -103,8 +105,11 @@ REQUIRED_BUNDLE_FILES_V13 = REQUIRED_BUNDLE_FILES_V12 | {
 REQUIRED_BUNDLE_FILES_V14 = REQUIRED_BUNDLE_FILES_V13 | {
     "commercial/buyer_roi_model.json",
 }
-REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V14 | {
+REQUIRED_BUNDLE_FILES_V15 = REQUIRED_BUNDLE_FILES_V14 | {
     "research/claim_validation_ledger.json",
+}
+REQUIRED_BUNDLE_FILES = REQUIRED_BUNDLE_FILES_V15 | {
+    "commercial/investor_proof_pipeline.json",
 }
 
 
@@ -216,6 +221,12 @@ def build_data_room_checklist(
             "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
             "Investor-safe claims, evidence levels, upgrade gates, and disallowed overclaims are attached.",
             "Use the ledger during VC, broker, carrier, and design-partner reviews so demo-backed claims are not overstated.",
+        ),
+        _item(
+            "Investor Proof Pipeline",
+            "ready" if quote.final_monthly_premium_usd > 0 and suite_size >= 40 else "needs_work",
+            "Weekly operating workflow, reviewer targets, external-proof gates, and data-room upgrade rules are attached.",
+            "Execute the workflow with external reviewers and attach only written artifacts with packet fingerprints and permission metadata.",
         ),
         _item(
             "Design-Partner References",
@@ -366,6 +377,16 @@ def build_data_room_manifest(
         technical_diligence_runbook,
         dreamaudit_intake,
     )
+    investor_proof_pipeline = build_investor_proof_pipeline(
+        application,
+        quote,
+        fundraise_readiness,
+        design_partner_plan,
+        pilot_walkthrough_playbook,
+        external_validation_capture_kit,
+        claim_validation_ledger,
+        buyer_roi_model,
+    )
     return {
         "manifest_id": f"DR-{application.application_id}",
         "purpose": "VC/carrier diligence packet for learned-policy liability underwriting evidence.",
@@ -395,6 +416,7 @@ def build_data_room_manifest(
         "actuarial_readiness_plan": actuarial_readiness_plan,
         "buyer_roi_model": buyer_roi_model,
         "claim_validation_ledger": claim_validation_ledger,
+        "investor_proof_pipeline": investor_proof_pipeline,
     }
 
 
@@ -434,6 +456,7 @@ def build_data_room_bundle(
         ("commercial/external_validation_capture_kit.json", _json_bytes(manifest["external_validation_capture_kit"])),
         ("commercial/actuarial_readiness_plan.json", _json_bytes(manifest["actuarial_readiness_plan"])),
         ("commercial/buyer_roi_model.json", _json_bytes(manifest["buyer_roi_model"])),
+        ("commercial/investor_proof_pipeline.json", _json_bytes(manifest["investor_proof_pipeline"])),
         ("technical/technical_diligence_runbook.json", _json_bytes(manifest["technical_diligence_runbook"])),
     ]
     certificate_names: set[str] = set()
@@ -540,7 +563,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                         "taco_data_room_zip_v5, taco_data_room_zip_v6, taco_data_room_zip_v7, "
                         "taco_data_room_zip_v8, taco_data_room_zip_v9, taco_data_room_zip_v10, "
                         "taco_data_room_zip_v11, taco_data_room_zip_v12, taco_data_room_zip_v13, "
-                        "taco_data_room_zip_v14, or taco_data_room_zip_v15"
+                        "taco_data_room_zip_v14, taco_data_room_zip_v15, or taco_data_room_zip_v16"
                     )
                     expected_required_files = REQUIRED_BUNDLE_FILES
                 if index.get("checksum_algorithm") != "sha256":
@@ -689,7 +712,7 @@ def _write_zip_bytes(archive: zipfile.ZipFile, name: str, payload: bytes) -> Non
 
 def _packet_index(manifest_id: str, entries: list[tuple[str, bytes]]) -> dict[str, Any]:
     return {
-        "packet_format": PACKET_FORMAT_V15,
+        "packet_format": PACKET_FORMAT_V16,
         "manifest_id": manifest_id,
         "checksum_algorithm": "sha256",
         "indexed_file_count": len(entries),
@@ -735,6 +758,8 @@ def _required_files_for_packet_format(packet_format: str) -> set[str] | None:
     if packet_format == PACKET_FORMAT_V14:
         return REQUIRED_BUNDLE_FILES_V14
     if packet_format == PACKET_FORMAT_V15:
+        return REQUIRED_BUNDLE_FILES_V15
+    if packet_format == PACKET_FORMAT_V16:
         return REQUIRED_BUNDLE_FILES
     return None
 
@@ -798,6 +823,7 @@ def _bundle_readme(manifest: dict[str, Any]) -> str:
             "* `commercial/external_validation_capture_kit.json` - reviewer feedback, scorecard, LOI/pilot-scope, and permission-to-quote capture kit",
             "* `commercial/actuarial_readiness_plan.json` - future-cost, data-quality, modeling, credibility, filing, and claims-loop readiness plan",
             "* `commercial/buyer_roi_model.json` - modeled buyer economics, payback scenarios, proof gates, and ROI sensitivity cases",
+            "* `commercial/investor_proof_pipeline.json` - weekly external-proof workflow, reviewer targets, proof gates, and data-room upgrade rules",
             "* `technical/technical_diligence_runbook.json` - local reproduction, live-evidence, packet-verification, and cluster-regeneration runbook",
             "",
             "Boundary: this packet is diligence evidence for a local proof of concept, not an insurance offer, filed actuarial product, rate adequacy opinion, committed financing, or signed customer demand.",

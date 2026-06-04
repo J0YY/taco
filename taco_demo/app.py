@@ -65,6 +65,12 @@ from taco_demo.external_validation import (
 from taco_demo.fundraise_readiness import build_fundraise_readiness, fundraise_readiness_rows
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
 from taco_demo.investor_objections import build_investor_objection_register, investor_objection_rows
+from taco_demo.investor_proof_pipeline import (
+    build_investor_proof_pipeline,
+    investor_proof_gate_rows,
+    investor_proof_reviewer_rows,
+    investor_proof_stage_rows,
+)
 from taco_demo.insurance_scenarios import INSURANCE_SCENARIOS, scenario_summary
 from taco_demo.maniskill_suite import load_maniskill_suite
 from taco_demo.methodology_evidence import build_methodology_evidence_map, methodology_evidence_rows
@@ -712,6 +718,16 @@ with tabs[9]:
             technical_runbook,
             dreamaudit_intake,
         )
+        investor_proof_pipeline = build_investor_proof_pipeline(
+            application,
+            audit["quote"],
+            readiness,
+            design_partner_plan,
+            pilot_walkthrough,
+            external_validation_kit,
+            claim_validation_ledger,
+            buyer_roi_model,
+        )
         st.markdown("#### Investor Objection Register")
         c1, c2, c3 = st.columns(3)
         c1.metric("Register status", str(objection_register["status"]).replace("_", " ").title())
@@ -800,6 +816,15 @@ with tabs[9]:
         st.caption(claim_validation_ledger["boundary"])
         st.dataframe(pd.DataFrame(claim_validation_summary_rows(claim_validation_ledger)), width="stretch")
         st.dataframe(pd.DataFrame(claim_validation_rows(claim_validation_ledger)), width="stretch")
+        st.markdown("#### Investor Proof Pipeline")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Pipeline status", str(investor_proof_pipeline["status"]).replace("_", " ").title())
+        c2.metric("Artifact score", f"{investor_proof_pipeline['current_scores']['current_artifact_score']}/100")
+        c3.metric("Target raise", _money(investor_proof_pipeline["target_raise_usd"]))
+        st.caption(investor_proof_pipeline["boundary"])
+        st.dataframe(pd.DataFrame(investor_proof_stage_rows(investor_proof_pipeline)), width="stretch")
+        st.dataframe(pd.DataFrame(investor_proof_reviewer_rows(investor_proof_pipeline)), width="stretch")
+        st.dataframe(pd.DataFrame(investor_proof_gate_rows(investor_proof_pipeline)), width="stretch")
         data_room = build_data_room_checklist(
             application,
             audit["certificates"],

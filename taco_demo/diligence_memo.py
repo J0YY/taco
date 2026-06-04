@@ -109,6 +109,7 @@ def build_diligence_memo(
     actuarial_plan = data_room_manifest["actuarial_readiness_plan"]
     buyer_roi_model = data_room_manifest["buyer_roi_model"]
     claim_validation_ledger = data_room_manifest["claim_validation_ledger"]
+    investor_proof_pipeline = data_room_manifest["investor_proof_pipeline"]
 
     lines = [
         "# TACO Investor Diligence Memo",
@@ -168,6 +169,29 @@ def build_diligence_memo(
             f"| {claim['claim_id']} | {claim['evidence_level']} | {claim['upgrade_gate']} | "
             f"{claim['disallowed_overclaim']} |"
         )
+
+    lines.extend(
+        [
+            "",
+            "## Investor Proof Pipeline",
+            "",
+            f"* Status: {investor_proof_pipeline['status']}",
+            f"* Boundary: {investor_proof_pipeline['boundary']}",
+            f"* Target raise: ${investor_proof_pipeline['target_raise_usd']:,.0f}",
+            f"* Current artifact score: {investor_proof_pipeline['current_scores']['current_artifact_score']}/100",
+            "",
+            "| Stage | Window | Objective | Exit gate |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for stage in investor_proof_pipeline["workflow_stages"]:
+        lines.append(f"| {stage['stage']} | {stage['window']} | {stage['objective']} | {stage['exit_gate']} |")
+    lines.extend(["", "| Reviewer track | Target count | Conversion document |", "| --- | ---: | --- |"])
+    for target in investor_proof_pipeline["reviewer_targets"]:
+        lines.append(f"| {target['track_id']} | {target['target_count']} | {target['conversion_document']} |")
+    lines.extend(["", "| Proof gate | Pass condition | Do not count |", "| --- | --- | --- |"])
+    for gate in investor_proof_pipeline["proof_gates"]:
+        lines.append(f"| {gate['gate']} | {gate['pass_condition']} | {gate['do_not_count']} |")
 
     lines.extend(
         [

@@ -1096,3 +1096,19 @@
 - Independent `codex review --base _review-loop-baseline` found no correctness-breaking regression in the claim validation ledger, Investor Case UI, memo wiring, v15 data-room packet, or legacy verifier paths.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `99656`.
 - Recreated missing `_review-loop-baseline` at `4bd723401ce3de3fd99e9508df46b9486ab55f23` after the log-only commit and reran independent `codex review --base _review-loop-baseline` against the full claim-ledger change range through `71000fa`; the reviewer again found no correctness-breaking issue and confirmed tests passed.
+
+## 2026-06-04 - Improvement loop: investor proof pipeline
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date at `e256836`.
+- Confirmed the repo has one tracked project README; extra README hits are ignored cache or installed dependency files under `.pytest_cache` and `.venv`.
+- Identified the next VC diligence gap: existing artifacts describe external validation, but there was no single operating workflow that turns reviewer walkthroughs into packet-fingerprinted written proof, live DreamAudit/activation evidence, commercial conversion documents, and claim-ledger upgrades for a credible $5M seed process.
+- Added `taco_demo/investor_proof_pipeline.py` with weekly operating cadence, reviewer targets, pass/fail proof gates, minimum fundraise package, data-room upgrade rules, and boundaries against counting meetings, screenshots, modeled ROI, capacity interest, or demo fixtures as external proof.
+- Wired the investor proof pipeline into the Investor Case UI, diligence memo, data-room checklist, manifest, ZIP packet, packet README, and root README architecture/boundary language.
+- Bumped generated data-room packets to `taco_data_room_zip_v16` while preserving verifier compatibility for legacy v1 through v15 packets.
+- Added tests for the proof pipeline contract, row helpers, manifest/ZIP export, memo section, current v16 packet indexing, invalid packet-format messaging, and legacy v15 packet verification.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 59 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 105 passed.
+  - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all required packages already satisfied in `.venv`.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
