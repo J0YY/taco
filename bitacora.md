@@ -467,3 +467,5 @@
 - Second independent `codex review --base _review-loop-baseline` found one Streamlit workflow issue:
   - immediately after clicking `Scan DreamAudit Certificates`, the Investor tab could still render the prior intake until another interaction triggered a rerun.
 - Added `st.rerun()` after storing the DreamAudit intake result so Investor gates and downloaded memos see the fresh scan on the next render.
+- Pushed DreamAudit scan refresh fix commit `45a65e8` to GitHub `main`.
+- Third independent `codex review --base _review-loop-baseline` reported that the changes are internally consistent, preserve call compatibility, and pass the full test suite.
