@@ -494,6 +494,11 @@ const POLICY_CATS = [
     { name: 'OpenVLA · language override', task: 'pick & place · injected instruction suffix vs sanitizer', tier: 'Tier 1 · Certified', tone: 'dot-ok', s: '/videos/fr002_language_success.mp4', f: '/videos/fr002_language_failure.mp4' },
     { name: 'OpenVLA · warehouse occlusion', task: 'open the middle drawer · 37.9% occlusion', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/fr001_occlusion_success.mp4', f: '/videos/fr001_occlusion_failure.mp4' },
     { name: 'OpenVLA · SimplerEnv pick-coke', task: 'pick coke can · variant-shift OOD', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/openvla_coke_success.mp4', f: '/videos/openvla_coke_failure.mp4' },
+    { name: 'OpenVLA · SimplerEnv move-near', task: 'move object near target', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/openvla_movenear_success.mp4', f: '/videos/openvla_movenear_failure.mp4' },
+    { name: 'OpenVLA · SimplerEnv open-drawer', task: 'open the drawer', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/openvla_drawer_success.mp4', f: '/videos/openvla_drawer_failure.mp4' },
+  ] },
+  { key: 'mskill', label: 'Manipulation arms · RL (ManiSkill)', policies: [
+    { name: 'PPO · PullCube', task: 'pull cube to target · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/pullcube_success.mp4', f: '/videos/pullcube_failure.mp4' },
   ] },
   { key: 'mobile', label: 'Mobile manipulators', policies: [
     { name: 'MS-HAB · Fetch pick', task: 'tidy-house pick · ReplicaCAD apartment', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/mshab_pick_success.mp4', f: '/videos/mshab_pick_failure.mp4' },
