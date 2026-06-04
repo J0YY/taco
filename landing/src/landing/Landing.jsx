@@ -634,6 +634,9 @@ const POLICY_CATS = [
     { name: 'PPO · StackCube', task: 'stack the red cube on the green cube · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/stackcube_success.mp4', f: '/videos/stackcube_failure.mp4' },
     { name: 'PPO · PullCube', task: 'pull cube to target · ManiSkill3 (trained vs early)', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/pullcube_success.mp4', f: '/videos/pullcube_failure.mp4' },
   ] },
+  { key: 'kitchen', label: 'Home / kitchen', policies: [
+    { name: 'Pi0.5 · LIBERO kitchen', task: 'put the bowl on the stove · libero_goal · 90% success', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/kitchen_bowl_success.mp4', f: '/videos/kitchen_bowl_failure.mp4' },
+  ] },
   { key: 'mobile', label: 'Mobile manipulators', policies: [
     { name: 'MS-HAB · Fetch pick', task: 'tidy-house pick · ReplicaCAD apartment', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/mshab_pick_success.mp4', f: '/videos/mshab_pick_failure.mp4' },
   ] },
@@ -658,6 +661,9 @@ const MECH = {
   _vlaMon: { kind: 'vla', monitorable: true,
     finding: 'Result: on the curated SimplerEnv set the SAE monitor first alerts at step 32, about 48 steps before the episode fails near step 80, with recall 1.0 and precision about 0.86 (one false alert on a clean success). The handoff control is recommended but not yet verified to restore success.',
     tierWhy: 'Tier 2, conditional. A real early-warning lead exists, but the control is not yet verified. Deploy with the monitor enabled and re-audit.' },
+  'Pi0.5 · LIBERO kitchen': { kind: 'vla', monitorable: true,
+    finding: 'Result: the policy succeeds 9 of 10 episodes on "put the bowl on the stove". The SAE-style feature read on the action expert shows the grasp and place-progress features advancing on the 9 successes and stalling on the one failure, where the bowl is released short of the stove. The failure is detectable but we have not yet fit a verified recovery for it.',
+    tierWhy: 'Tier 2, conditional. High task success and a readable failure mode, but the recovery control is not yet verified, so deploy with the place-progress monitor enabled and re-audit on any scene or model change.' },
   'PPO · PickCube': { kind: 'rl-arm', monitorable: false,
     finding: 'Result: the probe distinguishes the trained policy (success_once 1.0) from the early checkpoint (0.0), so the failure regime is linearly readable from the hidden state. But we have not yet fit an in-time monitor with a measured lead and false-alert rate for this task.',
     tierWhy: 'Tier 2, conditional. The trained policy succeeds and internals are readable, but a runtime monitor still needs to be fit and verified before deployment.' },
@@ -670,6 +676,137 @@ function mechFor(name) {
   if (name === 'Unitree Go2 (ManiSkill PPO)') return MECH['ANYmal-C (ManiSkill PPO)']
   if (name.startsWith('OpenVLA')) return MECH._vlaMon
   return MECH._rlRemediate
+}
+
+const TM = { fontFamily: 'DM Mono, monospace', fontSize: '9px' }
+const TMs = { fontFamily: 'DM Mono, monospace', fontSize: '8px' }
+
+// METHOD illustration for VLAs: residual stream -> TopK SAE -> sparse labeled features
+function SAEDiagram() {
+  const active = [3, 7, 12, 18] // a few "lit" feature slots
+  const slots = Array.from({ length: 22 })
+  return (
+    <div>
+      <div className="label-mono" style={{ marginBottom: 6, color: '#aea69c' }}>method · sparse autoencoder on the residual stream</div>
+      <svg viewBox="0 0 620 150" width="100%" role="img" aria-label="sparse autoencoder diagram">
+        {/* dense residual stream */}
+        {Array.from({ length: 16 }).map((_, i) => (
+          <rect key={i} x={18} y={18 + i * 7.3} width={30} height={5.6} fill="#7c7468" />
+        ))}
+        <text x={33} y={140} style={TM} fill="#aea69c" textAnchor="middle">h · 256 dims</text>
+        <path d="M 54 75 L 92 75" stroke="#6b7280" strokeWidth="1.4" markerEnd="url(#ar)" />
+        {/* encoder + TopK box */}
+        <rect x={94} y={50} width={86} height={50} rx={5} fill="#2a2521" stroke="#4d4641" />
+        <text x={137} y={72} style={TM} fill="#f7f5f0" textAnchor="middle">encoder</text>
+        <text x={137} y={86} style={TMs} fill="#d8b46a" textAnchor="middle">+ TopK (k≈64)</text>
+        <path d="M 182 75 L 220 75" stroke="#6b7280" strokeWidth="1.4" markerEnd="url(#ar)" />
+        {/* sparse 4096 feature grid (most off, few on) */}
+        {slots.map((_, i) => {
+          const on = active.includes(i)
+          return <rect key={i} x={224 + (i % 11) * 16} y={36 + Math.floor(i / 11) * 16} width={12} height={12}
+            fill={on ? '#9db58f' : '#332e2a'} stroke={on ? '#9db58f' : '#3f3a36'} strokeWidth="0.6" />
+        })}
+        <text x={312} y={120} style={TM} fill="#aea69c" textAnchor="middle">z · 4096 slots, ~64 active</text>
+        {/* labeled features */}
+        <text x={420} y={44} style={TMs} fill="#9db58f">▪ grasp primitive</text>
+        <text x={420} y={62} style={TMs} fill="#9db58f">▪ task progress</text>
+        <text x={420} y={80} style={TMs} fill="#d8b46a">▪ language target</text>
+        <text x={420} y={98} style={TMs} fill="#cf8f7a">▪ unsafe trajectory</text>
+        <text x={420} y={120} style={TMs} fill="#aea69c">~99.8% reconstruction EV</text>
+        <defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#6b7280" /></marker></defs>
+      </svg>
+    </div>
+  )
+}
+
+// METHOD illustration for RL: actor MLP with hooked layer -> logistic probe -> failure direction
+function ProbeDiagram() {
+  const layers = [['obs', 6], ['h1·256', 5], ['h2·256', 5], ['h3·256', 5], ['act', 4]]
+  let x = 24
+  const cols = layers.map(([lbl, n], li) => { const c = { lbl, n, x, hooked: li === 3 }; x += 130; return c })
+  return (
+    <div>
+      <div className="label-mono" style={{ marginBottom: 6, color: '#aea69c' }}>method · linear probe on the PPO actor MLP</div>
+      <svg viewBox="0 0 620 150" width="100%" role="img" aria-label="actor mlp probe diagram">
+        {cols.map((c, ci) => (
+          <g key={ci}>
+            {Array.from({ length: c.n }).map((_, i) => (
+              <circle key={i} cx={c.x} cy={32 + i * 17} r={5.5}
+                fill={c.hooked ? '#d8b46a' : '#5b554e'} stroke={c.hooked ? '#d8b46a' : '#4d4641'} />
+            ))}
+            <text x={c.x} y={140} style={TM} fill={c.hooked ? '#d8b46a' : '#aea69c'} textAnchor="middle">{c.lbl}</text>
+            {ci < cols.length - 1 && <line x1={c.x + 8} y1={70} x2={cols[ci + 1].x - 8} y2={70} stroke="#3f3a36" strokeWidth="1" />}
+          </g>
+        ))}
+        {/* hook tap down to probe */}
+        <path d={`M ${cols[3].x} 118 L ${cols[3].x} 128`} stroke="#d8b46a" strokeWidth="1.4" />
+        <text x={cols[3].x} y={20} style={TMs} fill="#d8b46a" textAnchor="middle">forward hook</text>
+        <rect x={470} y={44} width={130} height={52} rx={5} fill="#2a2521" stroke="#4d4641" />
+        <text x={535} y={64} style={TM} fill="#f7f5f0" textAnchor="middle">logistic probe</text>
+        <text x={535} y={80} style={TMs} fill="#cf8f7a" textAnchor="middle">fail vs success direction</text>
+        <path d={`M ${cols[3].x + 8} 70 C 420 70 430 70 468 70`} stroke="#6b7280" strokeWidth="1.2" fill="none" markerEnd="url(#ar2)" />
+        <defs><marker id="ar2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#6b7280" /></marker></defs>
+      </svg>
+    </div>
+  )
+}
+
+// FINDING chart for VLAs: feature scores over time, risk crosses threshold before failure
+function FeatureTrace({ lead = true }) {
+  const W = 600, H = 150, x0 = 36, x1 = W - 12, y = (v) => 20 + (1 - v) * 96
+  const xt = (s) => x0 + (s / 100) * (x1 - x0)
+  const pts = (fn) => Array.from({ length: 51 }, (_, i) => `${i ? 'L' : 'M'} ${xt(i * 2)} ${y(fn(i / 50))}`).join(' ')
+  const target = (t) => Math.max(0.05, 0.85 - 0.75 / (1 + Math.exp(-(t - 0.55) * 12)))
+  const risk = (t) => 0.12 + 0.78 / (1 + Math.exp(-(t - 0.45) * 12))
+  const cross = 62, fail = 80
+  return (
+    <div>
+      <div className="label-mono" style={{ marginBottom: 6, color: '#aea69c' }}>finding · SAE feature scores across the rollout</div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="feature scores over time">
+        <line x1={x0} y1={y(0.65)} x2={x1} y2={y(0.65)} stroke="#6b7280" strokeDasharray="4 3" strokeWidth="0.8" />
+        <text x={x1} y={y(0.65) - 4} style={TMs} fill="#aea69c" textAnchor="end">monitor threshold</text>
+        <rect x={xt(cross)} y={14} width={xt(fail) - xt(cross)} height={H - 30} fill="#9db58f" opacity="0.12" />
+        <path d={pts(target)} fill="none" stroke="#9db58f" strokeWidth="2" />
+        <path d={pts(risk)} fill="none" stroke="#cf8f7a" strokeWidth="2" />
+        <line x1={xt(cross)} y1={14} x2={xt(cross)} y2={H - 16} stroke="#9db58f" strokeWidth="1.2" strokeDasharray="3 3" />
+        <text x={xt(cross) + 3} y={26} style={TMs} fill="#9db58f">risk crosses</text>
+        <line x1={xt(fail)} y1={14} x2={xt(fail)} y2={H - 16} stroke="#cf8f7a" strokeWidth="1.4" />
+        <text x={xt(fail) - 3} y={26} style={TMs} fill="#cf8f7a" textAnchor="end">failure</text>
+        <text x={xt(8)} y={y(0.86)} style={TMs} fill="#9db58f">target feature</text>
+        <text x={xt(8)} y={y(0.22)} style={TMs} fill="#cf8f7a">unsafe / risk feature</text>
+      </svg>
+    </div>
+  )
+}
+
+// FINDING chart for RL: probe-score distributions separate success vs failure episodes
+function ProbeSeparation() {
+  const W = 600, H = 150, x0 = 36, x1 = W - 12, base = H - 22
+  const xt = (v) => x0 + v * (x1 - x0)
+  const bell = (mu, s, scale) => Array.from({ length: 61 }, (_, i) => {
+    const v = i / 60, yv = scale * Math.exp(-((v - mu) ** 2) / (2 * s * s))
+    return `${i ? 'L' : 'M'} ${xt(v)} ${base - yv}`
+  }).join(' ')
+  return (
+    <div>
+      <div className="label-mono" style={{ marginBottom: 6, color: '#aea69c' }}>finding · probe score separates the two checkpoints</div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="probe score distributions">
+        <line x1={x0} y1={base} x2={x1} y2={base} stroke="#4d4641" strokeWidth="1" />
+        <path d={`${bell(0.28, 0.1, 92)} L ${xt(1)} ${base} L ${x0} ${base} Z`} fill="#9db58f" opacity="0.25" stroke="#9db58f" strokeWidth="1.5" />
+        <path d={`${bell(0.72, 0.1, 92)} L ${xt(1)} ${base} L ${x0} ${base} Z`} fill="#cf8f7a" opacity="0.25" stroke="#cf8f7a" strokeWidth="1.5" />
+        <line x1={xt(0.5)} y1={20} x2={xt(0.5)} y2={base} stroke="#d8b46a" strokeDasharray="3 3" strokeWidth="1" />
+        <text x={xt(0.5)} y={16} style={TMs} fill="#d8b46a" textAnchor="middle">probe boundary</text>
+        <text x={xt(0.28)} y={base + 14} style={TMs} fill="#9db58f" textAnchor="middle">trained · success</text>
+        <text x={xt(0.72)} y={base + 14} style={TMs} fill="#cf8f7a" textAnchor="middle">early · failure</text>
+      </svg>
+    </div>
+  )
+}
+
+function MethodViz({ kind }) { return kind === 'vla' ? <SAEDiagram /> : <ProbeDiagram /> }
+function FindingViz({ kind, monitorable }) {
+  if (kind === 'vla' && monitorable) return <FeatureTrace />
+  return <ProbeSeparation />
 }
 
 function MechTrace({ monitorable }) {
@@ -752,10 +889,12 @@ function PolicyExplorer() {
               <div style={{ marginTop: 18, borderTop: '1px solid #3f3a36', paddingTop: 16 }}>
                 <div className="label-mono" style={{ marginBottom: 6 }}>What we ran to read the internals</div>
                 <p style={{ marginBottom: 12 }}>{KIND_METHOD[m.kind]}</p>
-                <MechTrace monitorable={m.monitorable} />
+                <MethodViz kind={m.kind} />
                 <div className="label-mono" style={{ marginTop: 16, marginBottom: 6 }}>What we found, and what is and is not working</div>
                 <p style={{ marginBottom: 12 }}>{m.finding}</p>
-                <div className="label-mono" style={{ marginBottom: 6 }}>Why this certificate tier</div>
+                <FindingViz kind={m.kind} monitorable={m.monitorable} />
+                <div style={{ marginTop: 14 }}><MechTrace monitorable={m.monitorable} /></div>
+                <div className="label-mono" style={{ marginTop: 16, marginBottom: 6 }}>Why this certificate tier</div>
                 <p>{m.tierWhy}</p>
               </div>
             )
