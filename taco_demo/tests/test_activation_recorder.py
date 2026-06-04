@@ -52,6 +52,31 @@ class FakeModel:
         return self.head.forward(self.encoder.forward(value))
 
 
+class FakeBFloat16Tensor:
+    dtype = "torch.bfloat16"
+
+    def __init__(self, values, casted=False):
+        self.values = np.asarray(values, dtype=np.float32)
+        self.casted = casted
+
+    def detach(self):
+        return self
+
+    def to(self, _device):
+        return self
+
+    def cpu(self):
+        return self
+
+    def float(self):
+        return FakeBFloat16Tensor(self.values, casted=True)
+
+    def numpy(self):
+        if not self.casted:
+            raise TypeError("Got unsupported ScalarType BFloat16")
+        return self.values
+
+
 def test_activation_recorder_records_selected_layer_and_saves_npz(tmp_path):
     model = FakeModel()
     recorder = ActivationRecorder(layer_names=["policy.encoder"], max_batches=1).attach(model)
@@ -112,6 +137,16 @@ def test_save_npz_returns_actual_path_when_suffix_omitted(tmp_path):
 
     assert path == tmp_path / "activations.npz"
     assert path.exists()
+
+
+def test_activation_recorder_casts_bfloat16_like_tensor_before_numpy():
+    layer = FakeLayer(1.0)
+    recorder = ActivationRecorder().attach(None, named_modules=[("policy.bf16", layer)])
+
+    for hook in list(layer.hooks):
+        hook(layer, (), FakeBFloat16Tensor([1.0, 2.0]))
+
+    assert np.allclose(recorder.captures["policy.bf16"][0], np.array([1.0, 2.0], dtype=np.float32))
 
 
 def test_activation_recorder_snapshots_before_in_place_mutation():

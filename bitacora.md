@@ -175,3 +175,15 @@
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 32 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed fourth review-fix commit `09400a8` to GitHub `main`.
+- Extra independent `codex review --base _review-loop-baseline` found one production-path issue:
+  - bf16 torch tensors can fail NumPy conversion and be silently dropped by the activation recorder.
+- Fixed bf16-like tensor handling:
+  - activation recorder casts `bfloat16` tensor-like objects to float before NumPy conversion,
+  - fallback conversion retries `.float().numpy()` if direct `.numpy()` raises `TypeError`.
+- Added regression coverage with a fake bf16 tensor object.
+- Verification after bf16 fix:
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests/test_activation_recorder.py taco_demo/tests/test_dreamaudit_adapter.py` -> 11 passed.
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 33 passed.
+  - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

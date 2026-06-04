@@ -64,11 +64,20 @@ def _to_numpy(value: Any, *, detach: bool, device: str) -> np.ndarray | None:
             item = item.cpu()
         except TypeError:
             pass
+    if "bfloat16" in str(getattr(item, "dtype", "")) and hasattr(item, "float"):
+        try:
+            item = item.float()
+        except (TypeError, RuntimeError):
+            pass
     if hasattr(item, "numpy"):
         try:
             return np.asarray(item.numpy())
         except TypeError:
-            pass
+            if hasattr(item, "float"):
+                try:
+                    return np.asarray(item.float().numpy())
+                except (TypeError, RuntimeError):
+                    pass
     try:
         return np.asarray(item)
     except (TypeError, ValueError):
