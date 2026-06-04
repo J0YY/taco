@@ -324,52 +324,8 @@ if "application" not in st.session_state:
 if "audit" not in st.session_state:
     st.session_state.audit = None
 
-st.title("TACO")
-st.subheader("The Autonomous Casualty Office")
-st.caption("Liability insurance for robots before the first claim.")
-st.markdown("### TACO underwrites robot policies before deployment telemetry exists.")
-
-with st.sidebar:
-    st.header("Application")
-    app = st.session_state.application
-    company_name = st.text_input("Company name", app.company_name)
-    robot_type = st.text_input("Robot type", app.robot_type)
-    policy_id = st.text_input("Policy ID", app.policy_id)
-    deployment_units = st.number_input("Deployment units", min_value=1, value=app.deployment_units, step=10)
-    coverage_requested = st.number_input("Coverage requested", min_value=100_000, value=app.coverage_requested_usd, step=100_000)
-    telemetry_available = st.checkbox("Telemetry available", value=app.telemetry_available)
-    st.session_state.application = InsuranceApplication(
-        application_id=app.application_id,
-        company_name=company_name,
-        robot_type=robot_type,
-        policy_id=policy_id,
-        deployment_units=int(deployment_units),
-        coverage_requested_usd=int(coverage_requested),
-        deployment_stage=app.deployment_stage,
-        telemetry_available=telemetry_available,
-        created_at=app.created_at,
-        metadata=app.metadata,
-    )
-    if st.button("Bootstrap Demo Data", width="stretch"):
-        bootstrap(DATA_ROOT, force=True)
-        st.success("Demo data bootstrapped.")
-    if st.button("Run Internal Underwriting Audit", type="primary", width="stretch"):
-        _run_audit(st.session_state.application)
-        st.success("Internal underwriting audit complete.")
-    if st.button("Issue Binder", width="stretch"):
-        if st.session_state.audit:
-            audit = st.session_state.audit
-            path = issue_binder(
-                st.session_state.application,
-                audit["certificates"],
-                list(audit["metrics"].values()),
-                audit["quote"],
-                DATA_ROOT / "binders",
-            )
-            st.session_state.binder_path = str(path)
-            st.success(f"Issued {path.name}")
-        else:
-            st.warning("Run the audit first.")
+st.title("TACO — The Autonomous Casualty Office")
+st.caption("Liability insurance for learned robot policies, priced before deployment telemetry exists.")
 
 render_guided_flow()
 
@@ -395,6 +351,8 @@ tabs = st.tabs(
     ]
 )
 application = st.session_state.application
+if st.session_state.audit is None:
+    _run_audit(application)
 audit = st.session_state.audit
 
 with tabs[0]:

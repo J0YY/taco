@@ -285,19 +285,13 @@ def _pipeline_header(active: int) -> None:
 # --- main render -------------------------------------------------------------
 
 def render_guided_flow() -> None:
-    st.markdown("### Guided demo — from analyzed policy to insurance price")
-    st.caption("Pick a policy we've analyzed, watch a minimal perturbation cause a real failure, "
-               "see the internal mechanism that drives it, and price the risk.")
-
     # Stage 0: pick a policy
     names = [p["name"] for p in POLICIES]
     chosen_name = st.selectbox("Policy under analysis", names, index=0, key="gf_policy")
     policy = next(p for p in POLICIES if p["name"] == chosen_name)
-    c1, c2, c3 = st.columns(3)
+    c1, c2 = st.columns(2)
     c1.metric("Simulator / policy", policy["env"].split(" · ")[0])
     c2.metric("Failure families found", len(policy["certs"]))
-    c3.metric("Coverage context", "pre-deployment")
-    st.caption(f"Insured context: {policy['insured']}  ·  Environment: {policy['env']}")
 
     cert_choices = policy["certs"]
     cert_id = cert_choices[0]
