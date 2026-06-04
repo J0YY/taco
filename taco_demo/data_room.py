@@ -207,6 +207,7 @@ def data_room_bundle_summary(bundle_bytes: bytes) -> dict[str, Any]:
         names = sorted(archive.namelist())
     return {
         "file_count": len(names),
+        "packet_sha256": hashlib.sha256(bundle_bytes).hexdigest(),
         "contains_manifest": "manifest.json" in names,
         "contains_memo": "diligence_memo.md" in names,
         "contains_video_index": "suite/video_index.json" in names,
@@ -305,6 +306,7 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
         "issues": issues,
         "file_count": len(names),
         "indexed_file_count": indexed_file_count,
+        "packet_sha256": hashlib.sha256(bundle_bytes).hexdigest(),
     }
 
 

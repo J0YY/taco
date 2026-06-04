@@ -304,6 +304,7 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert summary["contains_memo"] is True
     assert summary["contains_video_index"] is True
     assert summary["contains_packet_index"] is True
+    assert summary["packet_sha256"] == hashlib.sha256(bundle).hexdigest()
     assert "packet/index.json" in summary["files"]
     assert "insurance/workflow_examples.json" in summary["files"]
     assert "research/sources.json" in summary["files"]
@@ -322,7 +323,9 @@ def test_data_room_bundle_exports_auditable_zip_packet():
     assert manifest["dreamaudit"]["recommended_scan_limit"] == 5000
     assert metric["metrics_source"] == "recorded_activation_forward_hooks"
     assert "not an insurance offer" in readme
-    assert verify_data_room_bundle(bundle)["valid"] is True
+    verification = verify_data_room_bundle(bundle)
+    assert verification["valid"] is True
+    assert verification["packet_sha256"] == hashlib.sha256(bundle).hexdigest()
 
 
 def test_data_room_bundle_verifier_rejects_tampered_packet_index_metadata():
@@ -412,6 +415,7 @@ def test_data_room_bundle_verifier_fails_closed_on_malformed_zip():
 
     assert verification["valid"] is False
     assert verification["file_count"] == 0
+    assert verification["packet_sha256"] == hashlib.sha256(b"not a zip").hexdigest()
     assert verification["issues"][0].startswith("Invalid data-room packet:")
 
 

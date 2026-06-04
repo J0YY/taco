@@ -585,7 +585,8 @@ with tabs[9]:
         packet_verification = verify_data_room_bundle(bundle)
         st.caption(
             f"Packet verification: {'valid' if packet_verification['valid'] else 'needs review'}; "
-            f"{packet_verification['indexed_file_count']} indexed files."
+            f"{packet_verification['indexed_file_count']} indexed files; "
+            f"SHA-256 {packet_verification['packet_sha256'][:16]}..."
         )
         st.download_button(
             "Download Data Room Packet",
@@ -593,6 +594,16 @@ with tabs[9]:
             file_name=f"TACO-DATAROOM-{application.application_id}.zip",
             mime="application/zip",
         )
+        uploaded_packet = st.file_uploader("Verify Data Room Packet", type=["zip"], key="data_room_packet_upload")
+        if uploaded_packet is not None:
+            uploaded_verification = verify_data_room_bundle(uploaded_packet.getvalue())
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Uploaded packet", "valid" if uploaded_verification["valid"] else "needs review")
+            c2.metric("Indexed files", uploaded_verification["indexed_file_count"])
+            c3.metric("File count", uploaded_verification["file_count"])
+            st.code(uploaded_verification["packet_sha256"], language="text")
+            if uploaded_verification["issues"]:
+                st.dataframe(pd.DataFrame({"Issue": uploaded_verification["issues"]}), width="stretch")
     else:
         st.info("Run the audit to populate the investor proof-point metrics.")
 

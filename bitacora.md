@@ -663,6 +663,25 @@
 - Pushed packet-index metadata validation commit `a973cba` to GitHub `main`.
 - Eleventh independent `codex review --base _review-loop-baseline` found no discrete, actionable bugs in the packet indexing and verification diff.
 
+## 2026-06-04 - Improvement loop: transferable packet verification
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `5ed541b`.
+- Captured `_review-loop-baseline` at `5ed541beba65a5d6839305b5c03a76799389d83e` for the independent review loop.
+- Identified a diligence workflow gap: TACO generated and self-verified the data-room packet, but a reviewer could not upload a transferred ZIP back into the app and compare a packet fingerprint.
+- Added `packet_sha256` to `data_room_bundle_summary` and `verify_data_room_bundle` results.
+- Updated the Investor Case tab to:
+  - show the generated packet SHA-256 prefix next to the packet status,
+  - accept an uploaded ZIP data-room packet,
+  - run the same verifier over the uploaded bytes,
+  - display uploaded-packet validity, indexed-file count, total file count, full SHA-256 digest, and verifier issues.
+- Updated the README product surface to mention uploaded packet verification with a SHA-256 chain-of-custody fingerprint.
+- Added regression coverage proving valid and malformed packets expose the exact SHA-256 digest.
+- Verification before commit:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 23 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 69 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
+
 ## 2026-06-04 - Improvement loop: data-room packet export
 
 - Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `6706ca9`.
