@@ -1,7 +1,8 @@
 from taco_demo.binder import issue_binder
 from taco_demo.quote_engine import generate_quote
 from taco_demo.sample_data import DEMO_CERTIFICATES
-from taco_demo.schemas import InternalRiskMetrics, default_application, read_json, write_json
+from taco_demo.schemas import DEMO_CREATED_AT, InternalRiskMetrics, default_application, read_json, write_json
+from taco_demo.scripts import bootstrap_demo_data
 
 
 def test_dataclass_json_roundtrip_works(tmp_path):
@@ -9,6 +10,21 @@ def test_dataclass_json_roundtrip_works(tmp_path):
     path = tmp_path / "application.json"
     write_json(app, path)
     assert read_json(path)["application_id"] == "APP-APEX-001"
+    assert read_json(path)["created_at"] == DEMO_CREATED_AT
+
+
+def test_bootstrap_force_is_application_deterministic(tmp_path, monkeypatch):
+    monkeypatch.setattr(bootstrap_demo_data, "create_all_demo_videos", lambda root: [])
+    monkeypatch.setattr(
+        bootstrap_demo_data,
+        "write_maniskill_suite",
+        lambda root, force=False: root / "maniskill_suite" / "manifest.json",
+    )
+    bootstrap_demo_data.bootstrap(tmp_path, force=True)
+    first = read_json(tmp_path / "applications" / "APP-APEX-001.json")
+    bootstrap_demo_data.bootstrap(tmp_path, force=True)
+    second = read_json(tmp_path / "applications" / "APP-APEX-001.json")
+    assert first == second
 
 
 def test_binder_contains_application_quote_certificates_and_metrics(tmp_path):

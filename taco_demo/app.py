@@ -132,13 +132,13 @@ with st.sidebar:
         created_at=app.created_at,
         metadata=app.metadata,
     )
-    if st.button("Bootstrap Demo Data", use_container_width=True):
+    if st.button("Bootstrap Demo Data", width="stretch"):
         bootstrap(DATA_ROOT, force=True)
         st.success("Demo data bootstrapped.")
-    if st.button("Run Internal Underwriting Audit", type="primary", use_container_width=True):
+    if st.button("Run Internal Underwriting Audit", type="primary", width="stretch"):
         _run_audit(st.session_state.application)
         st.success("Internal underwriting audit complete.")
-    if st.button("Issue Binder", use_container_width=True):
+    if st.button("Issue Binder", width="stretch"):
         if st.session_state.audit:
             audit = st.session_state.audit
             path = issue_binder(
@@ -211,7 +211,7 @@ with tabs[1]:
                     "Internal risk score": round(metric.internal_risk_score, 3),
                 }
             )
-        st.dataframe(pd.DataFrame(rows), use_container_width=True)
+        st.dataframe(pd.DataFrame(rows), width="stretch")
         with st.expander("Research-backed methodology"):
             for foundation in RESEARCH_FOUNDATIONS:
                 st.markdown(f"**{foundation['claim']}**")
@@ -279,7 +279,7 @@ with tabs[3]:
         if crossings:
             fig.add_vline(x=float(trace["time_s"][crossings[0]]), line_dash="dot", line_color="#166534", annotation_text="risk crossing")
         fig.update_layout(height=500, yaxis_range=[0, 1], title="Internal Risk Signature")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         metric = audit["metrics"][cert.certificate_id]
         cols = st.columns(6)
         cols[0].metric("Concept Coverage", f"{metric.concept_coverage_score:.2f}")
@@ -329,7 +329,7 @@ with tabs[4]:
                 }
                 for item in UNDERWRITING_WORKFLOW
             ]
-            st.dataframe(pd.DataFrame(workflow_rows), use_container_width=True)
+            st.dataframe(pd.DataFrame(workflow_rows), width="stretch")
         st.json(dataclass_to_dict(quote))
 
 with tabs[5]:
@@ -374,7 +374,7 @@ with tabs[6]:
         }
         for case in cases
     ]
-    st.dataframe(pd.DataFrame(rows), use_container_width=True)
+    st.dataframe(pd.DataFrame(rows), width="stretch")
     selected_id = st.selectbox("Evidence replay", [case["video_id"] for case in cases], key="maniskill_suite_case")
     selected = next(case for case in cases if case["video_id"] == selected_id)
     cols = st.columns([1, 1])

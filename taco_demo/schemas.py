@@ -9,6 +9,9 @@ from pathlib import Path
 from typing import Any
 
 
+DEMO_CREATED_AT = "2026-06-04T00:00:00+00:00"
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
@@ -138,6 +141,6 @@ def default_application() -> InsuranceApplication:
         coverage_requested_usd=10_000_000,
         deployment_stage="pre-deployment",
         telemetry_available=False,
-        created_at=now_iso(),
+        created_at=DEMO_CREATED_AT,
         metadata={"source": "demo_generated_placeholder_data"},
     )
