@@ -9,10 +9,11 @@ import numpy as np
 
 from taco_demo.sample_data import DEMO_CERTIFICATES
 from taco_demo.schemas import default_application, write_json
+from taco_demo.maniskill_suite import write_maniskill_suite
 from taco_demo.video_utils import create_all_demo_videos
 
 
-DATA_DIRS = ("applications", "certificates", "traces", "videos", "binders")
+DATA_DIRS = ("applications", "certificates", "traces", "videos", "binders", "maniskill_suite")
 
 
 def ensure_data_dirs(root: Path) -> Path:
@@ -131,6 +132,7 @@ def bootstrap(root: Path | None = None, force: bool = False) -> Path:
             if force or not trace_path.exists():
                 np.savez(trace_path, **make_trace(certificate.certificate_id, mode))
     create_all_demo_videos(root)
+    write_maniskill_suite(root, force=force)
     return root
 
 

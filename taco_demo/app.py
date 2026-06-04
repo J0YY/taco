@@ -10,6 +10,7 @@ import streamlit as st
 
 from taco_demo.binder import issue_binder
 from taco_demo.investor_case import FUNDRAISE_MILESTONES, MOAT_HYPOTHESES, RESEARCH_FOUNDATIONS, UNDERWRITING_WORKFLOW, investor_summary
+from taco_demo.maniskill_suite import load_maniskill_suite
 from taco_demo.quote_engine import generate_quote, required_control_for_failure, traditional_underwriting_status
 from taco_demo.schemas import FailureCertificate, InsuranceApplication, ReplayArtifacts, dataclass_to_dict, default_application, read_json
 from taco_demo.scripts.bootstrap_demo_data import bootstrap
@@ -94,6 +95,10 @@ def _show_gif(path: str | None) -> None:
         st.info("GIF missing. Click Bootstrap Demo Data.")
 
 
+def _load_maniskill_manifest() -> dict[str, object]:
+    return load_maniskill_suite(DATA_ROOT)
+
+
 st.set_page_config(page_title="TACO", page_icon="T", layout="wide")
 
 if "application" not in st.session_state:
@@ -148,7 +153,19 @@ with st.sidebar:
         else:
             st.warning("Run the audit first.")
 
-tabs = st.tabs(["Application", "Underwriting Audit", "Replay Evidence", "Internal Signals", "Quote", "Binder", "Investor Case", "Spec"])
+tabs = st.tabs(
+    [
+        "Application",
+        "Underwriting Audit",
+        "Replay Evidence",
+        "Internal Signals",
+        "Quote",
+        "Binder",
+        "ManiSkill Suite",
+        "Investor Case",
+        "Spec",
+    ]
+)
 application = st.session_state.application
 audit = st.session_state.audit
 
@@ -336,6 +353,43 @@ with tabs[5]:
                 st.download_button("Download Markdown Binder", markdown_path.read_bytes(), file_name=markdown_path.name)
 
 with tabs[6]:
+    manifest = _load_maniskill_manifest()
+    cases = list(manifest["cases"])
+    st.markdown("### ManiSkill/RMA Failure Evidence Suite")
+    st.caption("Forty supplemental replays showing how TACO turns varied simulator failures into underwriting signals and required controls.")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Replay videos", manifest["suite_size"])
+    c2.metric("Failure families", len({case["failure_family"] for case in cases}))
+    c3.metric("ManiSkill envs", len({case["env_id"] for case in cases}))
+    c4.metric("Cluster status", "reproducible")
+    rows = [
+        {
+            "Video": case["video_id"],
+            "Env": case["env_id"],
+            "Task": case["task"],
+            "Failure": case["failure_family"],
+            "Identified signal": case["identified_signal"],
+            "Required control": case["required_control"],
+            "Severity": case["severity"],
+        }
+        for case in cases
+    ]
+    st.dataframe(pd.DataFrame(rows), use_container_width=True)
+    selected_id = st.selectbox("Evidence replay", [case["video_id"] for case in cases], key="maniskill_suite_case")
+    selected = next(case for case in cases if case["video_id"] == selected_id)
+    cols = st.columns([1, 1])
+    with cols[0]:
+        st.image(DATA_ROOT / "maniskill_suite" / "videos" / str(selected["video_path"]))
+    with cols[1]:
+        st.markdown("**What TACO identifies**")
+        st.write(selected["identified_signal"])
+        st.markdown("**Underwriting interpretation**")
+        st.write(selected["underwriting_readout"])
+        st.markdown("**Required control**")
+        st.write(selected["required_control"])
+        st.json(selected)
+
+with tabs[7]:
     st.markdown("### Investor Case")
     st.caption("Why this could plausibly support a venture-scale seed story if the fallback evidence is replaced with real DreamAudit and VLA traces.")
     if audit:
@@ -374,7 +428,7 @@ with tabs[6]:
     for foundation in RESEARCH_FOUNDATIONS:
         st.markdown(f"* **{foundation['source']}**: {foundation['taco_translation']} [link]({foundation['url']})")
 
-with tabs[7]:
+with tabs[8]:
     readme = Path(__file__).with_name("README.md")
     if readme.exists():
         st.markdown(readme.read_text(encoding="utf-8"))

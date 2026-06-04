@@ -49,3 +49,10 @@
   - Muratore et al. domain randomization / CoRL 2018,
   - ICLR 2024 sparse autoencoder interpretability,
   - Anthropic 2024 model-feature mapping and monitoring discussion.
+- Independent `codex review --base _review-loop-baseline` found no actionable bugs in the investor-case diff.
+- Added a supplemental ManiSkill/RMA-style evidence suite:
+  - `taco_demo/maniskill_suite.py`,
+  - `taco_demo/scripts/generate_maniskill_video_suite.py`,
+  - `taco_demo/data/maniskill_suite/manifest.json`,
+  - 40 generated replay GIFs across eight failure families and five ManiSkill-style RMA environments.
+- The suite records what TACO identifies from each replay: risk signal, underwriting interpretation, required control, severity, minimal failure cost, and neighborhood failure rate.

@@ -67,6 +67,7 @@ taco_demo/data/applications/   insurance applications
 taco_demo/data/certificates/   replayable failure certificate JSON
 taco_demo/data/traces/         success/failure/mitigated NPZ traces
 taco_demo/data/videos/         generated replay GIFs
+taco_demo/data/maniskill_suite/ supplemental 40-video ManiSkill/RMA-style evidence suite
 taco_demo/data/binders/        issued JSON and Markdown binders
 ```
 
@@ -88,6 +89,25 @@ Artifacts by role:
 * Risk manager: conditional quote, exclusions, required controls.
 * Broker/MGA: binder, premium breakdown, known failure family taxonomy.
 * Carrier/reinsurer: actuarial evidence memo, mitigability scores, re-audit conditions.
+
+## ManiSkill/RMA Video Evidence Suite
+
+The demo includes a supplemental 40-video ManiSkill/RMA-style gallery under `taco_demo/data/maniskill_suite/`. Each case has:
+
+* a generated replay GIF,
+* a ManiSkill environment label,
+* a failure family,
+* the internal/behavioral signal TACO identifies,
+* an underwriting interpretation,
+* a required control.
+
+The suite covers eight failure families across five ManiSkill-style RMA environments: occlusion-induced wrong grasp, semantic distractor confusion, contact force overshoot, rope entanglement memory bias, camera glare pose drift, drawer collision edge cases, workspace boundary overreach, and transparent-object depth error.
+
+Generate it locally or on the cluster with:
+
+```bash
+python -m taco_demo.scripts.generate_maniskill_video_suite --force
+```
 
 ## Internal Underwriting Metrics
 
