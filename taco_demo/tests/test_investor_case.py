@@ -364,7 +364,7 @@ def test_data_room_bundle_verifier_rejects_unsafe_member_paths():
         "suite/video_index.json",
         "dreamaudit/summary.json",
     ]
-    for unsafe_name in ["..", "safe/..", "C:/evil.txt", "C:evil.txt"]:
+    for unsafe_name in ["", ".", "./evil.txt", "foo/.", "foo//bar", "..", "safe/..", "C:/evil.txt", "C:evil.txt"]:
         entries = {name: b"" for name in required_files}
         entries[unsafe_name] = b"indexed hostile member"
         packet_index = {

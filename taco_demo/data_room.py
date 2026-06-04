@@ -377,7 +377,7 @@ def _unsafe_zip_name(name: str) -> bool:
         name.startswith("/")
         or "\\" in name
         or bool(re.match(r"^[A-Za-z]:", name))
-        or any(part == ".." for part in name.split("/"))
+        or any(part in {"", ".", ".."} for part in name.split("/"))
     )
 
 

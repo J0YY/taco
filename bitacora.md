@@ -614,6 +614,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 65 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed byte-count schema fix commit `5559c33` to GitHub `main`.
+- Sixth independent `codex review --base _review-loop-baseline` found one issue:
+  - indexed ZIP members named `""`, `"."`, or containing `./` or empty path segments could normalize unsafely and still pass verification.
+- Tightened unsafe ZIP path detection to reject empty, current-directory, and parent-directory path segments and expanded hostile-member regression coverage.
+- Verification after normalized-path fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 19 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 65 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
