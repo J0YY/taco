@@ -918,3 +918,6 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 87 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed pilot walkthrough playbook commit `797e01e` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the pilot walkthrough artifact, Investor Case UI, memo wiring, v7 data-room packet versioning, or legacy packet verification.
+- Restarted Streamlit at `http://127.0.0.1:8501` with PID `77774`.
