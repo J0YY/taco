@@ -17,6 +17,7 @@ from taco_demo.external_evidence import (
     saescope_catalog_rows,
     saescope_summary,
 )
+from taco_demo.guided_flow import render_guided_flow
 from taco_demo.activation_evidence_contract import (
     activation_artifact_check_rows,
     activation_gate_rows,
@@ -368,6 +369,12 @@ with st.sidebar:
             st.success(f"Issued {path.name}")
         else:
             st.warning("Run the audit first.")
+
+render_guided_flow()
+
+st.divider()
+with st.expander("Detailed workbench — every stage as its own tab (advanced)", expanded=False):
+    st.caption("The guided demo above is the recommended walkthrough. These tabs are the full underwriting workbench.")
 
 tabs = st.tabs(
     [
