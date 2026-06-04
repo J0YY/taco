@@ -270,7 +270,15 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                 unindexed = sorted(set(names) - set(indexed_files) - {PACKET_INDEX_PATH})
                 if unindexed:
                     issues.extend(f"ZIP file missing from packet index: {name}" for name in unindexed)
-    except (KeyError, TypeError, ValueError, zipfile.BadZipFile, json.JSONDecodeError) as exc:
+    except (
+        KeyError,
+        TypeError,
+        ValueError,
+        RuntimeError,
+        NotImplementedError,
+        zipfile.BadZipFile,
+        json.JSONDecodeError,
+    ) as exc:
         issues.append(f"Invalid data-room packet: {exc}")
     return {
         "valid": not issues,

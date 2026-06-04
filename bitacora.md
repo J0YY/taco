@@ -623,6 +623,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 65 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed normalized-path fix commit `a96e6c1` to GitHub `main`.
+- Seventh independent `codex review --base _review-loop-baseline` found one issue:
+  - encrypted or unsupported ZIP members could raise `RuntimeError` or `NotImplementedError` during `archive.read(...)` instead of returning an invalid verifier result.
+- Extended the verifier fail-closed exception handling for read-time ZIP errors and added regression coverage for an encrypted `packet/index.json` member.
+- Verification after read-time ZIP error fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 20 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 66 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

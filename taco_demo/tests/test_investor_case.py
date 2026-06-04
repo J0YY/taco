@@ -1,6 +1,7 @@
 import io
 import hashlib
 import json
+import struct
 import zipfile
 from dataclasses import replace
 
@@ -32,6 +33,28 @@ def _carrier_ready_dreamaudit_intake() -> dict[str, object]:
         ],
         "recommended_scan_limit": 5000,
     }
+
+
+def _mark_zip_member_encrypted(bundle: bytes, member_name: str) -> bytes:
+    data = bytearray(bundle)
+    target = member_name.encode("utf-8")
+    position = 0
+    while True:
+        central_offset = data.find(b"PK\x01\x02", position)
+        if central_offset == -1:
+            raise AssertionError(f"ZIP member not found: {member_name}")
+        name_length = struct.unpack("<H", data[central_offset + 28 : central_offset + 30])[0]
+        extra_length = struct.unpack("<H", data[central_offset + 30 : central_offset + 32])[0]
+        comment_length = struct.unpack("<H", data[central_offset + 32 : central_offset + 34])[0]
+        name = data[central_offset + 46 : central_offset + 46 + name_length]
+        if name == target:
+            local_offset = struct.unpack("<I", data[central_offset + 42 : central_offset + 46])[0]
+            local_flags = struct.unpack("<H", data[local_offset + 6 : local_offset + 8])[0]
+            central_flags = struct.unpack("<H", data[central_offset + 8 : central_offset + 10])[0]
+            data[local_offset + 6 : local_offset + 8] = struct.pack("<H", local_flags | 1)
+            data[central_offset + 8 : central_offset + 10] = struct.pack("<H", central_flags | 1)
+            return bytes(data)
+        position = central_offset + 46 + name_length + extra_length + comment_length
 
 
 def test_research_foundations_have_sources_and_translations():
@@ -318,6 +341,41 @@ def test_data_room_bundle_verifier_fails_closed_on_malformed_zip():
     assert verification["valid"] is False
     assert verification["file_count"] == 0
     assert verification["issues"][0].startswith("Invalid data-room packet:")
+
+
+def test_data_room_bundle_verifier_fails_closed_on_read_time_zip_errors():
+    required_files = [
+        "README.md",
+        "manifest.json",
+        "application.json",
+        "quote.json",
+        "checklist.json",
+        "diligence_memo.md",
+        "insurance/workflow_examples.json",
+        "research/sources.json",
+        "suite/video_index.json",
+        "dreamaudit/summary.json",
+    ]
+    packet_index = {
+        "files": [
+            {
+                "path": name,
+                "bytes": 0,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            }
+            for name in required_files
+        ]
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name in required_files:
+            archive.writestr(name, b"")
+        archive.writestr("packet/index.json", json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(_mark_zip_member_encrypted(buffer.getvalue(), "packet/index.json"))
+
+    assert verification["valid"] is False
+    assert any(issue.startswith("Invalid data-room packet:") for issue in verification["issues"])
 
 
 def test_data_room_bundle_verifier_rejects_empty_packet_index():
