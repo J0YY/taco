@@ -171,7 +171,7 @@ def build_dreamaudit_intake_summary(
     ladder_limits = tuple(limit for limit in readiness_ladder_limits if limit > 0)
     if limit is not None and limit > 0:
         ladder_limits = tuple(sorted(set((*ladder_limits, limit))))
-    scan_limit = max(ladder_limits) if limit is None and ladder_limits else None
+    scan_limit = None
     if limit is not None:
         scan_limit = max((*ladder_limits, limit), default=limit)
     all_certs = adapt_dreamaudit_certificates(root_path, limit=scan_limit)

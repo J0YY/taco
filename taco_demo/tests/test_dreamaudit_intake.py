@@ -96,6 +96,33 @@ def test_build_dreamaudit_intake_summary_recommends_carrier_ready_scan_depth(tmp
     assert summary["evidence_depth_ladder"][1]["gaps"] == []
 
 
+def test_build_dreamaudit_intake_summary_limit_none_keeps_summary_uncapped(tmp_path):
+    for idx in range(5):
+        payload = _ready_certificate_payload(idx, "occlusion")
+        (tmp_path / f"{idx:02d}-cert.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    summary = build_dreamaudit_intake_summary(tmp_path, limit=None, readiness_ladder_limits=(2,))
+
+    assert summary["summary"]["certificates"] == 5
+    assert len(summary["rows"]) == 5
+    assert summary["evidence_depth_ladder"] == [
+        {
+            "scan_limit": 2,
+            "certificates": 2,
+            "readiness_score": 60,
+            "status": "needs_more_evidence",
+            "failure_families": 1,
+            "minimality_reports": 2,
+            "replay_commands": 2,
+            "source_directories": 1,
+            "gaps": [
+                "Fewer than 30 certificates imported; broaden the scan before carrier review.",
+                "Fewer than three failure families represented.",
+            ],
+        }
+    ]
+
+
 def test_certificate_rows_limits_output():
     cert = adapt_dreamaudit_certificate(
         {

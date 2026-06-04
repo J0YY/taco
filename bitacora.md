@@ -389,3 +389,13 @@
   - 1,000-certificate ladder rung: readiness `85/100`, status `needs_more_evidence`, gap is low minimality coverage,
   - 5,000-certificate ladder rung: readiness `100/100`, status `carrier_review_ready`, gaps `[]`,
   - recommended scan limit: `5000`.
+- Pushed evidence-depth ladder commit `b2c4a30` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one edge case:
+  - `limit=None` now meant "uncapped" in the public summary API, but the ladder implementation could cap adaptation at the largest ladder rung.
+- Fixed `limit=None` so selected-summary adaptation remains uncapped while ladder rows still use their configured staged depths.
+- Added regression coverage proving an uncapped summary can include more certificates than a smaller ladder rung.
+- Verification after review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_intake.py taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_quote_engine.py` -> 23 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 46 passed.
+  - uncapped real DreamAudit scan summarized `6531` certificates with readiness `100/100`, status `carrier_review_ready`, and recommended ladder depth `5000`.
+  - `git diff --check` -> clean.
