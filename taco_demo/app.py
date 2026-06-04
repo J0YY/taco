@@ -18,6 +18,7 @@ from taco_demo.external_evidence import (
     saescope_summary,
 )
 from taco_demo.guided_flow import render_guided_flow
+from taco_demo.sae_features import render_sae_panel
 from taco_demo.activation_evidence_contract import (
     activation_artifact_check_rows,
     activation_gate_rows,
@@ -1447,6 +1448,12 @@ with tabs[11]:
         "original success/failure metadata. These show TACO's evidence is policy- and "
         "simulator-agnostic, and that internal risk signatures can fire before failure on a real policy."
     )
+
+    st.markdown("#### Mechanistic interpretation — real SAE feature analysis")
+    st.caption("Proof we can read a robot policy's internals: an SAE trained on a real VLA, "
+               "decomposed into interpretable features.")
+    render_sae_panel(st)
+    st.divider()
 
     ss = saescope_summary()
     st.markdown("#### FR-004 · Internal monitor fires before failure (real)")

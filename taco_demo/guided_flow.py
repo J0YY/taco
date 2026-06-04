@@ -27,6 +27,7 @@ import streamlit as st
 from .external_evidence import fr004_certificate, saescope_summary
 from .mechanism import MECH_SOURCES, mechanism_caption, mechanism_flowchart_dot
 from .quote_engine import generate_quote
+from .sae_features import render_sae_panel
 from .sample_data import DEMO_CERTIFICATES
 from .schemas import default_application
 from .trace_scoring import compute_early_warning_margin, compute_internal_metrics, load_trace
@@ -359,10 +360,12 @@ def render_guided_flow() -> None:
     with stage_tabs[2]:
         _pipeline_header(2)
         st.markdown("#### Why it failed — the internal mechanism")
-        with st.expander("How we read the robot's mind (method)", expanded=False):
+        with st.expander("How we read the robot's mind (method + real SAE proof)", expanded=False):
             st.graphviz_chart(mechanism_flowchart_dot())
             st.caption(mechanism_caption())
             st.caption("Method: " + MECH_SOURCES[0]["source"] + " — " + MECH_SOURCES[0]["url"])
+            st.divider()
+            render_sae_panel(st)
         trace = _exhibit_trace(cert_id)
         failure_ts = _CERTS[cert_id].failure_timestep if cert_id in _CERTS else 80
         chart, _, lead = _crossing_chart(trace, failure_ts)
