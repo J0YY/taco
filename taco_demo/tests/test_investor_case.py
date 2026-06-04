@@ -6,6 +6,7 @@ import zipfile
 from dataclasses import replace
 
 from taco_demo.data_room import (
+    MAX_ZIP_MEMBER_BYTES,
     build_data_room_bundle,
     build_data_room_checklist,
     build_data_room_manifest,
@@ -487,6 +488,49 @@ def test_data_room_bundle_verifier_fails_closed_on_corrupt_deflate_payloads():
 
     assert verification["valid"] is False
     assert any(issue.startswith("Invalid data-room packet:") for issue in verification["issues"])
+
+
+def test_data_room_bundle_verifier_rejects_oversized_members_before_reading():
+    required_files = [
+        "README.md",
+        "manifest.json",
+        "application.json",
+        "quote.json",
+        "checklist.json",
+        "diligence_memo.md",
+        "insurance/workflow_examples.json",
+        "research/sources.json",
+        "suite/video_index.json",
+        "dreamaudit/summary.json",
+    ]
+    payloads = {name: b"" for name in required_files}
+    payloads["manifest.json"] = b'{"manifest_id":"DR-TEST"}'
+    payloads["huge.bin"] = b"x" * (MAX_ZIP_MEMBER_BYTES + 1)
+    packet_index = {
+        "packet_format": "taco_data_room_zip_v1",
+        "manifest_id": "DR-TEST",
+        "checksum_algorithm": "sha256",
+        "indexed_file_count": len(payloads),
+        "required_files": sorted(required_files + ["packet/index.json"]),
+        "files": [
+            {
+                "path": name,
+                "bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            for name, payload in payloads.items()
+        ],
+    }
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in payloads.items():
+            archive.writestr(name, payload)
+        archive.writestr("packet/index.json", json.dumps(packet_index))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is False
+    assert "ZIP member too large: huge.bin" in verification["issues"]
 
 
 def test_data_room_bundle_verifier_rejects_empty_packet_index():

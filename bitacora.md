@@ -690,6 +690,20 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 69 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed upload-verifier branch fix commit `6535ab8` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found one issue:
+  - exposing uploaded packet verification to arbitrary ZIPs made unbounded decompression/verification work possible through crafted ZIP bombs.
+- Added verifier resource bounds:
+  - maximum uploaded packet byte size,
+  - maximum ZIP member count,
+  - maximum total uncompressed ZIP size,
+  - maximum individual ZIP member size before `archive.read(...)`.
+- Added regression coverage for an indexed oversized ZIP member that fails verification before payload hashing.
+- Verification after uploaded ZIP resource-bound fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 24 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 70 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

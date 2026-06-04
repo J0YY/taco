@@ -17,6 +17,10 @@ from .schemas import FailureCertificate, InsuranceApplication, InternalRiskMetri
 
 ZIP_TIMESTAMP = (2026, 6, 4, 0, 0, 0)
 PACKET_INDEX_PATH = "packet/index.json"
+MAX_PACKET_BYTES = 10_000_000
+MAX_ZIP_MEMBERS = 256
+MAX_TOTAL_UNCOMPRESSED_BYTES = 10_000_000
+MAX_ZIP_MEMBER_BYTES = 2_000_000
 REQUIRED_BUNDLE_FILES = {
     "README.md",
     "manifest.json",
@@ -223,9 +227,23 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
     names: list[str] = []
     index: dict[str, Any] | None = None
     indexed_file_count = 0
+    if len(bundle_bytes) > MAX_PACKET_BYTES:
+        issues.append(f"Packet exceeds maximum byte size: {len(bundle_bytes)} > {MAX_PACKET_BYTES}")
     try:
         with zipfile.ZipFile(io.BytesIO(bundle_bytes), mode="r") as archive:
+            infos = archive.infolist()
             names = sorted(archive.namelist())
+            infos_by_name = {info.filename: info for info in infos}
+            total_uncompressed = sum(info.file_size for info in infos)
+            if len(infos) > MAX_ZIP_MEMBERS:
+                issues.append(f"ZIP member count exceeds limit: {len(infos)} > {MAX_ZIP_MEMBERS}")
+            if total_uncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES:
+                issues.append(
+                    f"ZIP uncompressed size exceeds limit: {total_uncompressed} > {MAX_TOTAL_UNCOMPRESSED_BYTES}"
+                )
+            oversized_names = sorted(info.filename for info in infos if info.file_size > MAX_ZIP_MEMBER_BYTES)
+            if oversized_names:
+                issues.extend(f"ZIP member too large: {name}" for name in oversized_names)
             unsafe_names = [name for name in names if _unsafe_zip_name(name)]
             if unsafe_names:
                 issues.extend(f"Unsafe ZIP member path: {name}" for name in unsafe_names)
@@ -238,11 +256,15 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
             if PACKET_INDEX_PATH not in names:
                 issues.append(f"Missing required file: {PACKET_INDEX_PATH}")
             else:
-                raw_index = json.loads(archive.read(PACKET_INDEX_PATH))
-                if isinstance(raw_index, dict):
-                    index = raw_index
+                index_info = infos_by_name.get(PACKET_INDEX_PATH)
+                if index_info is not None and index_info.file_size <= MAX_ZIP_MEMBER_BYTES:
+                    raw_index = json.loads(archive.read(PACKET_INDEX_PATH))
+                    if isinstance(raw_index, dict):
+                        index = raw_index
+                    else:
+                        issues.append("Invalid packet index: expected JSON object")
                 else:
-                    issues.append("Invalid packet index: expected JSON object")
+                    issues.append("Invalid packet index: packet index exceeds member size limit")
             if index is not None:
                 if index.get("packet_format") != "taco_data_room_zip_v1":
                     issues.append("Invalid packet index: packet_format must be taco_data_room_zip_v1")
@@ -279,6 +301,9 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                 for name, item in indexed_files.items():
                     if name not in names:
                         issues.append(f"Indexed file missing from ZIP: {name}")
+                        continue
+                    info = infos_by_name.get(name)
+                    if info is not None and info.file_size > MAX_ZIP_MEMBER_BYTES:
                         continue
                     payload = archive.read(name)
                     expected = str(item.get("sha256", ""))
