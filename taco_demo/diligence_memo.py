@@ -114,6 +114,7 @@ def build_diligence_memo(
     research_validation_plan = data_room_manifest["research_validation_plan"]
     methodology_validation_protocol = data_room_manifest["methodology_validation_protocol"]
     activation_evidence_contract = data_room_manifest["activation_evidence_contract"]
+    evidence_provenance_audit = data_room_manifest["evidence_provenance_audit"]
     dreamaudit_reconciliation = data_room_manifest["dreamaudit_corpus_reconciliation"]
     competitive_positioning = data_room_manifest["competitive_positioning"]
     commercial_traction_plan = data_room_manifest["commercial_traction_plan"]
@@ -252,6 +253,30 @@ def build_diligence_memo(
     lines.extend(["", "| Artifact check | Evidence | Blocks |", "| --- | --- | --- |"])
     for item in activation_evidence_contract["artifact_checks"]:
         lines.append(f"| {item['check']} | {item['evidence']} | {item['blocks']} |")
+
+    lines.extend(
+        [
+            "",
+            "## Evidence Provenance Audit",
+            "",
+            f"* Status: {evidence_provenance_audit['status']}",
+            f"* Boundary: {evidence_provenance_audit['boundary']}",
+            f"* Recorded activation metrics: {evidence_provenance_audit['current_counts']['recorded_activation_metrics']}",
+            f"* Adapted DreamAudit certificates: {evidence_provenance_audit['current_counts']['adapted_dreamaudit_certificates']}",
+            f"* Generated suite videos: {evidence_provenance_audit['current_counts']['generated_suite_videos']}",
+            "",
+            "| Certificate | Evidence class | Source | Upgrade gate |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for item in evidence_provenance_audit["certificate_sources"]:
+        lines.append(f"| {item['certificate_id']} | {item['evidence_class']} | {item['source']} | {item['upgrade_gate']} |")
+    lines.extend(["", "| Metric certificate | Evidence class | Metric source | Cannot claim |", "| --- | --- | --- | --- |"])
+    for item in evidence_provenance_audit["metric_sources"]:
+        lines.append(f"| {item['certificate_id']} | {item['evidence_class']} | {item['metrics_source']} | {item['cannot_claim']} |")
+    lines.extend(["", "| Claim | Current safe level | Upgrade requires |", "| --- | --- | --- |"])
+    for item in evidence_provenance_audit["claim_upgrade_rules"]:
+        lines.append(f"| {item['claim']} | {item['current_safe_level']} | {item['upgrade_requires']} |")
 
     lines.extend(
         [

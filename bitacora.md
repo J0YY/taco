@@ -1336,3 +1336,18 @@
 - Independent `codex review --base _review-loop-baseline` inspected the cumulative fundraise narrative memo diff, observed the test suite passing, and found no discrete correctness issues in the UI, manifest, bundle, verifier versioning, diligence memo, or tests.
 
 - Restarted Streamlit at http://127.0.0.1:8501 with detached active PID 40658, --server.fileWatcherType none, and --browser.gatherUsageStats false.
+
+## 2026-06-04 - Improvement loop: evidence provenance audit
+
+- Pulled `origin/main` with `--ff-only`; local `main` was already up to date and clean at `124e2a4`.
+- Identified the next VC-quality gap: the data room had strong DreamAudit, activation, and video artifacts, but reviewers still needed one provenance artifact that classifies which evidence is fixture/generated, adapted DreamAudit, or recorded activation-hook output before claims are upgraded.
+- Added `taco_demo/evidence_provenance.py` with certificate, internal-metric, and video source classification, claim-upgrade rules, reviewer questions, and explicit no-overclaim boundaries for fixture data, adapted DreamAudit certificates, recorded activation traces, and generated replay media.
+- Wired the provenance audit into the Investor Case UI, diligence memo, VC data-room checklist, manifest, ZIP packet, packet README, and root README architecture description.
+- Bumped generated data-room packets to `taco_data_room_zip_v27` while preserving verifier compatibility for legacy v1 through v26 packets.
+- Verification before commit:
+  - `.venv/bin/python -m py_compile taco_demo/evidence_provenance.py taco_demo/data_room.py taco_demo/app.py taco_demo/diligence_memo.py taco_demo/external_proof_registry.py taco_demo/methodology_validation_protocol.py taco_demo/tests/test_investor_case.py` -> passed.
+  - `git diff --check` -> clean.
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py -q` -> 79 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests -q` -> 128 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `.venv/bin/python -m pip install -r taco_demo/requirements-taco.txt` -> all requirements already satisfied.

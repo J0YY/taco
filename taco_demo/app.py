@@ -89,6 +89,13 @@ from taco_demo.dreamaudit_corpus_reconciliation import (
     dreamaudit_gap_rows,
     dreamaudit_gate_rows,
 )
+from taco_demo.evidence_provenance import (
+    build_evidence_provenance_audit,
+    provenance_certificate_rows,
+    provenance_metric_rows,
+    provenance_upgrade_rows,
+    provenance_video_rows,
+)
 from taco_demo.external_validation import (
     build_external_validation_capture_kit,
     external_validation_ladder_rows,
@@ -879,6 +886,14 @@ with tabs[9]:
             methodology_validation_protocol,
             technical_runbook,
         )
+        evidence_provenance_audit = build_evidence_provenance_audit(
+            application,
+            audit["certificates"],
+            list(audit["metrics"].values()),
+            audit["quote"],
+            suite_manifest,
+            dreamaudit_intake,
+        )
         fundraise_narrative_memo = build_fundraise_narrative_memo(
             application,
             audit["quote"],
@@ -1026,6 +1041,17 @@ with tabs[9]:
         st.dataframe(pd.DataFrame(activation_gate_rows(activation_evidence_contract)), width="stretch")
         st.dataframe(pd.DataFrame(activation_artifact_check_rows(activation_evidence_contract)), width="stretch")
         st.dataframe(pd.DataFrame(activation_workflow_rows(activation_evidence_contract)), width="stretch")
+        st.markdown("#### Evidence Provenance Audit")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Provenance status", str(evidence_provenance_audit["status"]).replace("_", " ").title())
+        c2.metric("Recorded metrics", evidence_provenance_audit["current_counts"]["recorded_activation_metrics"])
+        c3.metric("Generated videos", evidence_provenance_audit["current_counts"]["generated_suite_videos"])
+        st.caption(evidence_provenance_audit["boundary"])
+        st.dataframe(pd.DataFrame(provenance_certificate_rows(evidence_provenance_audit)), width="stretch")
+        st.dataframe(pd.DataFrame(provenance_metric_rows(evidence_provenance_audit)), width="stretch")
+        st.dataframe(pd.DataFrame(provenance_upgrade_rows(evidence_provenance_audit)), width="stretch")
+        with st.expander("Video provenance rows", expanded=False):
+            st.dataframe(pd.DataFrame(provenance_video_rows(evidence_provenance_audit)), width="stretch")
         st.markdown("#### Investor Proof Pipeline")
         c1, c2, c3 = st.columns(3)
         c1.metric("Pipeline status", str(investor_proof_pipeline["status"]).replace("_", " ").title())

@@ -106,6 +106,7 @@ InsuranceApplication
          research validation plan with falsifiable hypotheses, workstreams, thresholds, and downgrade rules
          methodology validation protocol with endpoints, baselines, sample-size rungs, and artifact gates
          activation evidence contract with layer maps, calibration gates, NPZ checks, and internals no-claim rules
+         evidence provenance audit with source classes, claim boundaries, and upgrade gates
          investor claim validation ledger with safe claims, evidence levels, upgrade gates, and disallowed overclaims
          investor proof pipeline with weekly reviewer cadence, proof gates, packet fingerprints, and data-room upgrade rules
          external proof registry with proof slots, permission-to-quote state, redaction gates, and claim-upgrade rules
@@ -259,7 +260,7 @@ The Streamlit app includes:
 * 40 ManiSkill/RMA-style failure examples,
 * 10 insurance failure/pricing workflows,
 * runtime compliance and renewal loop,
-* investor case, VC readiness gates, methodology evidence map, DreamAudit corpus reconciliation, research validation plan, methodology validation protocol, activation evidence contract, investor claim validation ledger, investor proof pipeline, external proof registry, fundraise narrative memo, commercial traction plan, commercial unit economics, seed round close plan, competitive positioning, pricing diligence sensitivity, actuarial readiness plan, buyer ROI model, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
+* investor case, VC readiness gates, methodology evidence map, DreamAudit corpus reconciliation, research validation plan, methodology validation protocol, activation evidence contract, evidence provenance audit, investor claim validation ledger, investor proof pipeline, external proof registry, fundraise narrative memo, commercial traction plan, commercial unit economics, seed round close plan, competitive positioning, pricing diligence sensitivity, actuarial readiness plan, buyer ROI model, investor objection register, pilot walkthrough playbook, external validation capture kit, commercial scale model, insurance capacity roadmap, enterprise security plan, technical diligence runbook, VC data-room checklist, design-partner diligence plan, proposed $5M seed financing plan, data-room manifest export, diligence memo download, hash-indexed ZIP data-room packet export, and uploaded packet verification with a SHA-256 chain-of-custody fingerprint,
 * live DreamAudit artifact intake,
 * architecture/spec view.
 
@@ -287,6 +288,8 @@ The research validation plan makes the methodology falsifiable. It maps the simu
 The methodology validation protocol turns those workstreams into an executable prospective study design. It predeclares primary endpoints, output-only and replay baselines, sample-size rungs, packet-hash pre-registration, reviewer artifact gates, and claim downgrade rules so TACO can show a disciplined path to proving the method rather than implying the local demo has already done so.
 
 The activation evidence contract closes the reviewer gap between "there is an activation recorder" and "the internals claim is inspectable." It specifies the required success/failure/mitigated NPZ triplet, layer-to-signal map, shared calibration gates, artifact checks, workflow steps, and failure conditions. It does not claim activations are causal explanations, that a layer map is externally validated, that a customer policy has been recorded, or that activation-derived pricing is actuarially credible.
+
+The evidence provenance audit classifies every primary certificate, internal metric, and generated video by source type: local fixture, adapted DreamAudit certificate, recorded activation trace, generated demo trace, or generated ManiSkill/RMA replay. It gives reviewers a direct way to see what can be claimed now and what requires source paths, replay commands, simulator seeds, calibration notes, or external reproduction before being upgraded.
 
 The investor claim validation ledger turns the pitch into a controlled diligence artifact. It lists safe wording, current evidence, upgrade gates, and disallowed overclaims for internals, replay evidence, pricing, ROI, external validation, capacity, and packet transfer. This makes the story more fundraise-ready without implying deterministic behavior, signed customers, guaranteed savings, filed rates, or carrier approval.
 
