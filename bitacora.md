@@ -1095,3 +1095,4 @@
 - Pushed investor claim validation ledger commit `2a0967a` to GitHub `main`.
 - Independent `codex review --base _review-loop-baseline` found no correctness-breaking regression in the claim validation ledger, Investor Case UI, memo wiring, v15 data-room packet, or legacy verifier paths.
 - Restarted Streamlit at `http://127.0.0.1:8501` with PID `99656`.
+- Recreated missing `_review-loop-baseline` at `4bd723401ce3de3fd99e9508df46b9486ab55f23` after the log-only commit and reran independent `codex review --base _review-loop-baseline` against the full claim-ledger change range through `71000fa`; the reviewer again found no correctness-breaking issue and confirmed tests passed.
