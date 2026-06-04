@@ -773,6 +773,8 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 74 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed packet-format compatibility fix commit `342f0ad` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found no actionable correctness issues in the design-partner diligence plan diff and noted the v1 packet compatibility fix.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 
