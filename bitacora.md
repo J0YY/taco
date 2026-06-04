@@ -835,3 +835,12 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 79 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed methodology evidence map commit `72c7721` to GitHub `main`.
+- Independent `codex review --base _review-loop-baseline` found one issue:
+  - carrier-ready DreamAudit certificate intake could incorrectly upgrade demo internal-risk metrics to `research_and_artifact_backed` for the internals claim.
+- Fixed the methodology map so `internal_activation_risk_path` requires real activation metric sources and cannot be upgraded by DreamAudit certificate-readiness alone.
+- Verification after review fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 34 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 80 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

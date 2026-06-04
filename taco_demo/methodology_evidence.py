@@ -68,7 +68,7 @@ def build_methodology_evidence_map(
             "internal_activation_risk_path",
             "Internal traces can expose behavior-relevant risk signals not visible from output-only pass/fail labels.",
             "Do the internal-risk metrics come from trace artifacts for the same certificates?",
-            _internals_status(certificates, metrics, dreamaudit_ready),
+            _internals_status(certificates, metrics),
             [
                 "Sparse Autoencoders Find Highly Interpretable Features, ICLR 2024",
                 "Anthropic, Mapping the Mind of a Large Language Model, 2024",
@@ -149,7 +149,6 @@ def methodology_evidence_rows(evidence_map: dict[str, Any]) -> list[dict[str, st
 def _internals_status(
     certificates: list[FailureCertificate],
     metrics: list[InternalRiskMetrics],
-    dreamaudit_ready: bool,
 ) -> str:
     if not certificates or not metrics:
         return "needs_work"
@@ -158,7 +157,7 @@ def _internals_status(
     if not complete:
         return "needs_work"
     real_activation_sources = {"recorded_activation_forward_hooks", "activation_recorder_npz"}
-    if any(metric.metrics_source in real_activation_sources for metric in metrics) or dreamaudit_ready:
+    if any(metric.metrics_source in real_activation_sources for metric in metrics):
         return "research_and_artifact_backed"
     return "demo_backed_needs_live_evidence"
 

@@ -136,6 +136,29 @@ def test_methodology_evidence_map_separates_backed_claims_from_open_risks():
     assert all(claim["boundary"] for claim in evidence_map["claims"])
 
 
+def test_methodology_evidence_map_does_not_treat_carrier_ready_dreamaudit_as_activation_evidence():
+    app = default_application()
+    metrics = [
+        InternalRiskMetrics(cert.certificate_id, 1.0, 0.6, 0.4, 0.8, 0.9, 0.2, "signature", True, "demo_trace_fixture", {})
+        for cert in DEMO_CERTIFICATES
+    ]
+    quote = generate_quote(app, DEMO_CERTIFICATES, {metric.certificate_id: metric for metric in metrics}, {})
+    carrier_ready_intake = _carrier_ready_dreamaudit_intake()
+    carrier_ready_intake["readiness"] = {"readiness_score": 100, "status": "carrier_review_ready", "gaps": []}
+    evidence_map = build_methodology_evidence_map(
+        app,
+        DEMO_CERTIFICATES,
+        metrics,
+        quote,
+        {"suite_name": "suite", "suite_size": 40, "cases": build_maniskill_suite_cases()},
+        carrier_ready_intake,
+    )
+    claims_by_id = {claim["claim_id"]: claim for claim in evidence_map["claims"]}
+
+    assert claims_by_id["live_corpus_transfer"]["status"] == "research_and_artifact_backed"
+    assert claims_by_id["internal_activation_risk_path"]["status"] == "demo_backed_needs_live_evidence"
+
+
 def test_methodology_evidence_map_flags_missing_live_and_internal_evidence():
     app = default_application()
     quote = generate_quote(app, DEMO_CERTIFICATES, {}, {})
