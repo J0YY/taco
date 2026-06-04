@@ -641,6 +641,15 @@
   - `.venv/bin/python -m pytest taco_demo/tests` -> 67 passed.
   - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed corrupt-deflate fix commit `50632e7` to GitHub `main`.
+- Ninth independent `codex review --base _review-loop-baseline` found one issue:
+  - duplicate `path` entries in `packet/index.json` silently overwrote earlier checksum records, allowing ambiguous indexes to pass if the last duplicate matched.
+- Tightened packet-index validation to reject duplicate indexed paths and added regression coverage for a duplicate where the first checksum mismatches and the second matches.
+- Verification after duplicate packet-index path fix:
+  - `.venv/bin/python -m pytest taco_demo/tests/test_investor_case.py taco_demo/tests/test_insurance_scenarios.py` -> 22 passed.
+  - `.venv/bin/python -m pytest taco_demo/tests` -> 68 passed.
+  - `.venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.
 
 ## 2026-06-04 - Improvement loop: data-room packet export
 

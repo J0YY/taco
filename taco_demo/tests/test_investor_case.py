@@ -543,6 +543,48 @@ def test_data_room_bundle_verifier_rejects_non_integer_byte_counts():
         assert f"Invalid packet index: file bytes must be an integer for {required_files[0]}" in verification["issues"]
 
 
+def test_data_room_bundle_verifier_rejects_duplicate_packet_index_paths():
+    required_files = [
+        "README.md",
+        "manifest.json",
+        "application.json",
+        "quote.json",
+        "checklist.json",
+        "diligence_memo.md",
+        "insurance/workflow_examples.json",
+        "research/sources.json",
+        "suite/video_index.json",
+        "dreamaudit/summary.json",
+    ]
+    files = []
+    for name in required_files:
+        files.append(
+            {
+                "path": name,
+                "bytes": 0,
+                "sha256": hashlib.sha256(b"tampered").hexdigest(),
+            }
+        )
+        files.append(
+            {
+                "path": name,
+                "bytes": 0,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            }
+        )
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name in required_files:
+            archive.writestr(name, b"")
+        archive.writestr("packet/index.json", json.dumps({"files": files}))
+
+    verification = verify_data_room_bundle(buffer.getvalue())
+
+    assert verification["valid"] is False
+    assert f"Duplicate packet index path: {required_files[0]}" in verification["issues"]
+    assert f"Checksum mismatch: {required_files[0]}" in verification["issues"]
+
+
 def test_data_room_bundle_sanitizes_external_certificate_ids_in_zip_paths():
     app = default_application()
     certs = [

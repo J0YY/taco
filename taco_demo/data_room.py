@@ -255,6 +255,9 @@ def verify_data_room_bundle(bundle_bytes: bytes) -> dict[str, Any]:
                     if not isinstance(item.get("bytes"), int) or isinstance(item.get("bytes"), bool):
                         issues.append(f"Invalid packet index: file bytes must be an integer for {item['path']}")
                         continue
+                    if item["path"] in indexed_files:
+                        issues.append(f"Duplicate packet index path: {item['path']}")
+                        continue
                     indexed_files[item["path"]] = item
                 indexed_file_count = len(indexed_files)
                 for name, item in indexed_files.items():
