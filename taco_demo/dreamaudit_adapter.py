@@ -255,6 +255,7 @@ def adapt_dreamaudit_certificate(path_or_payload: Path | str | JsonDict | Any, s
             "native_validation": _get(payload, "native_validation", default={}),
             "perturbed_validation": _get(payload, "perturbed_validation", default={}),
             "simulator_validation": _get(payload, "simulator_validation", default={}),
+            "minimality": _get(payload, "minimality", default={}),
             "world_model_discovery": _get(payload, "world_model_discovery", default={}),
             "original_failure_type": raw_failure_type,
             "dreamaudit_schema": "rich" if "simulator_validation" in payload else "compact",

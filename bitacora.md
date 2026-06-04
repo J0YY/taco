@@ -136,3 +136,16 @@
   - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 28 passed.
   - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
   - `git diff --check` -> clean.
+- Pushed first review-fix commit `4265ec6` to GitHub `main`.
+- Second independent `codex review --base _review-loop-baseline` found two remaining P2 issues:
+  - activation captures could share storage with mutable torch CPU tensors,
+  - adapted certificates did not preserve the raw DreamAudit `minimality` report.
+- Fixed both:
+  - activation recorder now copies arrays at hook capture time,
+  - adapter metadata now includes the full raw `minimality` object.
+- Added regression coverage for in-place post-hook mutation and minimality preservation.
+- Verification after second review fixes:
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests/test_dreamaudit_adapter.py taco_demo/tests/test_activation_recorder.py` -> 7 passed.
+  - `/tmp/taco-demo-venv/bin/python -m pytest taco_demo/tests` -> 29 passed.
+  - `/tmp/taco-demo-venv/bin/python -c "import taco_demo.app"` -> passed with expected Streamlit bare-mode warnings.
+  - `git diff --check` -> clean.

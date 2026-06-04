@@ -31,6 +31,15 @@ class FakeLayer:
         return output
 
 
+class MutatingFakeLayer(FakeLayer):
+    def forward(self, value):
+        output = np.asarray(value, dtype=float) * self.scale
+        for hook in list(self.hooks):
+            hook(self, (value,), output)
+        output *= -1
+        return output
+
+
 class FakeModel:
     def __init__(self):
         self.encoder = FakeLayer(2.0)
@@ -78,3 +87,13 @@ def test_record_forward_pass_removes_hooks_after_run(tmp_path):
     assert model.encoder.hooks == []
     assert model.head.hooks == []
     assert (tmp_path / "single_pass.npz").exists()
+
+
+def test_activation_recorder_snapshots_before_in_place_mutation():
+    layer = MutatingFakeLayer(2.0)
+    recorder = ActivationRecorder().attach(None, named_modules=[("policy.mutable", layer)])
+
+    output = layer.forward(np.array([1.0, 2.0]))
+
+    assert np.allclose(output, np.array([-2.0, -4.0]))
+    assert np.allclose(recorder.captures["policy.mutable"][0], np.array([2.0, 4.0]))

@@ -113,7 +113,7 @@ class ActivationRecorder:
                 return
             array = _to_numpy(output, detach=self.detach, device=self.device)
             if array is not None:
-                bucket.append(np.asarray(array))
+                bucket.append(np.asarray(array).copy())
 
         return record
 

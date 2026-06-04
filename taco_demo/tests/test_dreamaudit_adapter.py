@@ -85,6 +85,7 @@ def test_adapts_rich_dreamaudit_certificate_and_directory(tmp_path):
     assert cert.failure_rate_neighborhood == 0.6
     assert cert.failure_timestep == 94
     assert cert.metadata["dreamaudit_schema"] == "rich"
+    assert cert.metadata["minimality"] == payload["minimality"]
     assert [item.certificate_id for item in certs] == ["dreamaudit-synthetic-123-000001"]
     assert summary["certificates"] == 1
     assert summary["failure_families"] == ["contact_force_overshoot"]
