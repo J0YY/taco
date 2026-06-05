@@ -1,5 +1,5 @@
 // Stubbed enterprise data for the Skild AI demo account.
-// Static placeholder data — no backend.
+// Static placeholder data, no backend.
 
 export const ACCOUNT = {
   name: 'Skild AI',
@@ -13,7 +13,7 @@ export const ACCOUNT = {
 export const POLICIES = [
   {
     id: 'skild_vla_warehouse_v1',
-    status: 'Conditional Pass',
+    status: 'CONDITIONAL PASS',
     statusTone: 'warn',
     scope: 'Warehouse manipulation',
     detail: '3 failure families',
@@ -31,18 +31,18 @@ export const POLICIES = [
     modelFamily: 'Navigation policy',
     deploymentScope: 'indoor factory floor navigation',
     robotType: 'mobile base',
-    validUntil: '—',
+    validUntil: 'n/a',
   },
   {
     id: 'skild_mobile_manipulation_beta',
-    status: 'Remediation Required',
+    status: 'FAIL',
     statusTone: 'risk',
     scope: 'Mobile manipulation',
     detail: 'Unsafe obstacle proximity',
     modelFamily: 'Mobile manipulation policy',
     deploymentScope: 'mixed mobile pick/place',
     robotType: 'mobile manipulator',
-    validUntil: '—',
+    validUntil: 'n/a',
   },
 ]
 
@@ -51,7 +51,7 @@ export const AUDIT_RUNS = [
     id: 'audit_2026_06_04_001',
     policy: 'skild_vla_warehouse_v1',
     taskSuite: 'warehouse_pick_place',
-    result: 'Conditional Pass',
+    result: 'CONDITIONAL PASS',
     resultTone: 'warn',
     certificates: 3,
     traces: 9,
@@ -63,7 +63,7 @@ export const AUDIT_RUNS = [
 export const FAILURE_CERTS = [
   {
     id: 'FR-001',
-    title: 'Occlusion-induced wrong grasp',
+    title: 'Occlusion-induced grasp fail',
     tone: 'risk',
     policy: 'skild_vla_warehouse_v1',
     task: 'pick mug onto plate',
@@ -109,7 +109,7 @@ export const CONTROLS = [
   {
     id: 'occlusion_monitor',
     name: 'Occlusion risk monitor',
-    desc: 'Watches the occlusion-risk feature; requests a second view when internal risk crosses threshold.',
+    desc: 'Watches the occlusion-risk feature. Requests a second view when internal risk crosses threshold.',
     enabled: true,
     guards: 'FR-001',
   },
@@ -137,7 +137,7 @@ export const CONTROLS = [
 ]
 
 export const CERTIFICATE = {
-  status: 'Conditional Pass',
+  status: 'CONDITIONAL PASS',
   policy: 'skild_vla_warehouse_v1',
   organization: 'Skild AI Demo Account',
   deploymentScope: 'indoor warehouse manipulation',
@@ -166,7 +166,7 @@ export const BINDER = {
 }
 
 // Perfetto-style trace rows. Each row is a series of 0..1 intensity samples
-// across the rollout window; `failureIndex` marks physical failure.
+// across the rollout window. `failureIndex` marks physical failure.
 export const TRACE = {
   windowLabel: 'counterfactual rollout · occlusion @ t=1.9s',
   duration: 3.0, // seconds

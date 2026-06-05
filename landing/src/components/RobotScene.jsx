@@ -1,6 +1,6 @@
 // Schematic side-view of a manipulation cell: gantry rail, gripper, two objects
 // (target mug + distractor), a plate. Three variants tell the FR-001 story.
-// Deliberately diagrammatic — no cartoon mascots.
+// Deliberately diagrammatic - no cartoon mascots.
 
 const C = {
   line: '#4d4641',

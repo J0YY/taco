@@ -1,5 +1,5 @@
 /* ============================================================
-   Taco — design system (sourced from DESIGN.md)
+   Taco - design system (sourced from DESIGN.md)
    Warm dark canvas · off-white ink · hairline borders · no shadows
    Inter for prose · DM Mono for traces/certs/IDs/terminals
    ============================================================ */
@@ -19,11 +19,11 @@
   --mute: #aea69c;
   --on-primary: #2b2622;
 
-  /* Status — desaturated, warm; used sparingly as institutional signal */
-  --ok: #9db58f;        /* muted sage — pass / success */
-  --warn: #d8b46a;      /* muted amber — conditional / moderate */
-  --risk: #cf8f7a;      /* muted clay — failure / remediation */
-  --info: #8fa6b5;      /* muted slate — neutral signal */
+  /* Status - desaturated, warm; used sparingly as institutional signal */
+  --ok: #9db58f;        /* muted sage - pass / success */
+  --warn: #d8b46a;      /* muted amber - conditional / moderate */
+  --risk: #cf8f7a;      /* muted clay - failure / remediation */
+  --info: #8fa6b5;      /* muted slate - neutral signal */
 
   /* Radius */
   --r-xs: 2px;

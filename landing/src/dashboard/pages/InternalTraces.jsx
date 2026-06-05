@@ -20,7 +20,7 @@ export default function InternalTraces() {
 
       <div className="notice" style={{ marginTop: 20, borderLeftColor: 'var(--warn)' }}>
         <span className="dot dot-warn" />
-        <span>Risk signature detected <strong>0.82s before physical failure</strong>. The target feature collapses while the memorized-trajectory feature rises; internal risk crosses threshold before the wrong grasp.</span>
+        <span>Risk signature detected <strong>0.82s before physical failure</strong>. The target feature collapses while the memorized-trajectory feature rises. Internal risk crosses threshold before the wrong grasp.</span>
       </div>
 
       <div className="subgrid-cards" style={{ marginTop: 24 }}>

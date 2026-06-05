@@ -18,7 +18,7 @@ export default function ControlsPage() {
         <span className={`dot ${tone[cert.tone].dot}`} />
         <span>
           Certification with current controls: <strong className={tone[cert.tone].text}>{cert.label}</strong>
-          {anyDisabled && <> — disabled-control failure families are excluded from the covered deployment scope.</>}
+          {anyDisabled && <>. Disabled-control failure families are excluded from the covered deployment scope.</>}
         </span>
       </div>
 

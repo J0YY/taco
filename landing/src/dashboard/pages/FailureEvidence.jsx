@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import { FAILURE_CERTS, tone } from '../../data/stub.js'
-import RobotScene from '../../components/RobotScene.jsx'
+
+const asset = (p) => `${import.meta.env.BASE_URL}${String(p).replace(/^\//, '')}`
 
 const REPLAYS = [
-  { variant: 'native', tone: 'dot-ok', lbl: 'Native success' },
-  { variant: 'failure', tone: 'dot-risk', lbl: 'Counterfactual failure' },
-  { variant: 'mitigated', tone: 'dot-ok', lbl: 'Mitigated replay' },
+  { tone: 'dot-ok', lbl: 'Native success', src: '/videos/native_success_cropped.gif' },
+  { tone: 'dot-risk', lbl: 'Counterfactual failure', src: '/videos/counter_fail_cropped.gif' },
+  { tone: 'dot-ok', lbl: 'Mitigated replay', src: '/videos/mitigate_cropped.gif' },
 ]
 
 export default function FailureEvidence() {
@@ -28,9 +29,12 @@ export default function FailureEvidence() {
 
         <div className="replay-grid" style={{ marginBottom: 20 }}>
           {REPLAYS.map((r) => (
-            <div className="card replay-card" key={r.variant}>
+            <div className="card replay-card" key={r.lbl}>
               <div className="replay-head"><span className="lbl">{r.lbl}</span><span className={`dot ${r.tone}`} /></div>
-              <div className="replay-scene"><RobotScene variant={r.variant} /></div>
+              <div className="replay-scene">
+                <img src={asset(r.src)} alt={r.lbl}
+                     style={{ width: '100%', display: 'block', background: '#221e1b', aspectRatio: '16 / 10', objectFit: 'cover' }} />
+              </div>
             </div>
           ))}
         </div>

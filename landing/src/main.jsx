@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './styles/global.css'
 import './styles/app.css'
 import Landing from './landing/Landing.jsx'
+import Research from './research/Research.jsx'
 import Dashboard from './dashboard/Dashboard.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 
@@ -16,6 +17,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/research" element={<Research />} />
         <Route path="/demo/*" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>

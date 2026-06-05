@@ -22,7 +22,7 @@ export default function Certification() {
             <div className="display-sm" style={{ marginTop: 4 }}>{cert.label}</div>
           </div>
           <span className="cert-seal-stamp" style={{ color: tone[cert.tone].text.includes('warn') ? 'var(--warn)' : 'var(--risk)', borderColor: cert.tone === 'warn' ? 'var(--warn)' : 'var(--risk)' }}>
-            {cert.tone === 'warn' ? 'conditional' : 'exclusion'}
+            {cert.tone === 'warn' ? 'conditional pass' : 'fail'}
           </span>
         </div>
         <div className="cert-seal-body">
@@ -44,7 +44,7 @@ export default function Certification() {
         <div className="terminal">
           <div className="terminal-bar"><span className="tcap" /><span className="tcap" /><span className="tcap" /><span style={{ marginLeft: 6 }}>model_card.md</span></div>
           <div className="terminal-body" style={{ lineHeight: 1.8, color: 'var(--body-strong)' }}>
-            <div className="text-ok">Taco Audited — {cert.label}</div>
+            <div className="text-ok">Taco Audited: {cert.label}</div>
             <div style={{ marginTop: 8 }}>
               This robot policy was audited against visual occlusion, language override,
               and semantic distractor failure families. Required runtime controls must

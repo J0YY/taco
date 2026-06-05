@@ -27,8 +27,8 @@ const NAV = [
 export function deriveCertStatus(controls) {
   const allOn = controls.every((c) => c.enabled)
   return allOn
-    ? { label: 'Conditional Pass', tone: 'warn' }
-    : { label: 'Pass with Exclusion', tone: 'risk' }
+    ? { label: 'CONDITIONAL PASS', tone: 'warn' }
+    : { label: 'FAIL', tone: 'risk' }
 }
 
 function Shell() {
@@ -46,7 +46,7 @@ function Shell() {
               className={({ isActive }) => (isActive ? 'active' : '')}>
               <span>{label}</span>
               {label === 'Certification' && (
-                <span className="badge">{cert.tone === 'warn' ? 'cond.' : 'excl.'}</span>
+                <span className="badge">{cert.tone === 'warn' ? 'cond.' : 'fail'}</span>
               )}
               {label === 'Failure Evidence' && <span className="badge">3</span>}
             </NavLink>

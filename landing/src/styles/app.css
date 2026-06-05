@@ -65,7 +65,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s-3xl);
-  align-items: start;
+  align-items: center;
 }
 @media (max-width: 980px) {
   .hero-grid { grid-template-columns: 1fr; gap: var(--s-2xl); }
@@ -73,7 +73,7 @@
 }
 .hero h1 { margin-bottom: var(--s-lg); max-width: 12ch; }
 .hero-sub { max-width: 52ch; margin-bottom: var(--s-xl); }
-.hero-ctas { display: flex; gap: var(--s-md); flex-wrap: wrap; margin-bottom: var(--s-xl); }
+.hero-ctas { display: flex; gap: var(--s-md); flex-wrap: wrap; }
 .hero-tagline {
   font-family: var(--font-mono);
   font-size: 13px;
@@ -130,7 +130,7 @@
 .pipe-text h3 { font-size: 24px; font-weight: 500; letter-spacing: -0.4px; margin-bottom: var(--s-md); }
 .pipe-text p { color: var(--body); font-size: 15px; max-width: 46ch; }
 
-/* sticky stage rail — highlights the active step as you scroll */
+/* sticky stage rail - highlights the active step as you scroll */
 .pipe-rail-sticky {
   position: sticky;
   top: 60px;
@@ -191,6 +191,77 @@
 @media (prefers-reduced-motion: reduce) {
   .pipe-steps .pipe-step { opacity: 1; transform: none; transition: none; }
 }
+
+/* ---------------- Waitlist modal ---------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 17, 15, 0.7);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-lg);
+}
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  background: var(--canvas-soft);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-lg);
+  padding: var(--s-2xl);
+}
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--mute);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+}
+.modal-close:hover { color: var(--ink); }
+.modal-title { font-size: 22px; font-weight: 500; letter-spacing: -0.4px; color: var(--ink); margin-bottom: var(--s-md); }
+.modal-body { font-size: 14px; color: var(--body); margin-bottom: var(--s-lg); max-width: 42ch; }
+.text-input {
+  background: var(--canvas);
+  color: var(--ink);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  padding: 10px var(--s-md);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.text-input::placeholder { color: var(--mute); }
+.text-input:focus { outline: none; border-color: var(--body); }
+.modal-form { display: flex; flex-direction: column; gap: var(--s-md); }
+.modal-form .text-input { width: 100%; }
+.modal-form .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+/* ---------------- Verdict legend (research policy library) ---------------- */
+.verdict-legend {
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--canvas-soft);
+  padding: var(--s-lg);
+  margin-bottom: var(--s-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+.verdict-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-lg);
+  flex-wrap: wrap;
+}
+.verdict-row .status-pill { min-width: 168px; justify-content: flex-start; }
+.verdict-row .caption { color: var(--body); flex: 1; min-width: 240px; }
 
 /* ---------------- Replay story ---------------- */
 .replay-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-lg); }
@@ -324,6 +395,7 @@
 .page-head { margin-bottom: var(--s-xl); }
 .page-head h2 { font-size: 22px; font-weight: 500; letter-spacing: -0.4px; margin-bottom: 6px; }
 .page-head p { color: var(--body); font-size: 14px; max-width: 64ch; }
+.page-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-lg); flex-wrap: wrap; }
 
 /* metric cards */
 .metric { padding: var(--s-lg); }

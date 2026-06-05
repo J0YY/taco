@@ -1,11 +1,15 @@
 import { AUDIT_RUNS, tone } from '../../data/stub.js'
+import WaitlistButton from '../../components/WaitlistModal.jsx'
 
 export default function AuditRuns() {
   return (
     <>
-      <div className="page-head">
-        <h2>Audit Runs</h2>
-        <p>Each run executes the policy against a task suite under counterfactual perturbations, emits failure certificates, records internal traces, and issues a binder.</p>
+      <div className="page-head page-head-row">
+        <div>
+          <h2>Audit Runs</h2>
+          <p>Each run executes the policy against a task suite under counterfactual perturbations, emits failure certificates, records internal traces, and issues a binder.</p>
+        </div>
+        <WaitlistButton label="Start new audit" />
       </div>
 
       <div className="card card-flush" style={{ marginBottom: 24 }}>

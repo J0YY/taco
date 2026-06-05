@@ -5,7 +5,7 @@ export default function Binder() {
     <>
       <div className="page-head">
         <h2>Binder</h2>
-        <p>A downstream underwriting artifact derived from the audit evidence — not the product itself. Insurance becomes possible once the evidence layer exists.</p>
+        <p>A downstream underwriting artifact derived from the audit evidence, not the product itself. Insurance becomes possible once the evidence layer exists.</p>
       </div>
 
       <div className="binder">
