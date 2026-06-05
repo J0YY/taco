@@ -622,8 +622,6 @@ const POLICY_CATS = [
     { name: 'OpenVLA · SimplerEnv open-drawer', task: 'open the drawer', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/openvla_drawer_success.mp4', f: '/videos/openvla_drawer_failure.mp4' },
   ] },
   { key: 'humanoid', label: 'Humanoids', policies: [
-    { name: 'PPO · Humanoid stand', task: 'stand up and stay balanced · MS-HumanoidStand · trained vs early', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/humanoid_stand_success.mp4', f: '/videos/humanoid_stand_fail.mp4' },
-    { name: 'PPO · Humanoid walk', task: 'walk forward without falling · MS-HumanoidWalk · trained vs early', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/humanoid_walk_success.mp4', f: '/videos/humanoid_walk_fail.mp4' },
     { name: 'PPO · Unitree G1 transport box', task: 'carry the box to the target shelf · UnitreeG1TransportBox · trained vs early', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/g1_box_success.mp4', f: '/videos/g1_box_fail.mp4' },
     { name: 'PPO · Unitree G1 place apple', task: 'place the apple in the bowl · UnitreeG1PlaceAppleInBowl · trained vs early', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/g1_apple_success.mp4', f: '/videos/g1_apple_fail.mp4' },
   ] },
