@@ -1,0 +1,15 @@
+{
+  "description": "Held-out accuracy of a linear probe (Fisher direction) on captured actor-MLP layer-3 (256-d) activations, separating the working checkpoint's hidden states from a failing/early checkpoint's, per ManiSkill PPO policy. Real measured values from a GPU capture+probe run on athena. Activations captured via taco_demo/scripts/patch_ppo_capture.py forward hooks; probe fit by taco_demo/scripts/probe_fit.py; runner taco_demo/scripts/probe_run.sh.",
+  "captured_layer": "actor_mean layer 3 hidden (256-d)",
+  "split": "70/30 train/held-out, standardized",
+  "policies": {
+    "PickCube-v1": 0.958,
+    "PokeCube-v1": 0.915,
+    "StackCube-v1": 0.904,
+    "PullCube-v1": 0.865,
+    "AnymalC-Reach-v1": 0.926,
+    "UnitreeGo2-Reach-v1": 0.908,
+    "AnymalC-Spin-v1": 0.984,
+    "UnitreeG1TransportBox-v1": 0.865
+  }
+}

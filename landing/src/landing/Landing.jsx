@@ -747,6 +747,30 @@ function tldrFor(name) {
   return 'The early checkpoint does not properly engage the object — it moves but never completes the task, so nothing reaches the goal; only the trained policy succeeds.'
 }
 
+// What each "what broke" line is actually grounded in. Honest provenance:
+//  sae      = measured from a trained SAE / internal monitor (sae-scope)
+//  probe    = measured from a linear probe on captured actor-MLP activations
+//  behavior = read from the failure replay; internals not captured on this policy
+// probe accuracies are real held-out results from a linear probe on captured
+// actor-MLP layer-3 activations (working vs failing checkpoint), measured on the cluster.
+const BASIS = {
+  'OpenVLA · SimplerEnv move-near': { kind: 'sae' },
+  'ANYmal-C (ManiSkill PPO)': { kind: 'probe', acc: 0.926 },
+  'Unitree Go2 (ManiSkill PPO)': { kind: 'probe', acc: 0.908 },
+  'ANYmal-C · spin (ManiSkill PPO)': { kind: 'probe', acc: 0.984 },
+  'PPO · PickCube': { kind: 'probe', acc: 0.958 },
+  'PPO · PokeCube': { kind: 'probe', acc: 0.915 },
+  'PPO · StackCube': { kind: 'probe', acc: 0.904 },
+  'PPO · PullCube': { kind: 'probe', acc: 0.865 },
+  'Unitree G1 · transport box': { kind: 'probe', acc: 0.865 },
+}
+function basisFor(name) {
+  const b = BASIS[name] || { kind: 'behavior' }
+  if (b.kind === 'sae') return { tone: '#9db58f', text: 'measured from internals — trained SAE monitor (sae-scope)' }
+  if (b.kind === 'probe') return { tone: '#9db58f', text: `measured from internals — linear probe on captured actor-MLP activations${b.acc != null ? ` (${Math.round(b.acc * 100)}% held-out)` : ''}` }
+  return { tone: '#aea69c', text: 'read from the failure replay — internals not captured on this exact policy' }
+}
+
 function mechFor(name) {
   if (MECH[name]) return MECH[name]
   if (name.startsWith('OpenVLA')) return MECH._vlaMon
@@ -962,9 +986,17 @@ function PolicyExplorer() {
             const m = mechFor(p.name)
             return (
               <div style={{ marginTop: 18, borderTop: '1px solid #3f3a36', paddingTop: 16 }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--canvas-softer)', border: '1px solid #4d4641', borderLeft: '3px solid var(--risk)', borderRadius: 8, padding: '12px 14px', marginBottom: 18 }}>
-                  <span className="label-mono" style={{ color: 'var(--risk)', whiteSpace: 'nowrap', marginTop: 2 }}>what broke</span>
-                  <p className="body-md text-body-strong" style={{ margin: 0 }}>{tldrFor(p.name)}</p>
+                <div style={{ background: 'var(--canvas-softer)', border: '1px solid #4d4641', borderLeft: '3px solid var(--risk)', borderRadius: 8, padding: '12px 14px', marginBottom: 18 }}>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span className="label-mono" style={{ color: 'var(--risk)', whiteSpace: 'nowrap', marginTop: 2 }}>what broke</span>
+                    <p className="body-md text-body-strong" style={{ margin: 0 }}>{tldrFor(p.name)}</p>
+                  </div>
+                  {(() => { const b = basisFor(p.name); return (
+                    <div className="label-mono" style={{ marginTop: 10, fontSize: 11, color: b.tone, display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <span style={{ width: 7, height: 7, borderRadius: 999, background: b.tone, display: 'inline-block' }} />
+                      {b.text}
+                    </div>
+                  ) })()}
                 </div>
                 <div className="label-mono" style={{ marginBottom: 6 }}>What we ran to read the internals</div>
                 <p style={{ marginBottom: 12 }}>{KIND_METHOD[m.kind]}</p>
