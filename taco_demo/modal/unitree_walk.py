@@ -106,8 +106,9 @@ def render(robot: str = "g1", mode: str = "success", steps: int = 450):
     counter = 0
     # control steps -> total sim steps
     total_steps = steps * control_decimation
-    # for the fail clip, shove after the robot has clearly started walking
-    push_start = int(total_steps * 0.45)
+    # for the fail clip, shove early (after a few steps of walking) so the robot
+    # is down for most of the clip -> obvious contrast with the success walk.
+    push_start = int(total_steps * 0.18)
     push_end = push_start + 180  # ~0.36s of sustained shove
     push_vec = np.array(PUSH_FORCE.get(robot, (60.0, 180.0, 0.0)), dtype=np.float64)
 

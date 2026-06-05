@@ -625,6 +625,7 @@ const POLICY_CATS = [
     { name: 'Unitree G1 · transport box', task: 'carry the box to the target shelf · ManiSkill PPO · trained vs early', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/g1_box_success.mp4', f: '/videos/g1_box_fail.mp4' },
     { name: 'Unitree G1 · walk', task: 'joystick walk forward · official pretrained policy · walk vs pushed-over fall', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/g1_walk_success.mp4', f: '/videos/g1_walk_fail.mp4' },
     { name: 'Unitree H1 · walk', task: 'joystick walk forward · official pretrained policy · walk vs pushed-over fall', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/h1_walk_success.mp4', f: '/videos/h1_walk_fail.mp4' },
+    { name: 'Unitree H1-2 · walk', task: 'joystick walk forward · official pretrained policy · walk vs pushed-over fall', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/h1_2_walk_success.mp4', f: '/videos/h1_2_walk_fail.mp4' },
     { name: 'Unitree G1 · place apple', task: 'place the apple in the bowl · ManiSkill PPO · trained vs early', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/g1_apple_success.mp4', f: '/videos/g1_apple_fail.mp4' },
   ] },
   { key: 'quad', label: 'Quadrupeds · robot dogs', policies: [
@@ -698,6 +699,9 @@ const MECH = {
   'Unitree H1 · walk': { kind: 'rl-leg', monitorable: true,
     finding: 'Result: Unitree’s official pretrained H1 joystick-walk policy (10-DOF legs, 41-dim obs) in MuJoCo. H1 is heavy, so it shrugs off a small push and only topples under a strong sustained shove — the clip shows it walking, getting shoved, and falling. Same about-to-fall probe method as the G1; not yet fit on this exact deploy net.',
     tierWhy: 'Tier 2, conditional. Real pretrained walking with a push-induced fall that is predictable from base orientation, but no verified in-time monitor on this deploy model, so deploy with a fall-arrest monitor and re-audit.' },
+  'Unitree H1-2 · walk': { kind: 'rl-leg', monitorable: true,
+    finding: 'Result: Unitree’s official pretrained H1-2 joystick-walk policy (a second H1 hardware variant) in MuJoCo. It walks upright with a natural gait and falls after a strong lateral shove. Same about-to-fall probe method (base tilt, angular velocity) we use on the trained quadrupeds; not yet fit on this deploy net.',
+    tierWhy: 'Tier 2, conditional. Real pretrained walking with a clean push-induced fall predictable from base orientation, but no verified in-time monitor on this deploy model, so deploy with a fall-arrest monitor and re-audit.' },
   'MS-HAB · Fetch pick': { kind: 'rl-arm', monitorable: false,
     finding: 'Result: the Fetch mobile manipulator runs a downloadable SAC checkpoint; across a 21-env eval it picks the object about 76% of the time. We hook its actor MLP and a probe separates the picked-vs-missed episodes from the hidden state, but on a fresh apartment spawn the misses (arm extends but never secures the grasp) are frequent and we have no in-time monitor for them yet.',
     tierWhy: 'Tier 3, remediate and re-audit. A downloadable policy with a real ~24% miss rate and readable internals, but no verified runtime monitor for the grasp-miss failure, so it cannot be conditionally certified yet.' },
