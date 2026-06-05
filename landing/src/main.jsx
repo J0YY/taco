@@ -7,9 +7,12 @@ import Landing from './landing/Landing.jsx'
 import Dashboard from './dashboard/Dashboard.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
 
+// basename must match the Vite base / GitHub Pages project path (e.g. /taco)
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<Landing />} />

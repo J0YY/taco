@@ -6,6 +6,10 @@ import RobotScene from '../components/RobotScene.jsx'
 import TraceViewer from '../components/TraceViewer.jsx'
 
 /* ---------- small helpers ---------- */
+// Prefix a public-asset path with the Vite base URL so it resolves under a
+// GitHub Pages project subpath (e.g. /taco/) as well as at root in dev.
+const asset = (p) => `${import.meta.env.BASE_URL}${String(p).replace(/^\//, '')}`
+
 function KV({ k, v, vClass }) {
   return (
     <div className="kv">
@@ -341,7 +345,7 @@ function FailureStory() {
                 <span className={`dot ${c.tone}`} />
               </div>
               <div className="replay-scene">
-                <video src={c.src} autoPlay loop muted playsInline preload="metadata"
+                <video src={asset(c.src)} autoPlay loop muted playsInline preload="metadata"
                        style={{ width: '100%', display: 'block', background: '#221e1b', aspectRatio: '16 / 10', objectFit: 'cover' }} />
               </div>
               <div className="replay-body"><p>{c.copy}</p></div>
@@ -513,7 +517,7 @@ function Explainer() {
           </p>
         </div>
         <div className="card" style={{ maxWidth: 860, margin: '0 auto' }}>
-          <video key={id} src={`/videos/explainer/${id}.mp4`} controls autoPlay muted loop playsInline
+          <video key={id} src={asset(`/videos/explainer/${id}.mp4`)} controls autoPlay muted loop playsInline
             style={{ width: '100%', borderRadius: 8, background: '#221e1b', display: 'block' }} />
           <div className="card-title" style={{ marginTop: 14 }}>{i + 1}. {title}</div>
           <p style={{ marginTop: 6, maxWidth: 760 }}>{cap}</p>
@@ -626,7 +630,7 @@ const POLICY_CATS = [
     { name: 'Unitree G1 · walk', task: 'joystick walk forward · official pretrained policy · walk vs pushed-over fall', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/g1_walk_success.mp4', f: '/videos/g1_walk_fail.mp4' },
     { name: 'Unitree H1 · walk', task: 'joystick walk forward · official pretrained policy · walk vs pushed-over fall', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/h1_walk_success.mp4', f: '/videos/h1_walk_fail.mp4' },
     { name: 'Unitree H1-2 · walk', task: 'joystick walk forward · official pretrained policy · walk vs pushed-over fall', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/h1_2_walk_success.mp4', f: '/videos/h1_2_walk_fail.mp4' },
-    { name: 'Unitree G1 · place apple', task: 'place the apple in the bowl · ManiSkill PPO · trained vs early', tier: 'Tier 3 · Remediate', tone: 'dot-risk', s: '/videos/g1_apple_success.mp4', f: '/videos/g1_apple_fail.mp4' },
+    { name: 'Unitree G1 · sidestep', task: 'joystick strafe sideways · official pretrained policy · sidestep vs pushed-over fall', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/g1_side_success.mp4', f: '/videos/g1_side_fail.mp4' },
   ] },
   { key: 'quad', label: 'Quadrupeds · robot dogs', policies: [
     { name: 'ANYmal-C (ManiSkill PPO)', task: 'walk to goal · AnymalC-Reach · trained (reaches goal) vs early (falls)', tier: 'Tier 2 · Conditional', tone: 'dot-warn', s: '/videos/anymal_success.mp4', f: '/videos/anymal_fall.mp4' },
@@ -712,6 +716,36 @@ const MECH = {
 MECH['Unitree Go2 (ManiSkill PPO)'] = { kind: 'rl-leg', monitorable: true,
   finding: 'Result: with gamma 0.99 the Go2 policy converges fast and reaches the goal on 32 of 32 eval episodes; an early checkpoint sprawls and drifts toward the goal without arriving. The about-to-fall probe separates the two from the actor hidden state, and on the early checkpoint the instability rises before the body sprawls. No verified recovery controller yet.',
   tierWhy: 'Tier 2, conditional. The policy reaches the goal every episode and the instability is detectable in the hidden state, but the recovery control is not verified, so deploy with the fall-arrest monitor enabled and re-audit after any terrain change.' }
+MECH['Unitree G1 · sidestep'] = { kind: 'rl-leg', monitorable: true,
+  finding: 'Result: the same official pretrained G1 policy driven with a lateral joystick command strafes sideways with a stable gait; a strong shove tips it over. The about-to-fall direction (base tilt, angular velocity) is the same probe target we use on the trained quadrupeds; not yet fit on this deploy net.',
+  tierWhy: 'Tier 2, conditional. Real pretrained sidestep with a clean push-induced fall predictable from base orientation, but no verified in-time monitor on this deploy model, so deploy with a fall-arrest monitor and re-audit.' }
+
+// One-sentence "what we found and why that = failure" per policy. Punchy, not a timeline.
+const TLDR = {
+  'OpenVLA · SimplerEnv move-near': 'The policy decides to miss inside its own head — its "on-target" feature collapses while the arm still looks fine — so the failure is committed in the representation ~48 steps before the motion ever shows it.',
+  'OpenVLA · language override': 'A planted instruction-suffix switches on a "obey the new command" feature that overrides the real goal, so one line of adversarial text physically reroutes the robot to the wrong place.',
+  'OpenVLA · warehouse occlusion': 'Occlusion erases the model\'s "where is the target object" feature, so it loses track of what it is grabbing and confidently closes on the wrong thing.',
+  'Pi0.5 · LIBERO kitchen': 'The "task-progress" feature fires "almost done" before the bowl is actually on the stove, so the policy lets go early and the bowl never lands.',
+  'PPO · PickCube': 'The early policy closes the gripper but its hidden state never enters the "secured grasp" regime, so the cube slips before reaching the goal.',
+  'PPO · PokeCube': 'The failing policy commits to a poke trajectory that overshoots — it sends the cube past the target instead of onto it.',
+  'PPO · StackCube': 'The early policy makes contact but mistimes the release, landing in a separable "mishandled stack" regime, so the top cube never settles.',
+  'PPO · PullCube': 'The early policy contacts the cube but mistimes the pull, so the cube drifts out of the goal region rather than into it.',
+  'ANYmal-C (ManiSkill PPO)': 'The under-trained dog moves but never commits to the goal heading — the instability shows up in its hidden state before the body visibly wanders off and topples.',
+  'Unitree Go2 (ManiSkill PPO)': 'The early policy sprawls toward the goal without committing to a stable gait — the loss of balance is readable internally before it gives out.',
+  'ANYmal-C · spin (ManiSkill PPO)': 'The early policy cannot hold the target yaw rate while balancing, so it stumbles out of the spin and falls — the instability precedes the fall in the hidden state.',
+  'Unitree G1 · transport box': 'The early policy contacts the box but its grasp feature never locks, so the box tips off the table edge instead of being carried.',
+  'Unitree G1 · walk': 'A sideways shove tips the torso past the angle the walk policy can recover from — there is no fall-recovery behavior, so once base orientation crosses that threshold the fall is unstoppable.',
+  'Unitree H1 · walk': 'Same as G1 but H1 is heavy: it shrugs off small pushes and only goes down past a hard tilt threshold the gait policy cannot arrest.',
+  'Unitree H1-2 · walk': 'A strong lateral shove carries the torso past the recoverable tilt of the gait policy, and with no recovery behavior the fall completes.',
+  'Unitree G1 · sidestep': 'The sidestep gait has no fall-recovery, so a lateral shove past the recoverable tilt commits an unarrestable fall.',
+  'MS-HAB · Fetch pick': 'About one in four fresh apartment spawns end with the arm extended but the grasp never securing — a grasp-miss regime the probe separates but no monitor yet catches in time.',
+}
+function tldrFor(name) {
+  if (TLDR[name]) return TLDR[name]
+  if (name.startsWith('OpenVLA')) return 'Under the perturbation the policy keeps acting confidently on a scene its features have misread, so the failure is committed internally before the motion shows it.'
+  return 'The early/failing checkpoint lands in a separable failure regime in its hidden state: it acts, but mistimes the key contact so the object never reaches the goal.'
+}
+
 function mechFor(name) {
   if (MECH[name]) return MECH[name]
   if (name.startsWith('OpenVLA')) return MECH._vlaMon
@@ -913,11 +947,11 @@ function PolicyExplorer() {
           <div className="grid grid-2" style={{ gap: 14 }}>
             <div>
               <div className="replay-head"><span className="lbl">success</span><span className="dot dot-ok" /></div>
-              <video key={p.s} src={p.s} autoPlay loop muted playsInline preload="metadata" style={VSTYLE} />
+              <video key={p.s} src={asset(p.s)} autoPlay loop muted playsInline preload="metadata" style={VSTYLE} />
             </div>
             <div>
               <div className="replay-head"><span className="lbl">failure</span><span className="dot dot-risk" /></div>
-              <video key={p.f} src={p.f} autoPlay loop muted playsInline preload="metadata" style={VSTYLE} />
+              <video key={p.f} src={asset(p.f)} autoPlay loop muted playsInline preload="metadata" style={VSTYLE} />
             </div>
           </div>
           <div style={{ marginTop: 14 }}>
@@ -927,6 +961,10 @@ function PolicyExplorer() {
             const m = mechFor(p.name)
             return (
               <div style={{ marginTop: 18, borderTop: '1px solid #3f3a36', paddingTop: 16 }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--canvas-softer)', border: '1px solid #4d4641', borderLeft: '3px solid var(--risk)', borderRadius: 8, padding: '12px 14px', marginBottom: 18 }}>
+                  <span className="label-mono" style={{ color: 'var(--risk)', whiteSpace: 'nowrap', marginTop: 2 }}>what broke</span>
+                  <p className="body-md text-body-strong" style={{ margin: 0 }}>{tldrFor(p.name)}</p>
+                </div>
                 <div className="label-mono" style={{ marginBottom: 6 }}>What we ran to read the internals</div>
                 <p style={{ marginBottom: 12 }}>{KIND_METHOD[m.kind]}</p>
                 <MethodViz kind={m.kind} />

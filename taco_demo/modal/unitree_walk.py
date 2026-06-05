@@ -52,7 +52,7 @@ PUSH_FORCE = {
 
 
 @app.function(gpu="A10G", image=img, timeout=900)
-def render(robot: str = "g1", mode: str = "success", steps: int = 450):
+def render(robot: str = "g1", mode: str = "success", steps: int = 450, cmd_override=None):
     """Run the pretrained Unitree sim2sim deploy headless and return mp4 bytes.
 
     mode == "success": forward walk command, no disturbance.
@@ -81,7 +81,7 @@ def render(robot: str = "g1", mode: str = "success", steps: int = 450):
     cmd_scale = np.array(cfg["cmd_scale"], dtype=np.float32)
     num_actions = cfg["num_actions"]
     num_obs = cfg["num_obs"]
-    cmd = np.array(cfg["cmd_init"], dtype=np.float32)  # forward joystick command
+    cmd = np.array(cmd_override if cmd_override is not None else cfg["cmd_init"], dtype=np.float32)
 
     action = np.zeros(num_actions, dtype=np.float32)
     target_dof_pos = default_angles.copy()
@@ -203,3 +203,16 @@ def main(robots: str = "g1,h1", steps: int = 450):
             p = os.path.join(d, name)
             open(p, "wb").write(data)
             print(f"WROTE {p} ({len(data)} bytes)")
+
+
+@app.local_entrypoint()
+def side(robot: str = "g1", steps: int = 450):
+    import os
+    os.makedirs("landing/public/videos", exist_ok=True)
+    os.makedirs("taco_demo/data/videos/incoming/unitree_walk", exist_ok=True)
+    for mode, cmd in [("success", [0.0, 0.5, 0.0]), ("fail", [0.0, 0.5, 0.0])]:
+        data = render.remote(robot=robot, mode=mode, steps=steps, cmd_override=cmd)
+        for p in (f"landing/public/videos/{robot}_side_{mode}.mp4",
+                  f"taco_demo/data/videos/incoming/unitree_walk/{robot}_side_{mode}.mp4"):
+            open(p, "wb").write(data)
+        print(f"WROTE {robot}_side_{mode}.mp4 ({len(data)} bytes)")

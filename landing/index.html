@@ -17,6 +17,17 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232b2622'/%3E%3Ctext x='16' y='23' font-family='monospace' font-size='20' fill='%23f7f5f0' text-anchor='middle'%3E%E2%97%88%3C/text%3E%3C/svg%3E" />
   </head>
   <body>
+    <!-- SPA redirect decode for GitHub Pages (pairs with public/404.html) -->
+    <script>
+      (function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function (s) {
+            return s.replace(/~and~/g, '&')
+          }).join('?')
+          window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash)
+        }
+      })(window.location)
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
