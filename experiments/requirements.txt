@@ -1,0 +1,8 @@
+# Core engine — runs anywhere, CPU-only.
+numpy>=1.24
+pytest>=7.0
+
+# Optional proposer backends (install as needed):
+#   LLM proposer   — pip install anthropic        (+ set ANTHROPIC_API_KEY)
+#   Cosmos backend — pip install diffusers transformers accelerate imageio
+#                    (GPU; targets nvidia/Cosmos-Predict2.5-2B)

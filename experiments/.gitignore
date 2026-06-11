@@ -1,0 +1,7 @@
+# generated audit reports + evidence
+runs/
+**/__pycache__/
+*.pyc
+# downloaded model weights / cosmos cache
+weights/
+.cosmos_cache/
