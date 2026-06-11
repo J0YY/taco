@@ -19,7 +19,7 @@ if __package__ in (None, ""):  # allow direct-file invocation
 
 from taco_audit.engine import AuditEngine
 from taco_audit.policy_loader import load_policy
-from taco_audit.proposers.heuristic import HeuristicProposer
+from taco_audit.proposers import make_proposer
 from taco_audit.report import save_report, to_markdown
 from taco_audit.scope import gather_scope, interactive_scope
 
@@ -56,11 +56,14 @@ def cmd_audit(args: argparse.Namespace) -> int:
             notes=args.notes or "",
         )
 
-    engine = AuditEngine(search_budget=args.budget, seed=args.seed,
+    scope_summary = f"{scope.robot_type}, task: {scope.task_description}, env: {scope.environment}"
+    proposer = make_proposer(args.proposer, scope_summary=scope_summary, seed=args.seed)
+    engine = AuditEngine(proposer=proposer, search_budget=args.budget, seed=args.seed,
                          on_event=_event_printer(not args.quiet))
     print(f"\nAuditing `{policy.policy_id}` from {policy.source_path}")
     print(f"Scope: {scope.robot_type} · {scope.environment} · {scope.human_proximity} "
-          f"· criticality {scope.criticality} (risk tolerance {scope.risk_tolerance():.3f})\n")
+          f"· criticality {scope.criticality} (risk tolerance {scope.risk_tolerance():.3f})")
+    print(f"Proposer: {getattr(proposer, 'name', args.proposer)}\n")
 
     verdict = engine.audit(policy, scope)
 
@@ -106,6 +109,9 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("--units", type=int, default=1)
     a.add_argument("--notes", default=None)
     a.add_argument("--budget", type=int, default=40, help="search rollouts per family")
+    a.add_argument("--proposer", default="heuristic", choices=["heuristic", "llm", "cosmos"],
+                   help="perturbation proposer: heuristic (default), llm (needs ANTHROPIC_API_KEY), "
+                        "cosmos (needs GPU + diffusers)")
     a.add_argument("--seed", type=int, default=0)
     a.add_argument("--out", default=None, help="directory to write verdict.json/.md")
     a.add_argument("--interactive", action="store_true", help="prompt for deployment scope")
