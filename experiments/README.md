@@ -71,7 +71,13 @@ python -m taco_audit.cli audit examples/policies/reach_blind.py \    # -> FAIL
 
 python examples/run_demo.py        # runs all three and prints a table
 python -m pytest tests             # the test suite
+streamlit run app.py               # the web interface (submit a policy, pick scope, get a verdict)
 ```
+
+Pick the proposer with `--proposer {heuristic,llm,cosmos}`. `llm` activates when
+`ANTHROPIC_API_KEY` is set (Claude proposes perturbations); `cosmos` renders
+perturbed scenes on a GPU. Both fall back to the heuristic if unavailable, so the
+audit always runs.
 
 Add `--interactive` to be prompted for the deployment scope, or pass it on the
 flags: `--robot-type`, `--task`, `--environment`, `--proximity`, `--criticality`,
