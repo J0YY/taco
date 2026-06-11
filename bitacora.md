@@ -1419,3 +1419,123 @@ Worked with the user (loop paused then killed) to make the demo real and clean.
 - In flight: Modal Playground Unitree Go1 render; athena agents for RoboCasa
   kitchen, SimplerEnv-OpenVLA, and MS-HAB (downloading/installing).
 - Tests: 153 passing. Commits 777857f..8d9851c pushed to origin/main.
+
+## 2026-06-11 — bitacora-vish: experiments/ — mechanistic audit engine + Cosmos-3 wiring (Claude session)
+
+Worked with Vishruth (single 5090, CUDA 13, torch 2.11+cu130) to stand up a new
+`experiments/` package: a closed-loop **mechanistic audit engine** that takes one
+submitted policy, gathers deployment scope, falsifies it in simulation until it
+finds the situations that break it, and returns **PASS / CONDITIONAL PASS / FAIL**.
+This is the runnable core behind the certifier story — separate from `taco_demo/`,
+self-contained (numpy-only core), and green end-to-end on this box.
+
+### Context gathered first
+- Read `AGENTS.md`, `NEXT_PRIORITIES.md`, `instructions.spec`, the bitácora, and
+  the verdict machinery already in the repo: `taco_demo/certification.py`
+  (Tiers 1–4) and `taco_demo/trace_scoring.py` (the exact internal signals —
+  `target_feature`, `occlusion_risk`, `internal_risk_score`, early-warning margin,
+  monitorability). Recent commits had reframed the public verdict to
+  PASS / CONDITIONAL PASS / FAIL — the engine targets that.
+- Environment reality (decisive): fresh box with torch 2.11+cu130 and
+  transformers/diffusers present, but **no** anthropic SDK, **no**
+  mani_skill/mujoco/sapien/gymnasium, **no** `ANTHROPIC_API_KEY`. So the engine
+  had to run with a numpy-only default and treat Cosmos/Claude as optional seams.
+
+### Evaluated the proposed algorithm, then fixed it
+The brief: "Monte-Carlo heuristic perturbations using Cosmos-3 to create new sim
+states, OR an LLM outputs a sim state → feed a sim → repeat until failure → report
+the traces." Sound (this is policy **falsification / adaptive stress testing**).
+Four fixes made it useful rather than "random until it breaks":
+1. **Continuous failure-proximity, not pass/fail.** Every rollout returns how
+   *close* it came to failing, so the cross-entropy search gets gradient signal
+   before the first real failure and finds the **minimal** perturbation
+   (`minimal_failure_cost`).
+2. **Characterise, don't just trip.** A verdict needs statistics: neighborhood
+   failure rate, severity, and whether an internal signal **precedes** the failure
+   (monitorability). The engine minimises the failure, probes its neighborhood,
+   and scores its trace.
+3. **Cosmos generates pixels, not physics state** — so it's the *visual
+   perturbation/evidence* backend, and an LLM/heuristic *structured* proposer
+   drives state-based policies. Made the proposer pluggable and routed by need.
+4. **An LLM emitting raw sim state hallucinates** — constrained Claude to a
+   *bounded, schema-validated JSON perturbation*, not arbitrary state.
+
+### Cosmos-3 research finding (fanned out a sub-agent)
+- **"Cosmos 3" is real** (launched 2026-06-01) but is a **16B/65B omnimodel — it
+  does NOT fit a 32 GB 5090** (16B BF16 ≈ 32 GB of weights alone, no quantized
+  path). Off-limits on this hardware.
+- The realistic on-device world model is **`nvidia/Cosmos-Predict2.5-2B`** (~32 GB
+  @720p, fits @480p with offload; wired into HF Diffusers as
+  `Cosmos2_5_PredictBasePipeline`). **Cosmos-Transfer2.5** (the ideal "re-render
+  under new lighting/clutter" tool) needs **65 GB → won't fit**. Confirmed-on-5090
+  fallback: `nvidia/Cosmos-Predict2-2B-Text2Image`.
+- Used the `claude-api` skill for correct model IDs (`claude-opus-4-8` default) +
+  the structured-output pattern (`output_config.format`).
+
+### Architecture built
+- `taco_audit/types.py` — contracts: bounded `Perturbation` (knob space + L2
+  cost), `RolloutResult` (continuous `failure_proximity` + trace), `AuditScope`
+  (5 scope fields → a `risk_tolerance()` that tightens the verdict), `Verdict`.
+- `taco_audit/sims/reach_world.py` — a dependency-free, deterministic 2-D tabletop
+  reach/grasp sim. The policy sees only *perceptual detections* (position,
+  salience, instruction match-score), never ground-truth ids. Perturbations
+  degrade perception the way deployment does (occlusion, look-alike distractor,
+  language override, sensor noise, lighting, viewpoint). Crucially it records the
+  **same internal signals `trace_scoring` consumes**, computed *behaviourally* from
+  the policy's own actions — a model-agnostic monitor needing no network weights
+  (a policy may override them by returning `(action, {"internal": {...}})`).
+- `taco_audit/proposers/` — `heuristic.py` (Monte-Carlo cross-entropy search,
+  default, no deps), `llm.py` (Claude proposes the next perturbation as validated
+  JSON; key-gated; falls back to heuristic on any error/refusal), `cosmos.py`
+  (`CosmosRenderer` for Predict2.5-2B + `CosmosProposer`; graceful when
+  weights/toolchain absent). `make_proposer()` selects + degrades safely.
+- `taco_audit/engine.py` — the loop: nominal check → per-family search → minimise
+  (binary search toward nominal with majority-vote) → neighborhood rate → trace
+  scoring (monitorability) → control-verification re-run → aggregate.
+- `taco_audit/scoring.py` (mirrors `trace_scoring`), `verdict.py` (scope-aware
+  Tier→PASS/CONDITIONAL/FAIL with required controls + exclusions), `report.py`
+  (json + markdown), `scope.py`, `policy_loader.py`, `cli.py`.
+- Example policies span the spectrum: `reach_robust` (identity-locked servo →
+  **PASS**), `reach_brittle` (salience follower → **CONDITIONAL PASS**, 3
+  monitorable families), `reach_blind` (open-loop memorizer → **FAIL**: the
+  failure is *not monitorable*, warning arrives too late).
+- `app.py` — Streamlit web interface: upload a `.py` (or pick an example), answer
+  5 scope questions, run, and get the verdict badge + certificates + per-family
+  mechanistic detail + downloadable report.
+
+### Verification
+- `pytest tests` → **8 passed**. `run_demo.py` →
+  robust=PASS, brittle=CONDITIONAL PASS (3 certs / 4 controls), blind=FAIL (1 cert,
+  non-monitorable). Streamlit app verified via `AppTest` (renders CONDITIONAL PASS,
+  no exceptions).
+- **Cosmos bring-up experiment** (`scripts/cosmos_smoke.py`): the diffusers path
+  resolves the pipeline, but the weights are **gated** — real failure captured is
+  `GatedRepoError 401` (needs `HF_TOKEN` + NVIDIA Open Model License accepted). The
+  renderer degraded gracefully and the audit ran without it. Code is fully wired;
+  bring-up is a credential gate, not a code problem. Added actionable
+  gated/OOM hints to the error path.
+
+### Commits this session (06c7054 → 800b71e)
+- `61a8a8d` feat(experiments): mechanistic audit engine — falsification loop +
+  PASS/CONDITIONAL/FAIL — types, ReachWorld sim, heuristic CEM proposer, engine,
+  scoring, scope-aware verdict, report, CLI, 3 example policies, README, tests.
+- `019a118` feat(experiments): pluggable LLM (Claude) and Cosmos proposer backends
+  — `llm.py` (schema-validated Claude proposer, key-gated), `cosmos.py`
+  (Predict2.5-2B renderer + proposer), `make_proposer()`, CLI `--proposer`.
+- `17413ce` feat(experiments): cosmos bring-up smoke test + actionable gated/OOM
+  hints — `scripts/cosmos_smoke.py`; confirmed the gated-auth blocker on this box.
+- `800b71e` feat(experiments): streamlit web interface — submit policy, scope,
+  verdict — `app.py`, verified via AppTest; requirements + README updated.
+
+### What is real vs modelled / next
+- **Real:** the closed-loop falsification search, minimal-failure minimisation,
+  neighborhood-rate estimation, trace scoring, monitorability test,
+  control-verification re-run, and the scope-aware verdict.
+- **Modelled (MVP):** `ReachWorld` is a compact 2-D sim and the internal monitor
+  is *behavioural* (from actions), not SAE activations. Seams are in place for a
+  heavier sim (gymnasium/MuJoCo) and for real Cosmos rendering.
+- **Next:** provide `HF_TOKEN` + accept the Cosmos license to light up real
+  Predict2.5-2B scene rendering at 480p; add a MuJoCo/SimplerEnv `Simulator`
+  adapter so the same engine audits real VLA/locomotion policies; optionally feed
+  real SAE activations through the `info["internal"]` seam.
+- Not pushed to origin (committed locally on `main` per "commit often").
