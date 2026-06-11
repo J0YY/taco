@@ -122,8 +122,15 @@ class CosmosRenderer:
             return out_path
         except Exception as e:
             self._failed = True
-            print(f"[cosmos] render failed ({type(e).__name__}: {e}); "
-                  "skipping Cosmos evidence.")
+            name = type(e).__name__
+            hint = ""
+            if "Gated" in name or "401" in str(e) or "restricted" in str(e).lower():
+                hint = (f"\n         -> {self.model_id} is gated: accept the NVIDIA Open "
+                        "Model License on its Hugging Face page and set HF_TOKEN, then retry.")
+            elif "out of memory" in str(e).lower() or "OutOfMemory" in name:
+                hint = ("\n         -> out of VRAM: drop to 480p (height=480,width=832) and keep "
+                        "enable_model_cpu_offload, or use TACO_COSMOS_MODEL=nvidia/Cosmos-Predict2-2B-Text2Image.")
+            print(f"[cosmos] render failed ({name}: {str(e)[:160]}); skipping Cosmos evidence.{hint}")
             return None
 
     def render_perturbation(self, pert: Perturbation, out_path: str) -> str | None:
